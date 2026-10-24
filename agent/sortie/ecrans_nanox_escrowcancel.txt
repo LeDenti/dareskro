@@ -1,0 +1,7 @@
+Review transaction
+Transaction Type | Cancel Escrow
+Account | rGJsjkfmASA2ezXYDp | TQJZDp9tRgCJAPhw
+Offer Sequence | 21789939
+Fee | XRP 0.000012
+Owner | rGJsjkfmASA2ezXYDp | TQJZDp9tRgCJAPhw
+Sign transaction?

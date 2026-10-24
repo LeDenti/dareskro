@@ -1,0 +1,10 @@
+preuves    planning 09:00-21:00, badge 12.12 -> 12.00 h retenues
+  temps de garde                 250.51 EUR
+  majorations heures sup.         83.50 EUR
+  indemnite de dimanche           94.99 EUR
+  prime d anciennete              37.58 EUR
+  TOTAL                          466.57 EUR   (+ 12.00 h de repos, hors sequestre)
+regles     purchased by the agent over x402 on Mastercard AP4M
+sha256     2c58685cab59839a04e35ffca7984b06a8c204b9d161ffc9372edd4c45c3391c
+statut     PROPOSITION — a valider par une personne nommee avant signature
+ecrit      sortie/bulletin.json, ../app/public/bulletin.json

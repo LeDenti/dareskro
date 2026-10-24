@@ -1,0 +1,362 @@
+# dareskro — agentic payroll escrow on the XRP Ledger, signed on a Ledger device
+
+**AI & Fintech XRP Ledger Hackathon, New York, 24–25 October 2026.**
+Track: Agentic Finance. Partner prizes targeted: Ledger (Agentic Finance), Mastercard.
+
+> The agent reads the evidence. The code computes the amount. A human signs on a
+> Ledger device. The XRP Ledger pays at the date. Nobody holds the funds in between.
+
+## The problem
+
+Every month a small business pays people whose work it cannot fully verify: a
+pharmacist's Sunday shift, a freelancer, a real-estate agent on commission. The
+evidence is scattered (schedules, badge logs, CRM), the rules are long (collective
+agreements), and someone always ends up chasing a payment.
+
+## What dareskro does
+
+1. **Evidence.** The schedule *qualifies* the hours (Sunday shift, shutters open,
+   after 35 h already worked). The badge log *proves* presence. A badge never
+   qualifies an hour: that is the schedule's job, and only the schedule's.
+2. **Calculation, by code only.** `officine.garde` applies the French pharmacy
+   collective agreement (IDCC 1996, art. 11; agreement of 23/03/2000, art. 4),
+   line by line, replayable to the cent. No model in the loop: a payroll must be
+   auditable three years later.
+3. **Human validation.** A named person validates the statement. Nothing is locked
+   while it is a PROPOSITION (GDPR art. 22: no fully automated decision on pay).
+4. **Signature on a Ledger device.** The employer signs `EscrowCreate` on the
+   device: amount, destination, pay date and the statement's SHA-256 are on a
+   screen the agent cannot touch. Nothing moves before that signature.
+5. **Payment by the ledger.** `FinishAfter` only — no `Condition`, no
+   `CancelAfter`. After the date, *anyone* can finish the escrow; the employer has
+   no transaction to take the money back. One possible outcome.
+
+## What was built during the 36 hours
+
+Only this counts for judging, and we say so.
+
+| Piece | Where | Status |
+|---|---|---|
+| Evidence → statement agent (schedule + badge → lines, total, SHA-256) | `agent/bulletin_garde.py` | done, 466.57 USD (`--devise EUR` for euros) |
+| Pay desk web app: statement, human validation, Ledger connect, `EscrowCreate` signed on device, proofs, third-party release | `app/` | done, run end to end on Speculos (Nano X, XRP app 2.8.1) **and on a real Nano S Plus (XRP app 2.8.2), Saturday 19:40 UTC** |
+| Ledger integration: Device Management Kit + `device-signer-kit-xrp` (pre-release), USB / Bluetooth / Speculos | `app/src/ledger.ts` | done |
+| Escrow builder for the device, memo with statement hash, early-finish / cancel / release proofs | `app/src/xrpl.ts` | done |
+| Ledger developer-experience feedback | `LEDGER_FEEDBACK.md` | done |
+| Delivery oracle (example 3): conditional escrow, proof = URL + SHA-256 read online by the oracle, secret revealed on match, refund at the deadline | `oracle/oracle.mjs`, `oracle/demo_livraison.mjs` | done, run on testnet 24/10 18:35 UTC |
+| Mastercard Agent Pay for Machines (AP4M): the agent buys its evidence over x402 in RLUSD on XRPL EVM testnet, inside a cap the employer approved | `ap4m/agent.mjs`, `ap4m/merchant.mjs` | done, run live 24/10 17:44 UTC: channel, 402, voucher, redemption, RLUSD settlement, receipt verified on-chain |
+
+### Measured on testnet, 24/10/2026, signed on the Ledger XRP app (2.8.1, Nano X emulated by Speculos)
+
+| Step | Signed by | Result |
+|---|---|---|
+| `EscrowCreate`, 466.57 XRP, FinishAfter +90 s, memos = statement SHA-256 + id — [19A03F2C…](https://testnet.xrpl.org/transactions/19A03F2CC5108F42B7FF2FD846F0150B4D735DC5444BDB34FA286982859E19E8) | the device, after 15 review screens | `tesSUCCESS` |
+| `EscrowFinish` by a third party **before** the date — [48136EE8…](https://testnet.xrpl.org/transactions/48136EE86CEDF26039857AD3C876697F95CEE59FF25708A149735542BD27D0DB) | a fresh faucet account | `tecNO_PERMISSION` |
+| `EscrowCancel` by the employer — [1E08B209…](https://testnet.xrpl.org/transactions/1E08B209F6C42A9217E24B028611F98C2FF6F33A1631CA3DD965BDD221772600) | the device (it signs; the ledger refuses) | `tecNO_PERMISSION` |
+| `EscrowFinish` by a third party **after** the date — [79C97E6B…](https://testnet.xrpl.org/transactions/79C97E6B56728E660DABAB32854ADFFA6EB4CE52FC6DDA98FC3FC378125B4913) | a fresh faucet account | `tesSUCCESS`, employee credited 466.57 XRP |
+
+What the device showed, screen by screen, is in `LEDGER_FEEDBACK.md`: the pay date
+as a readable UTC date, both memos in full, no blind signing.
+
+### On real hardware — Ledger Nano S Plus, XRP app 2.8.2, 24/10/2026 19:35–19:43 UTC
+
+Same page, Chrome, WebHID. The employer pressed the device's buttons; nobody else
+touched the keys. The first attempt, with the XRP app 2.2.2 that shipped on the
+device, was refused before any review screen (`status 6800`, see
+`LEDGER_FEEDBACK.md`); after updating the app in Ledger Live it signed.
+
+| Step | Signed by | Result |
+|---|---|---|
+| `EscrowCreate` 405.219732 XRP = 466.57 € at 1.1514 EUR/XRP, FinishAfter +240 s, memos sha256 + eur + oracle — [5FF67E32…](https://testnet.xrpl.org/transactions/5FF67E32CEE83FCB7E3E25FE726BA3AE2A851C370417C0A05D45E0119772E9CC) | **the Nano S Plus** | `tesSUCCESS`, escrow #21793983 |
+| `EscrowFinish` by a third party **before** the date — [EA6790A1…](https://testnet.xrpl.org/transactions/EA6790A1094094F90594663EFAC40E390C7C4A6032C7FF43B9FCBFC39D7CB6A9) | a fresh faucet account | `tecNO_PERMISSION` |
+| `EscrowCancel` by the employer — [71E227E5…](https://testnet.xrpl.org/transactions/71E227E5B7606F72505DF5DDBD3645DFC5B2B2F99E3E53CE84CE449FEC2016BD) | **the Nano S Plus** (it signs; the ledger refuses) | `tecNO_PERMISSION` |
+| `EscrowFinish` **by the oracle**, 13 s after the date — [F61DBCD3…](https://testnet.xrpl.org/transactions/F61DBCD30CD4D88AB55782E30287A012DBFC23E4381A8A853430F22E8AD8FF3A) | `rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW` | `tesSUCCESS`, employee credited |
+
+A first device-signed escrow a few minutes earlier
+([8C2AD66C…](https://testnet.xrpl.org/transactions/8C2AD66C5E4073A9D426E7602C553B05784324E777FA50E7BE4FA55F78F52DBF),
+90 s delay) was finished by a third party *after* its date
+([3BAC99BF…](https://testnet.xrpl.org/transactions/3BAC99BF09DBD2E366F93306DED2DEF3E1F9C123A6295FBC16BCE21726B2DF7E),
+`tesSUCCESS`) while we were still clicking: the "anyone can finish after the date"
+rule, demonstrated by accident.
+
+### Second run, 24/10/2026 15:54 UTC — the oracle releases by itself
+
+| Step | Signed by | Result |
+|---|---|---|
+| `EscrowCreate` with a third memo citing the oracle (17 screens on the device, `Memo Data [3]: rUuvu1X…`) — [F4029046…](https://testnet.xrpl.org/transactions/F4029046943D8EBADE8B7C432646739875D6635BF7A2F48D54FAF17040ACA524) | the device | `tesSUCCESS` |
+| `EscrowFinish` by a third party **before** the date — [013744BE…](https://testnet.xrpl.org/transactions/013744BEB23C06430FE2EFC6E6DB08191166C634D1CD54C0EF28F440784C970C) | a fresh faucet account | `tecNO_PERMISSION` |
+| `EscrowFinish` **by the oracle**, 12 s after the date, nobody clicked — [2F94E2BE…](https://testnet.xrpl.org/transactions/2F94E2BE970311999B3A759B4760CAC3EC4C9B0B2E9C1DCE54839655A48D79B2) | `rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW` | `tesSUCCESS`, employee credited 466.57 XRP |
+| `EscrowCancel` by the employer, signed on the device after the oracle had paid — [31771004…](https://testnet.xrpl.org/transactions/31771004943B4A5DFD7B1BB7B250FA8C1DA8F6A17DFE053BE99091DFC90F7562) | the device | `tecNO_TARGET`: already paid, nothing left to cancel |
+
+Oracle log of that run:
+
+```
+15:54:36 watching escrow #21789941 of rGJsjkfm…: 466.57 XRP to r3kiDtPb…, payable at ripple time 846172520
+15:55:27 escrow #21789941: date passed, submitting EscrowFinish…
+15:55:32 escrow #21789941: finished — 466.57 XRP to r3kiDtPb… — https://testnet.xrpl.org/transactions/2F94E2BE…
+```
+
+### What existed before (not for judging)
+
+Escrow core on XRPL testnet with xrpl-py, payroll rules (the `officine.garde`
+engine the agent imports), PDF dossiers. That prior work lives in a `sources/`
+folder that is **not part of this repository**: only the weekend's code is
+published here. Two lessons from that work are
+reused as-is: the beneficiary must open a trustline *before* a third party can
+finish a token escrow (`tecNO_LINE` otherwise), and RLUSD could not be escrowed
+when measured on 08/09/2026 because its issuer had not set
+`lsfAllowTrustLineLocking`.
+
+**Dollars owed, XRP locked, and the employee chooses how to be paid.** The
+statement is in dollars: that is what the employee is owed (`--devise EUR` for
+euros). The escrow is in XRP, converted at the rate of the moment of signing
+(Kraken XRP/USD, CoinGecko as fallback), and the memo `dareskro/fiat` carries the
+amount and the rate, so the device shows both: "466.57 USD @ 2.61 USD/XRP". Then
+two options, chosen on the pay desk before the lock:
+
+- **crypto**: the employee keeps the XRP the ledger releases at the date;
+- **dollars**: once the ledger has released the escrow — and only then, the payout
+  script re-reads the validated `EscrowFinish` on XRPL before doing anything —
+  the oracle settles RLUSD, a dollar stablecoin, to the employee's payout wallet
+  through **Mastercard Agent Pay for Machines** (`ap4m/payout.mjs`): a one-shot
+  "payslip settlement" merchant priced at the pay, the agent answers the 402 inside
+  the employer's budget, `VoucherRedeemed` on XRPL EVM, RLUSD settled, receipt. The
+  sandbox budget is 20 RLUSD, so the demo settles at 1/100 of the pay (4.67 RLUSD
+  for $466.57) and says so in the resource and the receipt.
+
+The first runs below, before 18:55 UTC, locked 466.57 XRP as a stand-in; from
+then on the page converts at the day's rate. Run from a terminal at 18:56 UTC
+(`app/scripts/demo-terminal.mjs`, DMK in Node, Speculos Nano X): rate 1.1474,
+466.57 € = 406.632386 XRP, the device showed `Memo Data [3]: 466.57 EUR @ 1.1474
+EUR/XRP Kraken 2026-10-24T18:56Z`, escrow
+[9D59BC76…](https://testnet.xrpl.org/transactions/9D59BC76560FDAC77A569972E87C1366ED89D6812F364DFE115EB4580A4735F3)
+`tesSUCCESS`, early finish by a stranger
+[7C2A9FDB…](https://testnet.xrpl.org/transactions/7C2A9FDBF6C5A03BC9CA54692AAC8ADD5CD334C70D89F9B7EB21AC6327D2E7EB)
+`tecNO_PERMISSION`, released by the oracle 12 s after the date
+[0356E36B…](https://testnet.xrpl.org/transactions/0356E36B867DB2F4F5FD8191D1BB4C10F3CD7C20A33565964FDC4CFFA35946DF).
+
+## The oracle — the nerve of the whole thing
+
+The oracle is the **named third party that executes what the ledger already
+decided**. It is an XRPL account with a name, a birth certificate on-chain and one
+job: watch the escrows it is cited in, and submit `EscrowFinish` once the ledger
+allows it. It pays the fee of that transaction. That is all it ever pays.
+
+| | |
+|---|---|
+| Name | dareskro payroll oracle v1 |
+| Address (testnet) | [`rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW`](https://testnet.xrpl.org/accounts/rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW) |
+| Birth certificate | [`AF5C74C8…`](https://testnet.xrpl.org/transactions/AF5C74C86FB526396E4FCF0B659AB2F3AA8D450C9218A19DA4F54C23EC3B4A2A): an `AccountSet` that changes nothing, with a memo saying what the account is |
+| Created | 24/10/2026 15:51 UTC, during the hackathon, with `node oracle/oracle.mjs create` |
+| Cited | in every escrow the pay desk builds: memo `dareskro/oracle` → its address, read on the Ledger device before signing |
+
+**What it cannot do, by construction, not by promise.** It never holds the funds:
+the money sits in the ledger and goes to the `Destination` written at creation,
+whoever submits the finish. It cannot pay early: `EscrowFinish` before
+`FinishAfter` is `tecNO_PERMISSION`. It cannot redirect: `EscrowFinish` has no
+destination field. It cannot cancel: the payroll escrow has no `CancelAfter`, so
+nobody can. For a payroll escrow the oracle's whole power is **punctuality**. If it
+dies, anyone else — the employee included — can finish the escrow and the money
+still goes where it was written.
+
+**Where an oracle does get power.** In a *conditional* escrow (the freelance case,
+example 3 below), the oracle holds the preimage of a `PREIMAGE-SHA-256`
+condition and reveals it when delivery is proven. There the oracle decides
+*whether*; here it only decides *when*, and even that is bounded below by the
+ledger. Same account, same code path, different escrow shape: the shape of the
+escrow is the policy.
+
+### The oracle, case by case
+
+The question that sorts oracles is not "can it disappear?" but **"is it a party to
+the dispute?"** An oracle with a stake in the outcome is not an oracle, it is a
+party. Each of our four cases gives the oracle a different shape, and the shape of
+the escrow decides how much the oracle can do.
+
+| Case | Escrow shape | Who observes what | The oracle decides | What bounds it |
+|---|---|---|---|---|
+| **Pharmacist's Sunday shift** (the demo) | `FinishAfter` only | *Before* the lock: the schedule qualifies the hours, the badge proves presence, code computes, a **named human** validates. *After* the lock: the **payroll oracle** `rUuvu1X…` watches the date | *when*, and only once the ledger allows it | cannot pay early (`tecNO_PERMISSION`), cannot redirect (no such field), cannot cancel (no `CancelAfter`). Anyone can replace it |
+| **Real-estate agent** | conditional: `Condition` + `CancelAfter` | two steps: the **notary's signature** on the deed, then the **official publication** of the sale (land records, DVF). Nothing is owed at the compromis (loi Hoguet art. 6) | *whether*: the signature releases the secret; the publication confirms it for anyone | neither the notary nor the public record is a party. The publication is a proof, not the trigger. `CancelAfter` refunds the agency if the sale falls through |
+| **Freelancer in Lagos, client in Paris** | conditional: `Condition` + `CancelAfter` | the oracle holds the secret and **reads a public fact by itself**: the file at the agreed URL has the agreed SHA-256 (built this weekend, see below). The signer is interchangeable; the oracle is not | *whether*, from a fact anyone can check | it cannot steal: the funds go to the destination written at creation. It can only block, and blocking ends at `CancelAfter`: the oracle itself submits the refund |
+| **Influencer product placement** | conditional + `FinishAfter` | the oracle reads the **platform**: the post is live at the agreed address, and still live at the date (30 days) | *whether*, from a public page | deleted post, no pay; the platform is party to nothing; `CancelAfter` refunds the brand |
+| **Affiliate commissions** (five expected) | model A: one conditional escrow per expected commission; model B: no escrow oracle at all | A: the **merchant's sales system** confirms the attributed sale and the end of the return window; automatic. B: the customer pays *through* dareskro and the commission is split at source | A: *whether*, with no human. B: nothing, the payment proves itself | A: the merchant is a party, so the money is locked **before** the sale, every release carries the order hash, and unreleased escrows are cancelled at the end of the campaign. B removes the oracle entirely |
+
+Three remarks the jury should hear:
+
+- **The payroll case moves the judgement before the lock.** The evidence is read
+  by the agent and judged by a named person while the money is still the
+  employer's. Once signed on the device, nothing is left to judge: only a date.
+  That is why its oracle can be a machine with no power.
+- **The conditional cases put the judgement after the lock.** The money is already
+  out of the payer's hands, so whoever reveals the secret decides. The remedy is
+  never trust: it is the `CancelAfter` deadline, after which the ledger refunds
+  the payer and the oracle has nothing left to decide.
+- **Same account, same code.** The payroll oracle finishes with `EscrowFinish`
+  alone; the conditional oracle finishes with `EscrowFinish` + `Fulfillment`
+  (`tickDelivery` in `oracle/oracle.mjs`). The difference is in the
+  escrow, not in the oracle.
+
+### Example 3, live: the oracle verifies the delivery online
+
+Built Saturday afternoon on the same oracle account. The client asks the oracle
+for a condition against an agreed proof — a URL and a SHA-256 — and locks the
+fee behind it with a `CancelAfter`. The oracle polls the URL. Nobody clicks.
+
+| Step (24/10/2026, 18:39 UTC, testnet) | Result |
+|---|---|
+| Client locks 40 XRP behind the condition, memos = proof + oracle — [26A28B94…](https://testnet.xrpl.org/transactions/26A28B9413CF47FCB45A8B7171085C565E8AE13B9B109825C535E9974071BFFD) | `tesSUCCESS` |
+| Freelancer publishes the **wrong** file | oracle: "published sha256 19d309b9… ≠ agreed 3be52427…", pays nothing |
+| A third party tries `EscrowFinish` without the secret — [4C585D08…](https://testnet.xrpl.org/transactions/4C585D0800286DFBB3CC0B2C60EC94688DCE6951F4C176C66D10FFAA23726F23) | `tecCRYPTOCONDITION_ERROR`: the ledger refuses |
+| Freelancer publishes the **right** file | oracle: "match (75 bytes)", reveals the secret, `EscrowFinish` + `Fulfillment` [3AA9B66D…](https://testnet.xrpl.org/transactions/3AA9B66DE39814C42C9CAA4ABC345A193838014587EC025667303E72B5693F41) `tesSUCCESS`, freelancer 100 → 140 XRP |
+| Second escrow, nothing ever published — [A15F4497…](https://testnet.xrpl.org/transactions/A15F4497DF04DA35D795A02F54633B2CE11E756BE824866C5B2CDF02F48BD9EF) | after `CancelAfter`, the oracle submits `EscrowCancel` [3CDE5B05…](https://testnet.xrpl.org/transactions/3CDE5B05BD7BC682FFC419306BC868E0AC448405DD927081846C61FD84B8E210): client refunded, 59.99 XRP |
+
+Same account, two shapes: on a payroll escrow the oracle decides *when*; on a
+delivery escrow it decides *whether*, from a fact anyone can re-check with a
+browser and a hash. In the demo the "publication" is a tiny HTTP server on the
+laptop; point `PROOF_URL` at any public address and nothing else changes.
+
+**A site, later.** Online verification covers code, files, sites and APIs —
+anything that reduces to a URL and a hash. For deliverables that need a judgement
+(a logo, a text), two more oracles are possible, and both deserve a site:
+a client-acceptance portal with an explicit silence rule (past the deadline,
+either refund or release, written in the escrow and said before signing), and a
+panel of named arbiters, party to nothing, paid a small share. Neither is built;
+both plug into the same account and the same `EscrowFinish`.
+
+**How it runs.** `oracle/oracle.mjs` — `create` (faucet account + birth memo),
+`watch` (an HTTP service on `127.0.0.1:8787` that the pay desk registers escrows
+with, plus a loop that finishes them at the date, retrying while the ledger's
+close time is not yet past the date), `status`. Its seed lives in
+`oracle/.oracle.json` (0600, never committed); what it watches is in
+`oracle/registry.json`, public.
+
+## Mastercard — the agent pays for its evidence (Agent Pay for Machines)
+
+The salary goes through the XRPL escrow. But before the engine can price the
+shift, the agent needs the current collective-agreement parameters: point value,
+seniority tiers, Sunday allowance, overtime thresholds. That is data a provider
+keeps current and sells per query. On AP4M the agent pays for it **by itself,
+inside a budget a human set**:
+
+1. **Channel.** The employer funds the team budget from the funding wallet and the
+   agent opens a Channel with a cap (2 RLUSD here). The cap is the employer's
+   decision; the agent cannot exceed it.
+2. **402.** The agent calls the rules service (`ap4m/merchant.mjs`, GET
+   `/resource`). The service answers `402 Payment Required` with a
+   `PAYMENT-REQUIRED` challenge.
+3. **Voucher.** The agent signs an EIP-712 Voucher for the cumulative amount
+   (0.05 RLUSD a query) and retries with `PAYMENT-SIGNATURE`. No human clicks.
+4. **Redemption.** The service redeems the Voucher on the PaymentLedger contract
+   (XRPL EVM testnet, chain 1449000): `VoucherRedeemed` is on the explorer. The
+   agent verifies the exact redemption before trusting the resource.
+5. **Settlement.** AP4M moves RLUSD from the escrow vault to the merchant payout
+   wallet and issues a verifiable receipt.
+6. **Load-bearing.** The agent writes what it bought to
+   `agent/sortie/regles_achetees.json`; `bulletin_garde.py` prices the shift with
+   the purchased point value and records the purchase in the statement
+   (`rules_source`), which the pay desk shows next to the lines. With
+   `--exige-achat` the engine refuses to compute without a purchase.
+
+Boundaries: the agent spends only inside the cap; the agent never touches the
+salary (that is the device-signed escrow); every purchase leaves an on-chain
+event and a receipt. Team `dareskro`, agent wallet (MetaMask, registered by the staff) `0xC3027DE9…aC7`,
+merchant payout `0x1f9265e1…f323`. Keys live in `ap4m/.env`
+(0600, never committed).
+
+```bash
+cd ap4m
+# the Mastercard AP4M hackathon SDK is "for hackathon use only" and is not redistributed here:
+# download it from the portal into ap4m/ (and the package into ap4m/vendor/), then install
+curl -sO https://hackathon.ap4m.build/sdk/ap4m-hackathon-sdk.js && mv ap4m-hackathon-sdk.js ap4m-hackathon-sdk.cjs
+curl -sO https://hackathon.ap4m.build/sdk/ap4m-x402.mjs && curl -sO https://hackathon.ap4m.build/sdk/verify-receipt.mjs
+mkdir -p vendor && curl -so vendor/sdk_ap4m-sdk.tgz https://hackathon.ap4m.build/sdk/ap4m-sdk.tgz
+npm install                            # ethers 6.17 + @ap4m/sdk from vendor/
+node merchant.mjs                      # the rules service, 127.0.0.1:4308
+node agent.mjs                         # sign in, Channel, 402, Voucher, settle
+../.venv/bin/python ../agent/bulletin_garde.py --exige-achat   # price the shift with what was bought (needs the private engine; the shipped bulletin.json already carries this purchase)
+```
+
+### Measured on XRPL EVM testnet, 24/10/2026 17:43–17:45 UTC, nobody clicked
+
+| Step | Proof |
+|---|---|
+| Team `dareskro` active, 20 RLUSD allocated by the organizer; merchant registered on-chain | `registerMerchant` [0xb3be482d…](https://explorer.testnet.xrplevm.org/tx/0xb3be482df16e55fb39049dfd09402edc7c3e905c4f229990ee7590e8a5722da7) |
+| Gas for both wallets bridged from the XRP Ledger testnet through Axelar (the EVM faucet was gated) | XRPL [A1F72873…](https://testnet.xrpl.org/transactions/A1F72873F17E8CA00679924C5D4F08E36D0B87E310C25D02CE3C33A2928FF5EE), [A98D843B…](https://testnet.xrpl.org/transactions/A98D843B9B44BFAF7459A10726C1A4DEC0A9C7FC0092110C3A45F91480AB2D23): 43 XRP each after 40 s |
+| Channel opened by the agent, cap 2 RLUSD (the employer's budget for this agent) | `0xe2c30cf9c897c60e8a6e9d471f4d6a9da1fe9264b482dfc4c6317bbc3813ccb0` |
+| GET `/resource` → `402` → EIP-712 Voucher signed by the agent → redeemed by the merchant, **`VoucherRedeemed`** | [0xf6b37003…](https://explorer.testnet.xrplevm.org/tx/0xf6b370033501d60560c010a7ed3811883d0192de702d8ffd6da98d9ea5858922), 0.05 RLUSD |
+| Settlement: RLUSD from the vault to the merchant payout wallet, balance now 0.05 RLUSD | settlement [0xe87d84aa…](https://explorer.testnet.xrplevm.org/tx/0xe87d84aa187f18905ffdb3795ca26ca014c7608e154185fa28e8f2ad3181f9ec), payout [0xf6fc32f8…](https://explorer.testnet.xrplevm.org/tx/0xf6fc32f89560883ea15535c05b07f03caf4a1ab0064fd1cf5931661274cd91c7) |
+| Verifiable receipt (`ap4m.claim-receipt.v1`), checked on-chain with `verify-receipt.mjs` | [claims/0xeca2dabf…/0x234af26d….json](https://hackathon.ap4m.build/public/evidence/claims/0xeca2dabf6d5669d2a69499da4108cb1e667db2028552a683d0e92d843eea8584/0x234af26dbbac13f4ae0efa921a18b65a866ed386a062fa357ea5413af4e9d0b3.json) |
+| The purchase in the pay statement (`rules_source`): the point value used is the one that was bought | `agent/sortie/bulletin.json`, shown on the pay desk next to the lines |
+
+### The dollar leg, triggered by the oracle — 24/10/2026 20:28 UTC
+
+The employee of escrow `#21789944` (employer `rGJsjkfmASA2ezXYDpTQJZDp9tRgCJAPhw`,
+466.57 USD = 361.141858 XRP at 1.29193) had chosen **dollars**. The oracle
+finished the escrow at the date, then ran `ap4m/payout.mjs` by itself.
+
+| Step | Proof |
+|---|---|
+| The ledger releases: `EscrowFinish` by the oracle, `tesSUCCESS` | [D749E538…](https://testnet.xrpl.org/transactions/D749E538E2BC6A969CF4CBE516AEDA038C271E81992179D96747CFFC36239C21) |
+| `payout.mjs` re-reads that transaction on XRPL (`tx`, validated, `EscrowFinish`, `tesSUCCESS`) before anything else; a one-shot "payslip settlement" merchant is priced at 4.67 RLUSD (1/100 of the pay, sandbox budget) with the finish hash in its content | the merchant's content, returned with the purchase: `resource` in `agent/sortie/payout.json` |
+| The agent answers the 402 with a signed Voucher inside the employer's channel, the merchant redeems it: **`VoucherRedeemed`**, 4.67 RLUSD | [0x7e124666…](https://explorer.testnet.xrplevm.org/tx/0x7e124666074a614917d1d7cd679d55784d3ab2b3bd63691a54454251dc05a431) |
+| Settlement and payout: RLUSD to the employee's payout wallet, 4.77 → 9.44 RLUSD | settlement [0x2e10a168…](https://explorer.testnet.xrplevm.org/tx/0x2e10a168e142fc749fc71543527c59cfdc5066c01ed8e6056027f6d884a7cab2), payout [0x83310afd…](https://explorer.testnet.xrplevm.org/tx/0x83310afd9aff69059f4a31300ea061d8f2f5889796997933db0a692e365877a8) |
+| Mastercard receipt (`ap4m.claim-receipt.v1`), with the payout observation | [claims/0xf4470eea…/0x6764e0ad….json](https://hackathon.ap4m.build/public/evidence/claims/0xf4470eea92e6363f93031203cad3d3163bb19f44bc102c3ca55eb2cb0351f3fd/0x6764e0ad071e562281d1a1b312f8555e0f28d3b1689720c67825c89b79968013.json) |
+| The oracle's own log and registry (`payoutResult`), shown on the pay desk | `20:28:03 escrow #21789944: 4.67 RLUSD settled via AP4M` |
+
+One honest detail, and the rule it produced. The first attempt (20:12 UTC) *was*
+redeemed on chain, but the script died before collecting the proof, leaving the
+kit's `purchase.json` unresolved; the kit then refuses any other purchase until that
+one is "resumed with its original arguments". `payout.mjs` now reads the chain
+first: if the channel's redeemed amount already covers the pending voucher, it
+resumes and collects — nothing is signed, nothing is paid twice; if the voucher was
+never redeemed and its channel can no longer hold it, it is set aside on disk
+(`abandoned-*.json`) and a fresh one is signed. Idempotence is the whole safety of
+a payout agent, and the chain, not a local file, is the source of truth for it.
+
+## Run it
+
+```bash
+# 1. the statement — already computed: agent/sortie/bulletin.json and app/public/bulletin.json
+#    ship with the repo. agent/bulletin_garde.py is the agent's code; it imports the payroll
+#    engine (officine.garde), prior work that is not in this repository, and says so if run.
+
+# 2. the oracle (Node 22+): create it once, then let it watch
+cd oracle && npm install && node oracle.mjs create && node oracle.mjs watch
+
+# 3. the pay desk (Node 22+, Chrome/Edge/Brave for WebHID), in another terminal
+cd app && npm install && npm run dev            # http://localhost:5173
+
+# 4. Mastercard AP4M (optional): download the SDK as shown in the AP4M section above, then
+cd ap4m && npm install && node merchant.mjs     # and node agent.mjs, node payout.mjs …
+```
+
+On the page: validate the statement with your name → connect the Ledger (USB)
+with the XRP app open → get the employer's address → fund it from the faucet
+(the page asks the faucet until it holds enough: about 100 XRP per call) →
+create a test employee → Prepare → **Sign on the Ledger** → Submit → run the three
+proofs. "Test wallet (no device)" is a rehearsal mode signed by xrpl.js; it is not
+what the bounty asks for.
+
+No device? Clone Ledger's workshop, `git clone https://github.com/LedgerHQ/device-management-kit-ts-workshop ledger-workshop`,
+run `ledger-workshop/xrpl-hackathon/speculos/run-speculos.sh stax` (needs Docker; colima on a Mac)
+and choose the Speculos transport. The terminal demo (`app/scripts/demo-terminal.mjs`) drives the same emulator with `nanox`.
+
+## Honest limits, said before the jury asks
+
+- In France an employee's pay must go through a payslip and a bank transfer
+  (C. trav. L3241-1). For employees dareskro is the **proof layer**: timekeeping,
+  replayable calculation, named validation, on-chain anchoring. For non-employees
+  (freelancers, agents, affiliates) it is the **payment channel** itself.
+- The badge proves presence, not the nature of the hour. Anything the schedule
+  does not cover goes to "to decide", for a human.
+- RLUSD escrow waits for its issuer's flag. XRP, or any issuer with the flag, works today.
+
+## Disclosure
+
+Prior work and third-party software, per the rules: XRPL escrow core and payroll
+rules written before the event (see above, not in this repository); Ledger Device
+Management Kit, XRP signer kit, and Ledger's workshop app
+<https://github.com/LedgerHQ/device-management-kit-ts-workshop> (Apache-2.0: the files
+copied or derived are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), license
+copy in [LICENSE-APACHE](LICENSE-APACHE)); Mastercard's AP4M hackathon SDK (not
+redistributed); xrpl.js; React/Vite. This repository is under the MIT license
+([LICENSE](LICENSE)). Built with AI assistance (Claude), used as a tool by the team.

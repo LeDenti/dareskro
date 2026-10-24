@@ -1,0 +1,44 @@
+# dependencies and builds
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# secrets: never committed (0600 files)
+*.seed
+*.env
+ap4m/.env
+oracle/.oracle.json
+oracle/.deliveries.json
+oracle_secrets.json
+.evm-wallet.json
+agent/.evm-wallet.json
+
+# local state of the Mastercard AP4M agent and merchants (SQLite, signed vouchers)
+ap4m/agent-state/
+ap4m/merchant-state/
+ap4m/merchant-state-payout/
+
+# Mastercard AP4M hackathon SDK: "for hackathon use only", downloaded from the portal, not redistributed here
+ap4m/vendor/
+ap4m/ap4m-hackathon-sdk.cjs
+ap4m/ap4m-x402.mjs
+ap4m/verify-receipt.mjs
+
+# Ledger's workshop clone (its own repository)
+ledger-workshop/
+
+# prior work (before the hackathon) and heavy media: not part of this repository
+sources/
+presentation/*.pdf
+presentation/videos/
+presentation/video-final/*.mp4
+presentation/video-final/build/
+*.mp4
+*.wav
+*.aiff
+
+# the ap4m lockfile pins the vendor tarball by integrity: readers install from the portal
+ap4m/package-lock.json

@@ -1,0 +1,13 @@
+# Planning de l'officine — ce que la plage ETAIT CENSEE etre.
+# Une pointeuse enregistre des heures, elle ne les qualifie pas : la
+# qualification (garde, dimanche, volets ouverts) vient d'ici, et d'ici seulement.
+salarie: Pharmacien adjoint, coefficient 600, 18 ans d'anciennete
+badge: A-0412
+date: 2026-10-25
+plage: 09:00-21:00
+type: garde dimanche, volets ouverts
+heures_semaine_avant: 35
+coefficient: 600
+anciennete_annees: 18
+valeur_point: 5.277
+validateur_attendu: C. Meunier, responsable RH

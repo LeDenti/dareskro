@@ -1,0 +1,78 @@
+{
+  "statement_id": "garde-2026-10-25-coef600",
+  "employee": {
+    "label": "Pharmacien adjoint, coefficient 600, 18 ans d'anciennete",
+    "badge": "A-0412"
+  },
+  "period": "2026-10",
+  "evidence": {
+    "schedule": {
+      "date": "2026-10-25",
+      "slot": "09:00-21:00",
+      "type": "garde dimanche, volets ouverts",
+      "week_hours_before": "35"
+    },
+    "badge": {
+      "arrivee": "2026-10-25T08:56:00+01:00",
+      "depart": "2026-10-25T21:03:00+01:00",
+      "heures_badgees": "12.12",
+      "heures_retenues": "12.00",
+      "regle": "heures planifiees, couvertes par le badge a 15 min pres"
+    },
+    "anomalies": []
+  },
+  "parameters": {
+    "coefficient": "600",
+    "point_value_eur": "5.277",
+    "hourly_rate_eur": "20.8756",
+    "shutters": "ouverts",
+    "seniority_years": "18"
+  },
+  "lines": [
+    {
+      "item": "temps de garde",
+      "detail": "12.00 h passees, 100 % du temps passe -> 12.00 h retenues x 20.8756 €",
+      "amount": "250.51"
+    },
+    {
+      "item": "majorations heures sup.",
+      "detail": "garde placee apres 35 h deja faites : 8 h a +25 %, 4.00 h a +50 %",
+      "amount": "83.50"
+    },
+    {
+      "item": "indemnite de dimanche",
+      "detail": "12.00 h x 1,5 point x 5.277 € = forfait horaire, independant du coefficient",
+      "amount": "94.99"
+    },
+    {
+      "item": "prime d anciennete",
+      "detail": "18 ans -> 15 % du minimum de coefficient, au prorata des heures effectives",
+      "amount": "37.58"
+    }
+  ],
+  "total": "466.57",
+  "currency": "USD",
+  "rest_hours_outside_escrow": "12.00",
+  "rest_note": "repos d egale duree — le texte ne prevoit pas de le remplacer par une indemnite",
+  "sources": [
+    "convention pharmacie d'officine IDCC 1996, art. 11 (anciennete : 15 % au-dela de 15 ans)",
+    "art. 7 -> accord du 23/03/2000 revise le 09/04/2008, art. 4 (garde dimanche : 1,5 point par heure, repos d'egale duree)",
+    "valeur du point 5,277 EUR, accord du 19/01/2026, A CONFIRMER"
+  ],
+  "rules_source": {
+    "how": "purchased by the agent over x402 on Mastercard AP4M",
+    "provider": "http://127.0.0.1:4308/resource",
+    "paid_rlusd": "0.05",
+    "channel_cap_rlusd": "2.0",
+    "redemption_tx": "0x9a8aa59c860f587387004a26f55b870421b5f92b97b972afdb9836973b0460fe",
+    "redemption_explorer": "https://explorer.testnet.xrplevm.org/tx/0x9a8aa59c860f587387004a26f55b870421b5f92b97b972afdb9836973b0460fe",
+    "receipt_url": "https://hackathon.ap4m.build/public/evidence/claims/0x39c17d2cae4b19d7872c1e95141b8b368d0b3bdb8db0370824dd7daa3c3d701f/0x48a3b227c003ac41569ae731ee81887042eb0bcd6021a14c3af92776d3b8acf7.json",
+    "purchased_at": "2026-10-24T19:18:59.330Z",
+    "agreement": "Pharmacie d'officine, IDCC 1996",
+    "valid_from": "2026-01-19"
+  },
+  "computed_by": "officine.garde — deterministic, replayable to the cent",
+  "computed_at": "2026-10-24T20:07:45+00:00",
+  "status": "PROPOSITION",
+  "sha256": "7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910"
+}

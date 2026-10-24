@@ -1,0 +1,453 @@
+{
+  "started": "2026-10-24T20:09:35.966Z",
+  "rate": 1.29193,
+  "amountXrp": "361.141858",
+  "statement": {
+    "total": "466.57",
+    "sha256": "7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910"
+  },
+  "employer": "rGJsjkfmASA2ezXYDpTQJZDp9tRgCJAPhw",
+  "employee": "rD2JUEDShDDyU9BF1iXXA28536CkmFQ2Cz",
+  "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+  "escrow": {
+    "sequence": 21789944,
+    "createHash": "D12FACCC9C466B2B809F49D222923C45B4B0DC0DF3F031E40B7053685F631BC0",
+    "createResult": "tesSUCCESS",
+    "earlyFinish": {
+      "hash": "BF40685CD92D52F0BF8DA162A9174CD92407566DFD4541FD511D5496969192B0",
+      "result": "tecNO_PERMISSION"
+    },
+    "finishHash": "D749E538E2BC6A969CF4CBE516AEDA038C271E81992179D96747CFFC36239C21"
+  },
+  "screens": [
+    "Review transaction",
+    "Transaction Type | Create Escrow",
+    "Account | rGJsjkfmASA2ezXYDp | TQJZDp9tRgCJAPhw",
+    "Finish After | 2026-10-24 20:11:42  | UTC",
+    "Amount | XRP 361.141858",
+    "Fee | XRP 0.000012",
+    "Destination | rD2JUEDShDDyU9BF1i | XXA28536CkmFQ2Cz",
+    "Memo Type [1] | dareskro/statement- | sha256",
+    "Memo Data [1] (1/2) | 7cad8a6d6a2eb2b69c | 442469c921e282f013 | d4d551c7beddae0d5",
+    "Memo Data [1] (2/2) | b064c69b910",
+    "Memo Fmt [1] | text/plain",
+    "Memo Type [2] | dareskro/statement- | id",
+    "Memo Data [2] | garde-2026-10-25- | coef600",
+    "Memo Fmt [2] | text/plain",
+    "Memo Type [3] | dareskro/fiat",
+    "Memo Data [3] (1/2) | 466.57 USD @  | 1.29193 USD/XRP  | Kraken 2026-10-",
+    "Memo ...[3] (2/2) | 24T20:10Z",
+    "Memo Type [4] | dareskro/oracle",
+    "Memo Data [4] | rUuvu1XPgd5GtTgrX | QKiwrHq3fb2xiHZMW",
+    "Sign transaction?"
+  ],
+  "trace": [
+    {
+      "at": 0,
+      "kind": "cmd",
+      "text": "$ python agent/bulletin_garde.py --exige-achat"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  temps de garde               250.51 EUR"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  majorations heures sup.       83.50 EUR"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  indemnite de dimanche         94.99 EUR"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  prime d anciennete            37.58 EUR"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  TOTAL                        466.57 EUR   (+ 12.00 h of rest, outside the escrow)"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  rules      purchased by the agent over x402 on Mastercard AP4M"
+    },
+    {
+      "at": 0,
+      "kind": "out",
+      "text": "  sha256     7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910"
+    },
+    {
+      "at": 0,
+      "kind": "cmd",
+      "text": "$ curl https://api.kraken.com/0/public/Ticker?pair=XRPUSD"
+    },
+    {
+      "at": 0.1,
+      "kind": "out",
+      "text": "  XRP/USD 1.29193  →  466.57 USD = 361.141858 XRP"
+    },
+    {
+      "at": 0.1,
+      "kind": "cmd",
+      "text": "$ node scripts/demo-terminal.mjs   # device: speculos, nanox"
+    },
+    {
+      "at": 0.1,
+      "kind": "out",
+      "text": "  connected: Speculos - XRP - 2.8.1"
+    },
+    {
+      "at": 0.1,
+      "kind": "screen",
+      "text": "app is ready",
+      "file": "00.png"
+    },
+    {
+      "at": 0.3,
+      "kind": "out",
+      "text": "  employer (device, 44'/144'/0'/0/0): rGJsjkfmASA2ezXYDpTQJZDp9tRgCJAPhw"
+    },
+    {
+      "at": 0.8,
+      "kind": "cmd",
+      "text": "$ curl -X POST https://faucet.altnet.rippletest.net/accounts -d '{\"destination\":\"rGJsjkfmASA2ezXYDpTQJZDp9tRgCJAPhw\"}'   # until 367 XRP"
+    },
+    {
+      "at": 6.5,
+      "kind": "out",
+      "text": "  balance 160.227554 XRP"
+    },
+    {
+      "at": 12,
+      "kind": "out",
+      "text": "  balance 160.227554 XRP"
+    },
+    {
+      "at": 17.5,
+      "kind": "out",
+      "text": "  balance 360.227554 XRP"
+    },
+    {
+      "at": 23.1,
+      "kind": "out",
+      "text": "  balance 360.227554 XRP"
+    },
+    {
+      "at": 28.6,
+      "kind": "out",
+      "text": "  balance 560.227554 XRP"
+    },
+    {
+      "at": 36.2,
+      "kind": "out",
+      "text": "  employee (test account): rD2JUEDShDDyU9BF1iXXA28536CkmFQ2Cz"
+    },
+    {
+      "at": 36.5,
+      "kind": "out",
+      "text": "  EscrowCreate: 361.141858 XRP → rD2JUEDShD…, FinishAfter 20:11:42 UTC, 4 memos, oracle rUuvu1XPgd…"
+    },
+    {
+      "at": 36.5,
+      "kind": "out",
+      "text": "  → review on the device"
+    },
+    {
+      "at": 36.8,
+      "kind": "device",
+      "text": "  [device] Review transaction"
+    },
+    {
+      "at": 36.8,
+      "kind": "screen",
+      "text": "Review transaction",
+      "file": "01.png"
+    },
+    {
+      "at": 37.4,
+      "kind": "device",
+      "text": "  [device] Transaction Type | Create Escrow"
+    },
+    {
+      "at": 37.4,
+      "kind": "screen",
+      "text": "Transaction Type | Create Escrow",
+      "file": "02.png"
+    },
+    {
+      "at": 38.1,
+      "kind": "device",
+      "text": "  [device] Account | rGJsjkfmASA2ezXYDp | TQJZDp9tRgCJAPhw"
+    },
+    {
+      "at": 38.1,
+      "kind": "screen",
+      "text": "Account | rGJsjkfmASA2ezXYDp | TQJZDp9tRgCJAPhw",
+      "file": "03.png"
+    },
+    {
+      "at": 38.6,
+      "kind": "device",
+      "text": "  [device] Finish After | 2026-10-24 20:11:42  | UTC"
+    },
+    {
+      "at": 38.6,
+      "kind": "screen",
+      "text": "Finish After | 2026-10-24 20:11:42  | UTC",
+      "file": "04.png"
+    },
+    {
+      "at": 39.2,
+      "kind": "device",
+      "text": "  [device] Amount | XRP 361.141858"
+    },
+    {
+      "at": 39.2,
+      "kind": "screen",
+      "text": "Amount | XRP 361.141858",
+      "file": "05.png"
+    },
+    {
+      "at": 39.7,
+      "kind": "device",
+      "text": "  [device] Fee | XRP 0.000012"
+    },
+    {
+      "at": 39.7,
+      "kind": "screen",
+      "text": "Fee | XRP 0.000012",
+      "file": "06.png"
+    },
+    {
+      "at": 40.3,
+      "kind": "device",
+      "text": "  [device] Destination | rD2JUEDShDDyU9BF1i | XXA28536CkmFQ2Cz"
+    },
+    {
+      "at": 40.3,
+      "kind": "screen",
+      "text": "Destination | rD2JUEDShDDyU9BF1i | XXA28536CkmFQ2Cz",
+      "file": "07.png"
+    },
+    {
+      "at": 40.9,
+      "kind": "device",
+      "text": "  [device] Memo Type [1] | dareskro/statement- | sha256"
+    },
+    {
+      "at": 40.9,
+      "kind": "screen",
+      "text": "Memo Type [1] | dareskro/statement- | sha256",
+      "file": "08.png"
+    },
+    {
+      "at": 41.4,
+      "kind": "device",
+      "text": "  [device] Memo Data [1] (1/2) | 7cad8a6d6a2eb2b69c | 442469c921e282f013 | d4d551c7beddae0d5"
+    },
+    {
+      "at": 41.4,
+      "kind": "screen",
+      "text": "Memo Data [1] (1/2) | 7cad8a6d6a2eb2b69c | 442469c921e282f013 | d4d551c7beddae0d5",
+      "file": "09.png"
+    },
+    {
+      "at": 42,
+      "kind": "device",
+      "text": "  [device] Memo Data [1] (2/2) | b064c69b910"
+    },
+    {
+      "at": 42,
+      "kind": "screen",
+      "text": "Memo Data [1] (2/2) | b064c69b910",
+      "file": "10.png"
+    },
+    {
+      "at": 42.5,
+      "kind": "device",
+      "text": "  [device] Memo Fmt [1] | text/plain"
+    },
+    {
+      "at": 42.6,
+      "kind": "screen",
+      "text": "Memo Fmt [1] | text/plain",
+      "file": "11.png"
+    },
+    {
+      "at": 43.1,
+      "kind": "device",
+      "text": "  [device] Memo Type [2] | dareskro/statement- | id"
+    },
+    {
+      "at": 43.1,
+      "kind": "screen",
+      "text": "Memo Type [2] | dareskro/statement- | id",
+      "file": "12.png"
+    },
+    {
+      "at": 43.7,
+      "kind": "device",
+      "text": "  [device] Memo Data [2] | garde-2026-10-25- | coef600"
+    },
+    {
+      "at": 43.7,
+      "kind": "screen",
+      "text": "Memo Data [2] | garde-2026-10-25- | coef600",
+      "file": "13.png"
+    },
+    {
+      "at": 44.2,
+      "kind": "device",
+      "text": "  [device] Memo Fmt [2] | text/plain"
+    },
+    {
+      "at": 44.2,
+      "kind": "screen",
+      "text": "Memo Fmt [2] | text/plain",
+      "file": "14.png"
+    },
+    {
+      "at": 44.8,
+      "kind": "device",
+      "text": "  [device] Memo Type [3] | dareskro/fiat"
+    },
+    {
+      "at": 44.8,
+      "kind": "screen",
+      "text": "Memo Type [3] | dareskro/fiat",
+      "file": "15.png"
+    },
+    {
+      "at": 45.5,
+      "kind": "device",
+      "text": "  [device] Memo Data [3] (1/2) | 466.57 USD @  | 1.29193 USD/XRP  | Kraken 2026-10-"
+    },
+    {
+      "at": 45.5,
+      "kind": "screen",
+      "text": "Memo Data [3] (1/2) | 466.57 USD @  | 1.29193 USD/XRP  | Kraken 2026-10-",
+      "file": "16.png"
+    },
+    {
+      "at": 46,
+      "kind": "device",
+      "text": "  [device] Memo ...[3] (2/2) | 24T20:10Z"
+    },
+    {
+      "at": 46,
+      "kind": "screen",
+      "text": "Memo ...[3] (2/2) | 24T20:10Z",
+      "file": "17.png"
+    },
+    {
+      "at": 46.6,
+      "kind": "device",
+      "text": "  [device] Memo Type [4] | dareskro/oracle"
+    },
+    {
+      "at": 46.6,
+      "kind": "screen",
+      "text": "Memo Type [4] | dareskro/oracle",
+      "file": "18.png"
+    },
+    {
+      "at": 47.1,
+      "kind": "device",
+      "text": "  [device] Memo Data [4] | rUuvu1XPgd5GtTgrX | QKiwrHq3fb2xiHZMW"
+    },
+    {
+      "at": 47.1,
+      "kind": "screen",
+      "text": "Memo Data [4] | rUuvu1XPgd5GtTgrX | QKiwrHq3fb2xiHZMW",
+      "file": "19.png"
+    },
+    {
+      "at": 47.7,
+      "kind": "device",
+      "text": "  [device] Sign transaction?"
+    },
+    {
+      "at": 47.7,
+      "kind": "screen",
+      "text": "Sign transaction?",
+      "file": "20.png"
+    },
+    {
+      "at": 48.5,
+      "kind": "device",
+      "text": "  [device] Transaction signed"
+    },
+    {
+      "at": 48.5,
+      "kind": "screen",
+      "text": "Transaction signed",
+      "file": "21.png"
+    },
+    {
+      "at": 48.5,
+      "kind": "out",
+      "text": "  signed on the device (20 screens)"
+    },
+    {
+      "at": 48.5,
+      "kind": "cmd",
+      "text": "$ xrpl submit --wait"
+    },
+    {
+      "at": 53.4,
+      "kind": "out",
+      "text": "  tesSUCCESS  escrow #21789944  https://testnet.xrpl.org/transactions/D12FACCC9C466B2B809F49D222923C45B4B0DC0DF3F031E40B7053685F631BC0"
+    },
+    {
+      "at": 53.4,
+      "kind": "cmd",
+      "text": "$ curl -X POST http://127.0.0.1:8787/watch"
+    },
+    {
+      "at": 53.4,
+      "kind": "out",
+      "text": "  oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW is watching escrow #21789944"
+    },
+    {
+      "at": 53.4,
+      "kind": "cmd",
+      "text": "$ node proofs.mjs --early-finish --by third-party"
+    },
+    {
+      "at": 63.2,
+      "kind": "out",
+      "text": "  tecNO_PERMISSION  https://testnet.xrpl.org/transactions/BF40685CD92D52F0BF8DA162A9174CD92407566DFD4541FD511D5496969192B0"
+    },
+    {
+      "at": 63.2,
+      "kind": "cmd",
+      "text": "$ tail -f oracle.log"
+    },
+    {
+      "at": 143.2,
+      "kind": "out",
+      "text": "  escrow #21789944: finished by the oracle at 20:11:57 UTC — https://testnet.xrpl.org/transactions/D749E538E2BC6A969CF4CBE516AEDA038C271E81992179D96747CFFC36239C21"
+    },
+    {
+      "at": 143.3,
+      "kind": "out",
+      "text": "  employee balance: 461.141858 XRP"
+    },
+    {
+      "at": 143.3,
+      "kind": "cmd",
+      "text": "$ tail -f oracle.log   # the employee chose dollars"
+    },
+    {
+      "at": 383.6,
+      "kind": "out",
+      "text": "  payout: \"pending\""
+    }
+  ]
+}

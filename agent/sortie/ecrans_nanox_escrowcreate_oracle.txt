@@ -1,0 +1,17 @@
+Review transaction
+Transaction Type | Create Escrow
+Account | rGJsjkfmASA2ezXYDp | TQJZDp9tRgCJAPhw
+Finish After | 2026-10-24 15:55:20  | UTC
+Amount | XRP 466.57
+Fee | XRP 0.000012
+Destination | r3kiDtPbaX6GKEy8Cm | RAjns6v2aKKkigdD
+Memo Type [1] | dareskro/statement- | sha256
+Memo Data [1] (1/2) | 6313d0e0fe9073f88b | b0a3ad5da0e44d3b2 | 48e4dee084b742701
+Memo Data [1] (2/2) | 47302be5f18c
+Memo Fmt [1] | text/plain
+Memo Type [2] | dareskro/statement- | id
+Memo Data [2] | garde-2026-10-25- | coef600
+Memo Fmt [2] | text/plain
+Memo Type [3] | dareskro/oracle
+Memo Data [3] | rUuvu1XPgd5GtTgrX | QKiwrHq3fb2xiHZMW
+Sign transaction?

@@ -1,0 +1,33 @@
+18:32:13 dareskro payroll oracle v1 — rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW — born AF5C74C8… — watching 0 escrow(s)
+18:32:13 oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW listening on http://127.0.0.1:8787
+18:33:01 delivery 4686b9688fd8: condition issued for http://127.0.0.1:8790/livrable.txt (sha256 a168090083…)
+18:33:09 watching delivery #21793465 of rGP3KMvFYzo9wNLKmpRkaovViYgSjgJaU6: 120 XRP to rnQcXGhD8MhvwaZQLdtqAecuUGZP1LrpNN once http://127.0.0.1:8790/livrable.txt has sha256 a168090083…, refund after ripple time 846182281
+18:33:10 delivery #21793465: not yet — published sha256 19d309b9f6… ≠ agreed a168090083…
+18:33:26 delivery #21793465: match (75 bytes) — revealing the secret, submitting EscrowFinish…
+18:33:33 delivery #21793465: finish tecNO_TARGET, giving up
+18:33:33 delivery f4a289dfacaf: condition issued for http://127.0.0.1:8790/jamais.txt (sha256 6497e4b3d7…)
+18:33:39 watching delivery #21793466 of rGP3KMvFYzo9wNLKmpRkaovViYgSjgJaU6: 120 XRP to rnQcXGhD8MhvwaZQLdtqAecuUGZP1LrpNN once http://127.0.0.1:8790/jamais.txt has sha256 6497e4b3d7…, refund after ripple time 846182088
+18:33:41 delivery #21793466: not yet — HTTP 404
+18:35:30 delivery cf86574e25ba: condition issued for http://127.0.0.1:8790/livrable.txt (sha256 a48702e225…)
+18:35:34 watching delivery #21793509 of rpzsyCvfUThLwJY46frCuwjDWstTarpALH: 40 XRP to rsJeK2Vcyk8MGsWFR2dFjXoo5HKNkhy4Vt once http://127.0.0.1:8790/livrable.txt has sha256 a48702e225…, refund after ripple time 846182430
+18:35:37 delivery #21793509: not yet — published sha256 19d309b9f6… ≠ agreed a48702e225…
+18:35:53 delivery #21793509: match (75 bytes) — revealing the secret, submitting EscrowFinish…
+18:36:00 delivery #21793509: finished — 40 XRP to rsJeK2Vcyk8MGsWFR2dFjXoo5HKNkhy4Vt — https://testnet.xrpl.org/transactions/27704665758041F5B1BD3CDCFAC0219E4AFF882B15866AB34943AF8D70765FE2
+18:36:03 delivery dd5019af3d56: condition issued for http://127.0.0.1:8790/jamais.txt (sha256 6497e4b3d7…)
+18:36:06 watching delivery #21793510 of rpzsyCvfUThLwJY46frCuwjDWstTarpALH: 40 XRP to rsJeK2Vcyk8MGsWFR2dFjXoo5HKNkhy4Vt once http://127.0.0.1:8790/jamais.txt has sha256 6497e4b3d7…, refund after ripple time 846182238
+18:36:08 delivery #21793510: not yet — HTTP 404
+18:37:28 delivery #21793510: deadline passed without a matching file, submitting EscrowCancel (refund to rpzsyCvfUThLwJY46frCuwjDWstTarpALH)…
+18:37:35 delivery #21793510: refunded — https://testnet.xrpl.org/transactions/A96A54D434FB4328F40E32871E8B17B06D78A1B8AA178E7011C4196575400A87
+18:39:24 delivery e6d638f9ec84: condition issued for http://127.0.0.1:8790/livrable.txt (sha256 3be52427d7…)
+18:39:30 watching delivery #21793579 of raj5GzWhcrd1vJQn55XaHdAVVvenrxkaFj: 40 XRP to rBXwA872ycPrVaYoWupBRT9BCzAn4VvHpD once http://127.0.0.1:8790/livrable.txt has sha256 3be52427d7…, refund after ripple time 846182664
+18:39:31 delivery #21793579: not yet — published sha256 19d309b9f6… ≠ agreed 3be52427d7…
+18:39:51 delivery #21793579: match (75 bytes) — revealing the secret, submitting EscrowFinish…
+18:39:57 delivery #21793579: finished — 40 XRP to rBXwA872ycPrVaYoWupBRT9BCzAn4VvHpD — https://testnet.xrpl.org/transactions/3AA9B66DE39814C42C9CAA4ABC345A193838014587EC025667303E72B5693F41
+18:40:00 delivery 40535a89f539: condition issued for http://127.0.0.1:8790/jamais.txt (sha256 6497e4b3d7…)
+18:40:04 watching delivery #21793580 of raj5GzWhcrd1vJQn55XaHdAVVvenrxkaFj: 40 XRP to rBXwA872ycPrVaYoWupBRT9BCzAn4VvHpD once http://127.0.0.1:8790/jamais.txt has sha256 6497e4b3d7…, refund after ripple time 846182475
+18:40:05 delivery #21793580: not yet — HTTP 404
+18:41:25 delivery #21793580: deadline passed without a matching file, submitting EscrowCancel (refund to raj5GzWhcrd1vJQn55XaHdAVVvenrxkaFj)…
+18:41:30 delivery #21793580: refunded — https://testnet.xrpl.org/transactions/3CDE5B05BD7BC682FFC419306BC868E0AC448405DD927081846C61FD84B8E210
+18:57:13 watching escrow #21789943 of rGJsjkfmASA2ezXYDpTQJZDp9tRgCJAPhw: 406.632386 XRP to rpiUHfp5ZGR5Kwki7VvsLa7dsW7YnKiMCJ, payable at ripple time 846183507
+18:58:35 escrow #21789943: date passed, submitting EscrowFinish…
+18:58:39 escrow #21789943: finished — 406.632386 XRP to rpiUHfp5ZGR5Kwki7VvsLa7dsW7YnKiMCJ — https://testnet.xrpl.org/transactions/0356E36B867DB2F4F5FD8191D1BB4C10F3CD7C20A33565964FDC4CFFA35946DF

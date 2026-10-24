@@ -1,0 +1,73 @@
+{
+  "purchased_at": "2026-10-24T19:18:59.330Z",
+  "provider": "http://127.0.0.1:4308/resource",
+  "operation": "rules-garde-video-1518",
+  "network": {
+    "name": "XRPL EVM Testnet",
+    "chainId": 1449000
+  },
+  "channel": {
+    "id": "0xe2c30cf9c897c60e8a6e9d471f4d6a9da1fe9264b482dfc4c6317bbc3813ccb0",
+    "cap_rlusd": "2.0",
+    "used_rlusd": "0.1",
+    "remaining_rlusd": "1.9"
+  },
+  "paid_rlusd": "0.05",
+  "claim_id": "0x39c17d2cae4b19d7872c1e95141b8b368d0b3bdb8db0370824dd7daa3c3d701f",
+  "redemption_tx": "0x9a8aa59c860f587387004a26f55b870421b5f92b97b972afdb9836973b0460fe",
+  "redemption_explorer": "https://explorer.testnet.xrplevm.org/tx/0x9a8aa59c860f587387004a26f55b870421b5f92b97b972afdb9836973b0460fe",
+  "settlement_tx": "0x20198bbe1349fef71e55a30fae40ba31312f14742024eb402cb80de557956461",
+  "payout_tx": "0x0db2335d0dc4594c36eaceef8256533a78a4d6e6002d90fa11cd60c65bca0949",
+  "receipt_url": "https://hackathon.ap4m.build/public/evidence/claims/0x39c17d2cae4b19d7872c1e95141b8b368d0b3bdb8db0370824dd7daa3c3d701f/0x48a3b227c003ac41569ae731ee81887042eb0bcd6021a14c3af92776d3b8acf7.json",
+  "rules": {
+    "agreement": "Pharmacie d'officine, IDCC 1996",
+    "closed_shutters_full_time_share": "0.25",
+    "monthly_hours": "151.67",
+    "night_markups": "due with shutters open, never with shutters closed",
+    "overtime_tiers": [
+      {
+        "markup": "0.25",
+        "up_to_hours": "43"
+      },
+      {
+        "markup": "0.50",
+        "up_to_hours": null
+      }
+    ],
+    "point_value_eur": "5.277",
+    "point_value_source": "accord du 19/01/2026, arrêté d'extension du 02/04/2026 — à confirmer",
+    "provider": "dareskro rules service",
+    "schema": "dareskro/payroll-rules.v1",
+    "seniority_basis": "minimum of the coefficient, prorated to hours worked, overtime markups excluded (art. 11)",
+    "seniority_bonus": [
+      {
+        "after_years": 3,
+        "rate": "0.03"
+      },
+      {
+        "after_years": 6,
+        "rate": "0.06"
+      },
+      {
+        "after_years": 9,
+        "rate": "0.09"
+      },
+      {
+        "after_years": 12,
+        "rate": "0.12"
+      },
+      {
+        "after_years": 15,
+        "rate": "0.15"
+      }
+    ],
+    "sources": [
+      "convention collective pharmacie d'officine IDCC 1996, art. 11",
+      "art. 7 → accord du 23/03/2000 révisé le 09/04/2008, art. 4"
+    ],
+    "sunday_allowance_points_per_hour": "1.5",
+    "sunday_rest": "equal duration, not payable (accord du 23/03/2000 révisé 09/04/2008, art. 4)",
+    "valid_from": "2026-01-19",
+    "weekly_threshold_hours": "35"
+  }
+}
