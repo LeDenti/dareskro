@@ -162,6 +162,8 @@ export type EscrowDraft = {
   statementId: string;
   /** The oracle cited in the escrow: the named third party expected to finish it at the date. */
   oracle?: string;
+  /** The zero-knowledge commitment of the statement's hidden inputs (zk/prove.mjs), so the proof binds to this escrow and not to any escrow of the same amount. */
+  zkCommitment?: string;
   /**
    * Shorter memos for a real device: the XRP app 2.2.2 on a Nano S Plus answered
    * "Missing critical parameter (6800)" to the four long memos the 2.8.1 emulator
@@ -182,6 +184,7 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
     { Memo: { MemoType: toHex("dareskro/sha256"), MemoData: toHex(d.statementSha256) } },
     ...(d.eur && d.rate ? [{ Memo: { MemoType: toHex("dareskro/fiat"), MemoData: toHex(`${d.eur} ${cur} @ ${d.rate.eurPerXrp}`) } }] : []),
     ...(d.oracle ? [{ Memo: { MemoType: toHex("dareskro/oracle"), MemoData: toHex(d.oracle) } }] : []),
+    ...(d.zkCommitment ? [{ Memo: { MemoType: toHex("dareskro/zk-commitment"), MemoData: toHex(d.zkCommitment) } }] : []),
   ];
   return withRetry(async (c) => c.autofill<EscrowCreate>({
     TransactionType: "EscrowCreate",
@@ -213,6 +216,10 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
       // before signing. Citing it gives it no power: anyone can finish after the date.
       ...(d.oracle
         ? [{ Memo: { MemoType: toHex("dareskro/oracle"), MemoData: toHex(d.oracle) } }]
+        : []),
+      // The ZK commitment: the compliance proof is bound to this escrow, not to any escrow of the same amount.
+      ...(d.zkCommitment
+        ? [{ Memo: { MemoType: toHex("dareskro/zk-commitment"), MemoData: toHex(d.zkCommitment) } }]
         : []),
     ],
     SigningPubKey: d.publicKey.toUpperCase(),

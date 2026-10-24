@@ -37,6 +37,22 @@ const explorer = (h) => `https://testnet.xrpl.org/transactions/${h}`;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** The testnet websocket drops now and then: reconnect and retry a ledger call a few times. */
+async function onLedger(fn, tries = 5) {
+  for (let i = 0; ; i++) {
+    try {
+      if (!c.isConnected()) await c.connect();
+      return await fn();
+    } catch (err) {
+      if (i >= tries - 1) throw err;
+      log(`ledger hiccup (${String(err?.message ?? err).split("\n")[0].slice(0, 80)}), retrying in 5 s…`);
+      try { await c.disconnect(); } catch { /* already closed */ }
+      await sleep(5000);
+    }
+  }
+}
+
+
 async function oracleGet(p) {
   const r = await fetch(ORACLE + p);
   if (!r.ok) throw new Error(`GET ${p}: HTTP ${r.status}`);
@@ -113,8 +129,8 @@ async function main() {
   c = new Client("wss://s.altnet.rippletest.net:51233");
   await c.connect();
   log("funding merchant and affiliate on testnet…");
-  const { wallet: merchant } = await c.fundWallet();
-  const { wallet: affiliate } = await c.fundWallet();
+  const { wallet: merchant } = await onLedger(() => c.fundWallet());
+  const { wallet: affiliate } = await onLedger(() => c.fundWallet());
   log(`merchant ${merchant.classicAddress}, affiliate ${affiliate.classicAddress}`);
 
   async function lock(label, orderRef, deadlineS) {
@@ -152,7 +168,7 @@ async function main() {
   }
 
   // 2-3. escrow 1: the expected commission
-  const affiliateBefore = await c.getXrpBalance(affiliate.classicAddress);
+  const affiliateBefore = await onLedger(() => c.getXrpBalance(affiliate.classicAddress));
   const e1 = await lock("escrow 1 (the sale)", ORDER_REF, DEADLINE_1);
 
   // 4. a wrong token: whoever holds the deliveryId but not the token cannot release
@@ -185,7 +201,7 @@ async function main() {
   }
   expect(s1?.status === "finished" && !!s1.finishHash, `escrow 1 ended ${s1?.status ?? "unknown"} instead of finished`);
   if (s1?.orderHash) expect(s1.orderHash === orderHash, `oracle recorded orderHash ${s1.orderHash}, not ${orderHash}`);
-  const affiliateAfter = await c.getXrpBalance(affiliate.classicAddress);
+  const affiliateAfter = await onLedger(() => c.getXrpBalance(affiliate.classicAddress));
   log(`affiliate balance: ${affiliateBefore} → ${affiliateAfter} XRP`);
 
   // 6. read the finish back from the ledger: the release names the order
@@ -203,7 +219,7 @@ async function main() {
   }
 
   // 7. escrow 2: the next commission, never earned
-  const merchantBefore = await c.getXrpBalance(merchant.classicAddress);
+  const merchantBefore = await onLedger(() => c.getXrpBalance(merchant.classicAddress));
   const e2 = await lock("escrow 2 (no sale)", ORDER_REF_2, DEADLINE_2);
   log(`no sale is confirmed; waiting ${DEADLINE_2} s for the deadline…`);
   const s2 = await follow(merchant.classicAddress, e2.seq, (e) => e.status !== "waiting", secondsUntil(e2.cancelAfter) + 60, "escrow 2");
@@ -213,7 +229,7 @@ async function main() {
     log(`escrow 2: ${s2?.status ?? "unknown"} — ${s2?.lastWhy ?? s2?.lastResult ?? s2?.note ?? "no word from the oracle"}`);
   }
   expect(s2?.status === "expired-refunded" && !!s2.refundHash, `escrow 2 ended ${s2?.status ?? "unknown"} instead of expired-refunded`);
-  const merchantAfter = await c.getXrpBalance(merchant.classicAddress);
+  const merchantAfter = await onLedger(() => c.getXrpBalance(merchant.classicAddress));
   log(`merchant balance: ${merchantBefore} → ${merchantAfter} XRP (20 locked then refunded, minus fees)`);
 
   // --- summary

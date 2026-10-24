@@ -185,7 +185,11 @@ def main():
               heures_deja_faites=int(plan["heures_semaine_avant"]))
 
     bulletin = {
-        "statement_id": "garde-%s-coef%s" % (plan["date"], plan["coefficient"]),
+        # Opaque on purpose: the id goes in an on-chain memo, and a readable id
+        # ("garde-2026-10-25-coef600") would tell the public the day and the coefficient.
+        "statement_id": "stmt-%s" % hashlib.sha256(
+            ("%s|%s|%s" % (plan["badge"], plan["date"], plan["coefficient"])).encode("utf-8")
+        ).hexdigest()[:12],
         "employee": {"label": plan["salarie"], "badge": plan["badge"]},
         "period": plan["date"][:7],
         "evidence": {

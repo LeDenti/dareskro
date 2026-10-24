@@ -130,6 +130,8 @@ export function ContractDesk(props: {
 
   // ---- what the oracle sees
   const [watched, setWatched] = useState<oracle.WatchedEscrow>();
+  // true once the oracle has accepted the watch: before that a confirmation would be refused (409)
+  const [handed, setHanded] = useState(false);
   const [oracleError, setOracleError] = useState<unknown>();
   const [beneficiaryBalance, setBeneficiaryBalance] = useState<number | null>();
   const [now, setNow] = useState(Date.now());
@@ -211,6 +213,7 @@ export function ContractDesk(props: {
     setSubmitError(undefined);
     setEscrow(undefined);
     setWatched(undefined);
+    setHanded(false);
     setOracleError(undefined);
     setBeneficiaryBalance(undefined);
     setConfirmations([]);
@@ -342,6 +345,7 @@ export function ContractDesk(props: {
           } else {
             await oracle.watch({ kind: c.oracleKind, ...base });
           }
+          setHanded(true);
         } catch (e) {
           setOracleError(e);
         }
@@ -644,10 +648,10 @@ export function ContractDesk(props: {
             </dd>
           </dl>
           <div className="row">
-            <button className="primary" onClick={() => confirm(cond!.confirmToken!, "Confirm the sale (right token)")} disabled={!escrow || !cond?.confirmToken || !orderHash || confirmBusy}>
+            <button className="primary" onClick={() => confirm(cond!.confirmToken!, "Confirm the sale (right token)")} disabled={!escrow || !handed || !cond?.confirmToken || !orderHash || confirmBusy}>
               Confirm the sale
             </button>
-            <button onClick={() => confirm("not-the-merchants-token", "Wrong token")} disabled={!escrow || !cond || !orderHash || confirmBusy}>
+            <button onClick={() => confirm("not-the-merchants-token", "Wrong token")} disabled={!escrow || !handed || !cond || !orderHash || confirmBusy}>
               Wrong token
             </button>
           </div>

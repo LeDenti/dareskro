@@ -112,6 +112,11 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 let client;
 async function ledger() {
+  if (client && !client.isConnected()) {
+    // xrpl.js refuses connect() on a socket still closing ("never cleaned up"): start afresh
+    try { await client.disconnect(); } catch { /* already gone */ }
+    client = undefined;
+  }
   if (!client) client = new Client(TESTNET);
   if (!client.isConnected()) await client.connect();
   return client;
@@ -344,7 +349,10 @@ async function tickConditional(e, wallet) {
   // before FinishAfter anyway. Delivery and affiliate have no date: decide now.
   const date = Math.max(e.checkAfter ?? 0, e.finishAfter ?? 0);
   if (now() < date + CLOSE_TIME_MARGIN) return kind.probe ? kind.probe(e) : false;
+  // After the date a page that is not there is looked at every PROBE_MS too, not every tick
+  if (kind.probe && e.lastSeen && !e.lastSeen.live && Date.now() - Date.parse(e.lastSeen.at) < PROBE_MS) return false;
   const check = await kind.verdict(e);
+  if (kind.probe) e.lastSeen = { at: new Date().toISOString(), live: check.ok, why: check.why };
   if (kind.polls !== false) {
     e.lastCheck = new Date().toISOString();
     e.checks = (e.checks ?? 0) + 1;

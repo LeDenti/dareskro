@@ -33,6 +33,22 @@ const explorer = (h) => `https://testnet.xrpl.org/transactions/${h}`;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** The testnet websocket drops now and then: reconnect and retry a ledger call a few times. */
+async function onLedger(fn, tries = 5) {
+  for (let i = 0; ; i++) {
+    try {
+      if (!c.isConnected()) await c.connect();
+      return await fn();
+    } catch (err) {
+      if (i >= tries - 1) throw err;
+      log(`ledger hiccup (${String(err?.message ?? err).split("\n")[0].slice(0, 80)}), retrying in 5 s…`);
+      try { await c.disconnect(); } catch { /* already closed */ }
+      await sleep(5000);
+    }
+  }
+}
+
+
 // --- the deliverable, and the server the freelancer "publishes" on
 const deliverable = `dareskro deliverable — landing page copy v1 — ${new Date().toISOString()}\n`;
 const wrong = "dareskro deliverable — draft v0, not the agreed one\n";
@@ -72,8 +88,8 @@ log(`oracle ${oracle.address} (${oracle.name})`);
 const c = new Client("wss://s.altnet.rippletest.net:51233");
 await c.connect();
 log("funding client and freelancer on testnet…");
-const { wallet: client } = await c.fundWallet();
-const { wallet: freelancer } = await c.fundWallet();
+const { wallet: client } = await onLedger(() => c.fundWallet());
+const { wallet: freelancer } = await onLedger(() => c.fundWallet());
 log(`client ${client.classicAddress}, freelancer ${freelancer.classicAddress}`);
 
 async function lock(proof, deadlineS, label) {
@@ -111,7 +127,7 @@ let s = await waitFor(client.classicAddress, e1.seq, (e) => e.checks >= 2, 20);
 log(`oracle says: ${s?.lastWhy ?? "?"} — status ${s?.status}`);
 
 // 6. a third party tries without the secret
-const { wallet: third } = await c.fundWallet();
+const { wallet: third } = await onLedger(() => c.fundWallet());
 try {
   const r = await c.submitAndWait({ TransactionType: "EscrowFinish", Account: third.classicAddress, Owner: client.classicAddress, OfferSequence: e1.seq }, { wallet: third, autofill: true });
   log(`third party finish without the secret: ${r.result.meta.TransactionResult} — ${explorer(r.result.hash)}`);
@@ -124,14 +140,14 @@ published = deliverable;
 log("freelancer publishes the RIGHT file…");
 s = await waitFor(client.classicAddress, e1.seq, (e) => e.status !== "waiting", 90);
 log(`escrow 1: ${s.status} — ${s.lastWhy} — ${s.finishHash ? explorer(s.finishHash) : s.lastResult}`);
-log(`freelancer balance: ${await c.getXrpBalance(freelancer.classicAddress)} XRP`);
+log(`freelancer balance: ${await onLedger(() => c.getXrpBalance(freelancer.classicAddress))} XRP`);
 
 // 8. escrow 2: nothing ever published at another URL
 const e2 = await lock({ url: PROOF_URL.replace("livrable", "jamais"), sha256: sha256("never") }, DEADLINE_2, "escrow 2 (no delivery)");
 log(`waiting ${DEADLINE_2} s for the deadline…`);
 s = await waitFor(client.classicAddress, e2.seq, (e) => e.status !== "waiting", DEADLINE_2 + 60);
 log(`escrow 2: ${s.status} — ${s.refundHash ? explorer(s.refundHash) : s.lastResult ?? s.lastWhy}`);
-log(`client balance: ${await c.getXrpBalance(client.classicAddress)} XRP`);
+log(`client balance: ${await onLedger(() => c.getXrpBalance(client.classicAddress))} XRP`);
 
 await c.disconnect();
 server.close();

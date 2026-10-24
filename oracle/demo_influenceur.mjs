@@ -34,6 +34,22 @@ const explorer = (h) => `https://testnet.xrpl.org/transactions/${h}`;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** The testnet websocket drops now and then: reconnect and retry a ledger call a few times. */
+async function onLedger(fn, tries = 5) {
+  for (let i = 0; ; i++) {
+    try {
+      if (!c.isConnected()) await c.connect();
+      return await fn();
+    } catch (err) {
+      if (i >= tries - 1) throw err;
+      log(`ledger hiccup (${String(err?.message ?? err).split("\n")[0].slice(0, 80)}), retrying in 5 s…`);
+      try { await c.disconnect(); } catch { /* already closed */ }
+      await sleep(5000);
+    }
+  }
+}
+
+
 // --- the post, and the "platform" that serves it while it is live
 const page = `<!doctype html><html><body><p>Unboxing the new kit, link in bio. ${MUST_CONTAIN}</p></body></html>\n`;
 let live = false;
@@ -114,9 +130,9 @@ async function main() {
   c = new Client("wss://s.altnet.rippletest.net:51233");
   await c.connect();
   log("funding brand, influencer and a bystander on testnet…");
-  const { wallet: brand } = await c.fundWallet();
-  const { wallet: influencer } = await c.fundWallet();
-  const { wallet: bystander } = await c.fundWallet();
+  const { wallet: brand } = await onLedger(() => c.fundWallet());
+  const { wallet: influencer } = await onLedger(() => c.fundWallet());
+  const { wallet: bystander } = await onLedger(() => c.fundWallet());
   log(`brand ${brand.classicAddress}, influencer ${influencer.classicAddress}, bystander ${bystander.classicAddress}`);
 
   async function lock(label) {
@@ -157,7 +173,7 @@ async function main() {
   // 2-4. escrow 1: the post is published and stays live
   live = true;
   log(`influencer publishes the post at ${POST_URL}`);
-  const influencerBefore = await c.getXrpBalance(influencer.classicAddress);
+  const influencerBefore = await onLedger(() => c.getXrpBalance(influencer.classicAddress));
   const e1 = await lock("escrow 1 (post stays live)");
 
   // 5. a bystander tries before the date, without the secret
@@ -188,11 +204,11 @@ async function main() {
     log(`escrow 1: ${s1?.status ?? "unknown"} — ${s1?.lastWhy ?? s1?.lastResult ?? s1?.note ?? "no word from the oracle"}`);
   }
   expect(s1?.status === "finished" && !!s1.finishHash, `escrow 1 ended ${s1?.status ?? "unknown"} instead of finished`);
-  const influencerAfter = await c.getXrpBalance(influencer.classicAddress);
+  const influencerAfter = await onLedger(() => c.getXrpBalance(influencer.classicAddress));
   log(`influencer balance: ${influencerBefore} → ${influencerAfter} XRP`);
 
   // 7. escrow 2: same deal, but the post disappears before the date
-  const brandBefore = await c.getXrpBalance(brand.classicAddress);
+  const brandBefore = await onLedger(() => c.getXrpBalance(brand.classicAddress));
   const e2 = await lock("escrow 2 (post deleted)");
   // let the oracle look once while the post is live, so the trace shows the transition
   await follow(brand.classicAddress, e2.seq, (e) => !!e.lastSeen, Math.min(30, Math.max(5, secondsUntil(e2.checkAfter) - 10)), "escrow 2");
@@ -206,7 +222,7 @@ async function main() {
     log(`escrow 2: ${s2?.status ?? "unknown"} — ${s2?.lastWhy ?? s2?.lastResult ?? s2?.note ?? "no word from the oracle"}`);
   }
   expect(s2?.status === "expired-refunded" && !!s2.refundHash, `escrow 2 ended ${s2?.status ?? "unknown"} instead of expired-refunded`);
-  const brandAfter = await c.getXrpBalance(brand.classicAddress);
+  const brandAfter = await onLedger(() => c.getXrpBalance(brand.classicAddress));
   log(`brand balance: ${brandBefore} → ${brandAfter} XRP (20 locked then refunded, minus fees)`);
   log(`the platform served the post ${hits.live} time(s) and answered 404 ${hits.gone} time(s)`);
 

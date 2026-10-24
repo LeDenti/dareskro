@@ -43,6 +43,7 @@ Only this counts for judging, and we say so.
 | Escrow builder for the device, memo with statement hash, early-finish / cancel / release proofs | `app/src/xrpl.ts` | done |
 | Ledger developer-experience feedback | `LEDGER_FEEDBACK.md` | done |
 | Delivery oracle (example 3): conditional escrow, proof = URL + SHA-256 read online by the oracle, secret revealed on match, refund at the deadline | `oracle/oracle.mjs`, `oracle/demo_livraison.mjs` | done, run on testnet 24/10 18:35 UTC |
+| Four payers on one desk (examples 1, 3, 4): the oracle gains the "presence" shape (influencer: the post must be live at the end of the period) and the "affiliate" shape (the merchant's sales system confirms the order; the release carries the order hash); the pay desk gets a case selector, a contract desk signed on the same device path, and a registry of every escrow | `oracle/oracle.mjs` (`KINDS`), `app/src/ContractDesk.tsx`, `oracle/demo_influenceur.mjs`, `oracle/demo_affiliation.mjs` | done, measured 21:38–21:56 UTC |
 | Mastercard Agent Pay for Machines (AP4M): the agent buys its evidence over x402 in RLUSD on XRPL EVM testnet, inside a cap the employer approved | `ap4m/agent.mjs`, `ap4m/merchant.mjs` | done, run live 24/10 17:44 UTC: channel, 402, voucher, redemption, RLUSD settlement, receipt verified on-chain |
 
 ### Measured on testnet, 24/10/2026, signed on the Ledger XRP app (2.8.1, Nano X emulated by Speculos)
@@ -228,6 +229,41 @@ with, plus a loop that finishes them at the date, retrying while the ledger's
 close time is not yet past the date), `status`. Its seed lives in
 `oracle/.oracle.json` (0600, never committed); what it watches is in
 `oracle/registry.json`, public.
+
+### Examples 4 and 5, live: the influencer and the affiliate — four payers on one desk
+
+The same oracle account, the same desk, four shapes of escrow. The pay desk
+(`app/`) now opens with a case selector — Employee · Freelancer · Influencer ·
+Affiliate — and the three contract cases share one `ContractDesk`: ask the
+oracle for a condition, lock the fee on the device, hand the escrow to the
+oracle, watch what it sees. A registry card lists every escrow of every kind.
+
+| Shape | Who decides, and what the oracle can do |
+|---|---|
+| **presence** (influencer, product placement): `Condition` + `FinishAfter` + `CancelAfter` | the oracle decides *whether the post is still there* at the end of the period: it reads the agreed URL, checks the agreed text is in it (`#ad @dareskro`), and only then reveals the secret. Before the date it only watches, and says so when the page appears or disappears. Deleted post, no pay: refund at the deadline. |
+| **affiliate** (commission on a merchant's sale): `Condition` + `CancelAfter` | the oracle decides nothing. The merchant's sales system — a party — confirms the sale with a token given once (`POST /affiliate/confirm`, the oracle keeps only its hash). The oracle only guarantees that the money was locked *before* the sale and that the release carries the SHA-256 of the order record in a memo (`dareskro/order-sha256`), so the payout can be matched to the order forever. No sale, refund at the deadline. |
+
+Measured on testnet, 24/10/2026 21:38–21:56 UTC (`oracle/demo_influenceur.mjs`, `oracle/demo_affiliation.mjs`, captures in `presentation/demo-terminal/capture/`):
+
+| Step | Proof |
+|---|---|
+| Influencer, escrow 1: 20 XRP locked behind the condition, FinishAfter = the end of the period | [F88D1196…](https://testnet.xrpl.org/transactions/F88D11962F76903EDE345DFC5F6675D854D29F0E2C4E462DC387CCD2D62FA5FB) |
+| A bystander tries to finish 38 s before the date | `tecNO_PERMISSION` [9779DC7D…](https://testnet.xrpl.org/transactions/9779DC7D2039227985577A9FEC35253E95D6D84951D6E637C1D6FBF15175DB9B) |
+| The post is live at the date: the oracle reveals the secret and pays | `tesSUCCESS` [D906F9CC…](https://testnet.xrpl.org/transactions/D906F9CC28C2075BCAC580EC6F82E9E050C37FD774EDA10819611EBB12FDE463) |
+| Influencer, escrow 2: the post is deleted before the date (HTTP 404, logged as a transition) | lock [0851C4BE…](https://testnet.xrpl.org/transactions/0851C4BE32D90E390759D799258CA3E4C86AFB72B1DDE5BBE3462D534EFEF4B1) |
+| Deadline passed with the post gone: the oracle refunds the brand | `EscrowCancel` `tesSUCCESS` [E1BA776B…](https://testnet.xrpl.org/transactions/E1BA776BF0A9242AD2813B90A4DD2418B8B3E322F728F9A5F88BCB7F2064DD2C) |
+| Affiliate, escrow 1: 20 XRP locked for order `ORD-2026-1045` before any sale | [CE7BFECE…](https://testnet.xrpl.org/transactions/CE7BFECEB5828DF31531E0B349D7D4BE5F0A945F415A0DC510668F574E2217ED) |
+| The merchant's system confirms with a wrong token | `HTTP 403 {"error":"bad token"}`, escrow still waiting |
+| Right token, order record hashed (`8fb00a23…`): the oracle finishes with the order hash in a memo, decoded back from the ledger and equal to the record's SHA-256 | `tesSUCCESS` [A9A9370A…](https://testnet.xrpl.org/transactions/A9A9370A083F7502A632BBC7F5DB4B247C2A0DC395EE495851746F4244248AAA) |
+| Affiliate, escrow 2: no sale before the deadline, the oracle refunds the merchant | [87A22223…](https://testnet.xrpl.org/transactions/87A2222325296812EC5DAE6EDC56E97F4B54A2B0AD750CA383911145C7A7E11D) |
+| Freelance regression on the same code: wrong file, stranger without the secret `tecCRYPTOCONDITION_ERROR` [EEE21FE0…](https://testnet.xrpl.org/transactions/EEE21FE00E7016BC60DF9B4E1E8465BEC5E0B7630A40355C19B2B50A02C4333B), right file paid, nothing published refunded | [D4FF12DA…](https://testnet.xrpl.org/transactions/D4FF12DA121ED1C494ACD6329507C379CA1716DFC0CA300FC0F35E5D7B452212), [7DE73379…](https://testnet.xrpl.org/transactions/7DE733794C1AF43BAF0F5F9D639D11D7E5F57A928DF265BA44B377FEDDD77AE8) |
+
+What changed in the oracle to carry four shapes: a `KINDS` table (what `/condition`
+agrees to, which `/watch` fields are required, how to probe, how to decide, what
+memo to add), one conditional handler for the three conditional shapes, and a
+registry that merges the entries a pass touched instead of overwriting the file —
+`/affiliate/confirm` and `/watch` write it while a finish is in flight. The payroll
+branch is the one measured on the real device, untouched.
 
 ## Mastercard — the agent pays for its evidence (Agent Pay for Machines)
 
