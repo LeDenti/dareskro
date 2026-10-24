@@ -318,6 +318,13 @@ capture in `presentation/demo-terminal/capture/confidentialite.log`): a pay escr
 | The administration opens it with its key: hash recomputed = memo, statement printed (employee, hours, four lines, 466.57 USD) | `bound to escrow 7ED9282F…: MATCH` |
 | The oracle releases at the date: the employee holds 461.127881 XRP | [C38552EE…](https://testnet.xrpl.org/transactions/C38552EEFB074CF3668B14D4F182BE03AAFA0BD5748D00AA344ADE3D77AB3504) |
 
+One more thing said plainly: this repository publishes the demo statement itself
+(`agent/sortie/bulletin.json`, served by the desk as `/bulletin.json`), because it is the
+input of every demo and the employer — who is the prover — reads it on the desk. The privacy
+layer is about what leaves the employer's machine: the chain and the sealed file. In a
+deployment the statement stays with the employer, the employee and the administration; the
+repository would carry a fictional one, as this one is.
+
 The desk's **Privacy** card (card 6 of the employee flow) talks to
 `agent/service_confidentialite.mjs` (127.0.0.1:8788): it seals the statement bound to the
 escrow just created, and shows, in the three readers' own words, what the public sees, what the
