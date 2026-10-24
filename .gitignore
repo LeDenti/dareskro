@@ -42,3 +42,11 @@ presentation/video-final/build/
 
 # the ap4m lockfile pins the vendor tarball by integrity: readers install from the portal
 ap4m/package-lock.json
+
+# selective-disclosure demo keys (X25519 private keys, 0600): never committed
+agent/cles/
+
+# zero-knowledge layer: dependencies and the private witness (hours, badge, nonce)
+zk/node_modules/
+zk/.witness/
+zk/target/

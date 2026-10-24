@@ -37,6 +37,7 @@ import type { EscrowCancel, EscrowCreate, Transaction, Wallet } from "xrpl";
 import { ContractDesk, type ContractKind } from "./ContractDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
+import * as privacy from "./privacy";
 import { SpeculosScreen } from "./SpeculosScreen";
 import { useDeviceAction } from "./useDeviceAction";
 import * as xrpl from "./xrpl";
@@ -218,11 +219,17 @@ function Desk(props: {
 
   // ---- the oracle: the named third party that finishes at the date (optional)
   const [oracleId, setOracleId] = useState<oracle.OracleIdentity>();
+  // privacy layer: the proof's public values (for the memo), the sealed statement, what each reader sees
+  const [zkPub, setZkPub] = useState<privacy.ZkPublic>();
+  const [sealInfo, setSealInfo] = useState<privacy.SealResult>();
+  const [viewOut, setViewOut] = useState<privacy.View>();
+  const [privacyBusy, setPrivacyBusy] = useState<string>();
   const [watched, setWatched] = useState<oracle.WatchedEscrow>();
   const [oracleError, setOracleError] = useState<unknown>();
 
   useEffect(() => {
     oracle.identity().then(setOracleId);
+    privacy.zkPublic().then(setZkPub);
   }, []);
 
   // ---- the registry: everything the oracle watches, every kind, every 5 s
@@ -436,6 +443,8 @@ function Desk(props: {
           statementSha256: statement.sha256,
           statementId: statement.statement_id,
           oracle: oracleId?.address,
+          // the proof's commitment rides in a memo: the compliance proof binds to this escrow, not to any escrow of the same amount
+          zkCommitment: zkPub?.commitment,
           compact: transport === "usb" || transport === "ble",
         }),
       );
@@ -491,6 +500,10 @@ function Desk(props: {
         finishAfter: xrpl.fromRippleTime(tx.FinishAfter!),
       });
       refreshBalance(employer.address);
+      // Seal the statement for the employee and the administration, bound to this escrow (best effort: the privacy service may be down)
+      setSealInfo(undefined);
+      setViewOut(undefined);
+      if (out.result === "tesSUCCESS") privacy.seal(out.hash).then(setSealInfo);
       // Hand the escrow to the oracle. If this fails, nothing is lost: anyone can finish it.
       if (out.result === "tesSUCCESS" && oracleId && statement) {
         try {
@@ -987,6 +1000,64 @@ function Desk(props: {
               account
             </a>
           </p>
+        )}
+      </Card>
+
+      <Card n="6" title="Privacy — invisible to the public, visible to the administration" disabled={!escrow}>
+        <p className="hint">
+          Three layers on top of a transparent ledger. The employee is paid to a fresh account per period (nobody can name the payee).
+          The statement is sealed with AES-256-GCM, its key wrapped for two readers only, the employee and the administration (X25519):
+          on the chain, hashes. A zero-knowledge proof (Noir, UltraHonk) lets anyone check the locked amount is a lawful pay under the
+          collective agreement without the payer disclosing who, how many hours, which coefficient or seniority.
+          The amount itself stays public until XLS-96 confidential transfers reach escrows.
+        </p>
+        <dl>
+          <dt>Proof commitment in the escrow</dt>
+          <dd>{zkPub ? <code>{zkPub.commitment.slice(0, 18)}… (total {(zkPub.total_cents / 100).toFixed(2)}, proof {zkPub.proof_bytes ?? "?"} bytes)</code> : "no proof served (node zk/prove.mjs, then the privacy service)"}</dd>
+          <dt>Sealed statement</dt>
+          <dd>
+            {sealInfo === undefined && escrow ? "sealing…" : sealInfo?.ok
+              ? <>sealed for {sealInfo.recipients?.join(" and ") ?? "the employee and the administration"}, {sealInfo.file_bytes} bytes, plaintext SHA-256 <code>{sealInfo.sha256_plain?.slice(0, 16)}…</code> = the memo</>
+              : <span className="ko">{sealInfo?.error ?? "not sealed"}</span>}
+          </dd>
+        </dl>
+        <div className="row">
+          {(["public", "administration", "employee"] as privacy.Role[]).map((role) => (
+            <button
+              key={role}
+              className={role === "administration" ? "primary" : undefined}
+              disabled={!escrow || !!privacyBusy}
+              onClick={async () => {
+                if (!escrow) return;
+                setPrivacyBusy(role);
+                try {
+                  setViewOut(await privacy.view(role, escrow.hash));
+                } finally {
+                  setPrivacyBusy(undefined);
+                }
+              }}
+            >
+              {role === "public" ? "Read as the public" : role === "administration" ? "Open as the administration" : "Open as the employee"}
+            </button>
+          ))}
+          <button
+            disabled={!escrow || !!privacyBusy}
+            onClick={async () => {
+              if (!escrow) return;
+              setPrivacyBusy("verify");
+              try {
+                setViewOut(await privacy.verifyProof(escrow.hash));
+              } finally {
+                setPrivacyBusy(undefined);
+              }
+            }}
+          >
+            Verify the proof against the chain
+          </button>
+          {privacyBusy && <span className="hint">{privacyBusy}…</span>}
+        </div>
+        {viewOut && (
+          <pre className={`privacy-view ${viewOut.ok ? "ok" : "ko"}`}>{viewOut.lines.join("\n")}</pre>
         )}
       </Card>
       </>

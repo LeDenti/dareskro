@@ -1,0 +1,92 @@
+22:10:10 oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW (dareskro payroll oracle v1)
+22:10:11 statement 7cad8a6d6a2e… total 466.57 USD = 361.127881 XRP at 1.29198 (Kraken)
+22:10:13 funding the employer and a fresh account for the employee (one per pay period: nobody can name the payee)…
+22:10:48 EscrowCreate tesSUCCESS #21797423 — https://testnet.xrpl.org/transactions/7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+22:10:48   memos: statement sha256, opaque id stmt-ffff3dd0e216, fiat at rate, oracle, zk commitment 0x26ab993adac520f0…
+22:10:48 handed to the oracle (payout: crypto — the employee keeps the XRP)
+22:10:48 — sealing the statement for the employee and the administration, bound to this escrow
+22:10:48 $ node agent/confidentiel.mjs --chiffre --escrow 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+    escrow 7ED9282F...: memo hash = statement hash (1292 ms on testnet)
+    sealed agent/sortie/bulletin.json: 2 987 bytes plain -> 5 837 bytes file, 2 recipients, 1306.8 ms
+           -> agent/sortie/bulletin.chiffre.json  and  app/public/bulletin.chiffre.json
+    what the public sees in that file:
+      version       dareskro/confidential-statement.v1
+      sha256_plain  7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910  (= the escrow memo)
+      escrow        7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+      ciphertext    3 072 bytes, iv 12, tag 16  (statement padded to 1024 bytes: a size class, content opaque)
+      zk opening    400 bytes sealed under the same key, commitment 0x26ab993adac520f0... in clear (it is public already)
+      recipients    employee, administration: ephemeral pk 32, wrapped key 32, tag 16 each
+      nothing else: no name, no hours, no coefficient, no lines, no amount, no nonce.
+22:10:50 — what the public sees
+22:10:50 $ node agent/divulgation.mjs --role public --escrow 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+    what anyone sees in agent/sortie/bulletin.chiffre.json:
+      version       dareskro/confidential-statement.v1
+      sha256_plain  7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910
+      escrow        7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+      ciphertext    3 072 bytes, opaque (spaces to a 1024-byte multiple)
+      zk opening    400 bytes, opaque; commitment 0x26ab993adac520f0... (public already)
+      recipients    employee, administration (wrapped content key each)
+    what anyone sees on testnet, EscrowCreate 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570 (1277 ms):
+      from          rwLcq15rYQPF3a4caoaW3sboUs4e2yVoTT
+      to            rsX2vnGwUWFAK76DpxfJdJXTQJ5mGBXxqp
+      amount        361.127881 XRP  (public: the XRP amount is never hidden on an escrow)
+      payable at    2026-10-24T22:12:14Z
+      memo          dareskro/statement-sha256  7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910
+      memo          dareskro/statement-id      stmt-ffff3dd0e216
+      memo          dareskro/fiat              466.57 USD @ 1.29198 USD/XRP Kraken 2026-10-24T22:10Z
+      memo          dareskro/oracle            rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+      memo          dareskro/zk-commitment     0x26ab993adac520f03a7cd7b4d1d1e02f07481a95604c1c2e4b4e911ff4ec2d76
+      => the escrow cites the same statement hash as the sealed file: same statement, content unreadable
+    what the public cannot do: open it.
+      tried to unwrap the employee block with a random key: refused ("Unsupported state or unable to authenticate data")
+      the two private keys are the only way in: who worked, how many hours, which lines stay sealed in the file.
+    RESULT: OK, the file and the escrow show the public nothing private
+22:10:51 — the proof, verified against the chain as anyone can
+22:10:51 $ node zk/verify.mjs --escrow 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+    proof VERIFIED in 15 ms (14656 bytes, vk 3680 bytes, 8 public fields)
+    escrow 7ED9282F...: statement memo 7cad8a6d6a2eb2b6... MATCHES the proof's public statement hash
+    escrow 7ED9282F...: 361.127881 XRP x 1.29198 USD/XRP (rate declared by the payer) = 466.5700 USD vs proven 466.57 -> MATCH (|diff| 0.0000), fiat memo total MATCHES
+    escrow 7ED9282F...: zk-commitment memo MATCHES the public commitment
+      WHAT THE PUBLIC LEARNS                                            | WHAT STAYS HIDDEN (measured)
+      ------------------------------------------------------------------+------------------------------
+      total 466.57 equals the IDCC 1996 formula for some                | who (badge, name): the commitment opens on nothing without the nonce
+      admissible hours, coefficient (100..2000) and seniority           | the nonce
+      Sunday shift: true; shutters open: true                           | hours, coefficient, seniority: hidden by the proof, but 11 triples fit the public total
+      35 h already worked that week                                     | 
+      point value 5.277                                                 | 
+      commitment 0x26ab993adac5... (badge, inputs, nonce, statement)    | 
+      statement 7cad8a6d6a2eb2b6... (public input = escrow memo)        | 
+      escrow rwLcq15rYQ... -> rsX2vnGwUW...                             | 
+      361.127881 XRP, bound to this total and statement                 | 
+    enumeration: 11 (hours, coefficient, seniority rate) triples give 466.57 under the public context; the proof hides which one, the public amount does not. Hiding the amount needs XLS-96 (no escrow in v1) or pooled periods.
+    RESULT: OK
+22:10:53 — what the administration sees
+22:10:53 $ node agent/divulgation.mjs --role administration --escrow 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570
+    role administration: unwrapped with agent/cles/administration.key, decrypted 2 979 bytes (+ padding) in 1.6 ms
+      recomputed sha256 7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910
+      = sha256_plain of the sealed file = sha256 field of the statement
+    what anyone sees on testnet, EscrowCreate 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570 (1278 ms):
+      from          rwLcq15rYQPF3a4caoaW3sboUs4e2yVoTT
+      to            rsX2vnGwUWFAK76DpxfJdJXTQJ5mGBXxqp
+      amount        361.127881 XRP  (public: the XRP amount is never hidden on an escrow)
+      payable at    2026-10-24T22:12:14Z
+      memo          dareskro/statement-sha256  7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910
+      memo          dareskro/statement-id      stmt-ffff3dd0e216
+      memo          dareskro/fiat              466.57 USD @ 1.29198 USD/XRP Kraken 2026-10-24T22:10Z
+      memo          dareskro/oracle            rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+      memo          dareskro/zk-commitment     0x26ab993adac520f03a7cd7b4d1d1e02f07481a95604c1c2e4b4e911ff4ec2d76
+      bound to escrow 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570: MATCH
+      memo dareskro/fiat "466.57 USD @ 1.29198 USD/XRP Kraken 2026-10-24T22:10Z" vs statement total 466.57 USD: MATCH
+      zk opening sealed under the same key: node zk/ouvrir.mjs --role administration recomputes the commitment 0x26ab993adac520f0...
+    --- statement (sealed for the public, open for this role) ---
+      employee  Pharmacien adjoint, coefficient 600, 18 ans d'anciennete  (badge A-0412)
+      period    2026-10, 2026-10-25 09:00-21:00, garde dimanche, volets ouverts
+      temps de garde                 250.51
+      majorations heures sup.         83.50
+      indemnite de dimanche           94.99
+      prime d anciennete              37.58
+      total                          466.57 USD
+      status    PROPOSITION, computed by officine.garde — deterministic, replayable to the cent
+22:10:54 — waiting for the oracle to release at the date (90 s)…
+22:12:35 released by the oracle: https://testnet.xrpl.org/transactions/C38552EEFB074CF3668B14D4F182BE03AAFA0BD5748D00AA344ADE3D77AB3504 — employee balance 461.127881 XRP
+22:12:35 SUMMARY: escrow 7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570 | seal ok | public sees nothing extra | proof verified | administration MATCH | release ok

@@ -1,0 +1,6 @@
+[package]
+name = "pay_compliance"
+type = "bin"
+authors = ["dareskro"]
+
+[dependencies]

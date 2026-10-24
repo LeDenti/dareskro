@@ -1,0 +1,16 @@
+{
+  "name": "dareskro-zk",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Zero-knowledge compliance proof for a dareskro pay escrow: the amount is lawful, the hours and the person stay hidden.",
+  "scripts": {
+    "prove": "node prove.mjs",
+    "verify": "node verify.mjs"
+  },
+  "dependencies": {
+    "@aztec/bb.js": "5.2.1",
+    "@noir-lang/noir_js": "1.0.0-rc.6",
+    "@noir-lang/noir_wasm": "1.0.0-rc.6"
+  }
+}

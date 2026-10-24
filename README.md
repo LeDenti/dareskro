@@ -44,6 +44,7 @@ Only this counts for judging, and we say so.
 | Ledger developer-experience feedback | `LEDGER_FEEDBACK.md` | done |
 | Delivery oracle (example 3): conditional escrow, proof = URL + SHA-256 read online by the oracle, secret revealed on match, refund at the deadline | `oracle/oracle.mjs`, `oracle/demo_livraison.mjs` | done, run on testnet 24/10 18:35 UTC |
 | Four payers on one desk (examples 1, 3, 4): the oracle gains the "presence" shape (influencer: the post must be live at the end of the period) and the "affiliate" shape (the merchant's sales system confirms the order; the release carries the order hash); the pay desk gets a case selector, a contract desk signed on the same device path, and a registry of every escrow | `oracle/oracle.mjs` (`KINDS`), `app/src/ContractDesk.tsx`, `oracle/demo_influenceur.mjs`, `oracle/demo_affiliation.mjs` | done, measured 21:38–21:56 UTC |
+| Privacy: the salary invisible to the public, visible to the administration — a fresh payee account per period, the statement sealed for two readers (employee, administration), a zero-knowledge compliance proof (Noir, UltraHonk in wasm) bound to the escrow by hash and commitment, a privacy service behind the desk's Privacy card | `agent/confidentiel.mjs`, `agent/divulgation.mjs`, `zk/` (`circuit/src/main.nr`, `prove.mjs`, `verify.mjs`, `ouvrir.mjs`), `agent/service_confidentialite.mjs`, `oracle/demo_confidentialite.mjs` | done, measured 22:10 UTC |
 | Mastercard Agent Pay for Machines (AP4M): the agent buys its evidence over x402 in RLUSD on XRPL EVM testnet, inside a cap the employer approved | `ap4m/agent.mjs`, `ap4m/merchant.mjs` | done, run live 24/10 17:44 UTC: channel, 402, voucher, redemption, RLUSD settlement, receipt verified on-chain |
 
 ### Measured on testnet, 24/10/2026, signed on the Ledger XRP app (2.8.1, Nano X emulated by Speculos)
@@ -265,6 +266,62 @@ registry that merges the entries a pass touched instead of overwriting the file 
 `/affiliate/confirm` and `/watch` write it while a finish is in flight. The payroll
 branch is the one measured on the real device, untouched.
 
+## Privacy — invisible to the public, visible to the administration
+
+The founder's rule for a salary: nobody in the street may read it, every administration
+(tax, social security) must be able to. An XRPL escrow is transparent by construction —
+the two accounts and the XRP amount are public — so privacy is a layer on top, in three
+mechanisms that stack, each hiding a different thing. All three are real code, run and
+measured tonight; the long version with every measurement is in [zk/README.md](zk/README.md).
+
+| Layer | Hides from the public | Leaves visible |
+|---|---|---|
+| **A. Unlinkable payee** — the employee is paid to a fresh account per pay period, derived from the employee's own Ledger (`44'/144'/<period>'/0/0`, `agent/compte_periode.mjs`) | *who* is paid: no account carries a person's pay history | that an escrow exists between two addresses |
+| **B. Selective disclosure** — `agent/confidentiel.mjs` seals the statement with AES-256-GCM (padded to a 1 kB class), the content key wrapped with X25519 + HKDF for two readers only: the employee and the administration. On the chain, hashes. `agent/divulgation.mjs --role administration` decrypts, recomputes the SHA-256, compares it with the escrow's memo and prints the statement; `--role public` shows what anyone sees and fails to open anything; `--role employee` the same as the administration, with the employee's key | *what*: the name, the hours, the lines, the total in dollars | a 3 072-byte opaque file and an empreinte |
+| **C. Zero-knowledge compliance proof** — `zk/circuit/src/main.nr` (Noir, compiled and proven in WebAssembly with `@noir-lang/noir_wasm` and `@aztec/bb.js` 5.2.1, no binary installed) proves that the total is exactly the collective agreement's formula for *some* admissible hours, coefficient and seniority, and that the prover knows them behind a Pedersen commitment that also binds the statement's SHA-256; the commitment rides in the escrow as a memo (`dareskro/zk-commitment`) | *why it is right*, without the payer disclosing anything: the proof itself reveals nothing but "lawful under IDCC 1996" | the total, the Sunday/shutters context, the point value — all public already |
+
+Measured, 24/10/2026 (arm64 Mac, Node 26, one wasm thread): compile 0.42 s, witness 33 ms,
+**prove 0.9 s, verify 15 ms**; proof 14 656 bytes, verification key 3 680 bytes; `node
+prove.mjs` 2.0 s wall clock, `node verify.mjs --escrow …` 0.3 s plus the testnet read.
+Tampering with the public total, the statement hash, one hex digit of the proof or of the
+key: rejected, exit 1. One character of the ciphertext: GCM refuses. The circuit's integer
+arithmetic was replayed against the payroll engine on 1.1 million cases (two independent
+reimplementations) and agrees on every statement with at most 43 h already worked in the week;
+beyond that the engine's overtime rule differs and `prove.mjs` refuses rather than guess.
+
+**The honest measurement, said before the jury asks.** With a public amount and a public
+formula, the proof cannot hide the inputs from arithmetic: `verify.mjs` counts the (hours,
+coefficient, seniority) triples that give 466.57 — **11** — and a readable statement id in the
+memo (`garde-2026-10-25-coef600`, what the first escrows carried) left **1**. So: the proof
+guarantees compliance and binds the person's commitment; the amount is the leak, not the
+proof. Two fixes, both done tonight: the statement id written in the memo is now opaque
+(`stmt-<12 hex>`), and the proof binds to the escrow by the statement hash and the commitment
+memo, not by amount alone. The amount itself disappears with **XLS-0096 Confidential
+Transfers** (spec Final, 10/09/2026; EC-ElGamal on secp256k1, Pedersen commitments,
+Bulletproofs; the issuer registers an `AuditorEncryptionKey`, so every hidden amount is also
+encrypted to the auditor — "visible to the administration" natively): the amendment
+`ConfidentialTransfer` is in rippled but not yet active on mainnet or testnet (22 validators
+of 29 in mid-October), and its first version excludes escrow. Until then, pooling several
+periods into one payment is the other way to make a total uninformative.
+
+Measured end to end on testnet, 24/10/2026 22:10 UTC (`oracle/demo_confidentialite.mjs`,
+capture in `presentation/demo-terminal/capture/confidentialite.log`): a pay escrow of
+361.127881 XRP (466.57 USD at 1.29198) to a fresh employee account, whose memos leak nothing.
+
+| Step | Proof |
+|---|---|
+| `EscrowCreate` #21797423: statement SHA-256, **opaque id** `stmt-ffff3dd0e216`, fiat at rate, oracle, **zk commitment** `0x26ab993a…` | [7ED9282F…](https://testnet.xrpl.org/transactions/7ED9282F5057807C852A0E6DDE24B2C35A5160E03C8BE6A01BFA94763CB9D570) |
+| The statement sealed for the employee and the administration, bound to that escrow: 2 987 bytes → 5 837-byte file, ciphertext 3 072 bytes, two wrapped keys | `agent/sortie/bulletin.chiffre.json` |
+| The public reads the file and the chain: two addresses, the amount, five memos, an opaque ciphertext; a random key is refused | `RESULT: OK, the file and the escrow show the public nothing private` |
+| Anyone verifies the proof against the chain: statement memo = the proof's public hash, zk-commitment memo = the proof's commitment, 361.13 XRP × rate = 466.57 | `proof VERIFIED in 15 ms`, `RESULT: OK`, 11 candidate triples printed |
+| The administration opens it with its key: hash recomputed = memo, statement printed (employee, hours, four lines, 466.57 USD) | `bound to escrow 7ED9282F…: MATCH` |
+| The oracle releases at the date: the employee holds 461.127881 XRP | [C38552EE…](https://testnet.xrpl.org/transactions/C38552EEFB074CF3668B14D4F182BE03AAFA0BD5748D00AA344ADE3D77AB3504) |
+
+The desk's **Privacy** card (card 6 of the employee flow) talks to
+`agent/service_confidentialite.mjs` (127.0.0.1:8788): it seals the statement bound to the
+escrow just created, and shows, in the three readers' own words, what the public sees, what the
+administration opens, what the employee opens, and the proof verified against the chain.
+
 ## Mastercard — the agent pays for its evidence (Agent Pay for Machines)
 
 The salary goes through the XRPL escrow. But before the engine can price the
@@ -363,6 +420,11 @@ cd app && npm install && npm run dev            # http://localhost:5173
 
 # 4. Mastercard AP4M (optional): download the SDK as shown in the AP4M section above, then
 cd ap4m && npm install && node merchant.mjs     # and node agent.mjs, node payout.mjs …
+
+# 5. the privacy layer: keys for the two readers, the proof, the service behind the Privacy card
+node agent/confidentiel.mjs --init && (cd zk && npm install && node prove.mjs)
+node agent/service_confidentialite.mjs            # 127.0.0.1:8788
+node oracle/demo_confidentialite.mjs              # the whole layer end to end on testnet, no device
 ```
 
 On the page: validate the statement with your name → connect the Ledger (USB)

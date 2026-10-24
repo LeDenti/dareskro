@@ -1,0 +1,23 @@
+{
+  "version": "dareskro/zk-public-inputs.v2",
+  "circuit": "pay_compliance",
+  "order": [
+    "total_cents",
+    "point_value_milli",
+    "dimanche",
+    "volets_ouverts",
+    "heures_semaine_avant",
+    "statement_hi",
+    "statement_lo",
+    "commitment"
+  ],
+  "note": "statement_hi/lo are the two halves of statement_sha256, a public input of the proof and the escrow memo",
+  "total_cents": 46657,
+  "point_value_milli": 5277,
+  "dimanche": true,
+  "volets_ouverts": true,
+  "heures_semaine_avant": 35,
+  "statement_sha256": "7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910",
+  "commitment": "0x26ab993adac520f03a7cd7b4d1d1e02f07481a95604c1c2e4b4e911ff4ec2d76",
+  "generated": "2026-10-24T22:07:57.930Z"
+}
