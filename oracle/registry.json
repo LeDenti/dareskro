@@ -200,6 +200,334 @@
           "xrpl_escrow_finish": "D749E538E2BC6A969CF4CBE516AEDA038C271E81992179D96747CFFC36239C21"
         }
       }
+    },
+    {
+      "kind": "affiliate",
+      "deliveryId": "bb67f5f7de13",
+      "owner": "ra2xbPft4W9pZEcmCTXjX44G6dmWdabJDo",
+      "sequence": 21796586,
+      "destination": "rHdtTick43YLJn4hRJoCxiSqTfDmYTs1et",
+      "amountXrp": "20",
+      "cancelAfter": 846192460,
+      "proof": {
+        "orderRef": "ORD-2026-1045"
+      },
+      "createHash": "7CA18050656E30FA4F66785739629A78A090BE1176ED900C39807841771F3D2A",
+      "status": "finished",
+      "registered": "2026-10-24T21:25:17.271Z",
+      "confirmed": {
+        "orderHash": "c73e8abedf45ae5f3972d08b808b2c67963d9e95c2c004e104d75dc64fc48b17",
+        "at": "2026-10-24T21:25:17.283Z"
+      },
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "7E36DBA58F252C4542ADC51396826FED941EEA6FB48014335C52FB514A1C02B9",
+      "lastTry": "2026-10-24T21:25:24.115Z",
+      "lastWhy": "sale confirmed by the merchant, order sha256 c73e8abedf…",
+      "finishedAt": "2026-10-24T21:25:24.115Z",
+      "finishHash": "7E36DBA58F252C4542ADC51396826FED941EEA6FB48014335C52FB514A1C02B9",
+      "orderHash": "c73e8abedf45ae5f3972d08b808b2c67963d9e95c2c004e104d75dc64fc48b17"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "844f207daa82",
+      "owner": "r3CaYT6oDnf58vXpvevyRnuHaxjtMzxSfj",
+      "sequence": 21796586,
+      "destination": "rXsyFqdLCBUMfjDJ9UU4r2BqamyAYkYHq",
+      "amountXrp": "20",
+      "checkAfter": 846192362,
+      "cancelAfter": 846192452,
+      "finishAfter": 846192362,
+      "proof": {
+        "url": "http://127.0.0.1:8791/post.html",
+        "mustContain": "#ad @dareskro"
+      },
+      "createHash": "AFFF8193C2F8EDA2B52B12C0467DA8459B791170EEDA8950147C7510811B3F88",
+      "status": "finished",
+      "registered": "2026-10-24T21:25:23.720Z",
+      "lastSeen": {
+        "at": "2026-10-24T21:26:08.154Z",
+        "live": true,
+        "why": "live with \"#ad @dareskro\" (97 chars)"
+      },
+      "lastCheck": "2026-10-24T21:26:08.154Z",
+      "checks": 1,
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "26E0555398C12259DB2E995D61FBE6F379CF58CF61C2425695BB967DACFE1936",
+      "lastTry": "2026-10-24T21:26:13.254Z",
+      "lastWhy": "live with \"#ad @dareskro\" (97 chars)",
+      "finishedAt": "2026-10-24T21:26:13.254Z",
+      "finishHash": "26E0555398C12259DB2E995D61FBE6F379CF58CF61C2425695BB967DACFE1936"
+    },
+    {
+      "kind": "affiliate",
+      "deliveryId": "41b9abf8bb1a",
+      "owner": "ra2xbPft4W9pZEcmCTXjX44G6dmWdabJDo",
+      "sequence": 21796587,
+      "destination": "rHdtTick43YLJn4hRJoCxiSqTfDmYTs1et",
+      "amountXrp": "20",
+      "cancelAfter": 846192401,
+      "proof": {
+        "orderRef": "ORD-2026-1046"
+      },
+      "createHash": "BCB0ED15D60D52D1B08CCE19ACFB30975B6EE40DA34E8FB1F2460A622FDD81C2",
+      "status": "expired-refunded",
+      "registered": "2026-10-24T21:25:34.095Z",
+      "lastWhy": "waiting for the merchant's confirmation",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "82A8B348C608CDCFA9DEDF21A480E0EA7C7BDEC91B86F75BCDA3F78151D2AFD7",
+      "lastTry": "2026-10-24T21:26:53.291Z",
+      "refundHash": "82A8B348C608CDCFA9DEDF21A480E0EA7C7BDEC91B86F75BCDA3F78151D2AFD7"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "eae66dc2f0d5",
+      "owner": "r3CaYT6oDnf58vXpvevyRnuHaxjtMzxSfj",
+      "sequence": 21796587,
+      "destination": "rXsyFqdLCBUMfjDJ9UU4r2BqamyAYkYHq",
+      "amountXrp": "20",
+      "checkAfter": 846192420,
+      "cancelAfter": 846192510,
+      "finishAfter": 846192420,
+      "proof": {
+        "url": "http://127.0.0.1:8791/post.html",
+        "mustContain": "#ad @dareskro"
+      },
+      "createHash": "70974F961C55CC29FD23DA04691192688D6DF400F44AF5E677108B46C5C772DA",
+      "status": "expired-refunded",
+      "registered": "2026-10-24T21:26:20.396Z",
+      "lastSeen": {
+        "at": "2026-10-24T21:28:33.416Z",
+        "live": false,
+        "why": "HTTP 404"
+      },
+      "lastCheck": "2026-10-24T21:28:33.416Z",
+      "checks": 22,
+      "lastWhy": "HTTP 404",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "37027E10AD381F5ACE12C45135B74FD4330E0DE30AFB32364130EEF24E896AC7",
+      "lastTry": "2026-10-24T21:28:41.514Z",
+      "refundHash": "37027E10AD381F5ACE12C45135B74FD4330E0DE30AFB32364130EEF24E896AC7"
+    },
+    {
+      "kind": "affiliate",
+      "deliveryId": "796f8d6a01f7",
+      "owner": "rEJM9HqpEFUzHcB4ccumFcjbFLjBKvESv2",
+      "sequence": 21796827,
+      "destination": "rNjnBkdj32dzCtKwv7rGbA1EADqSbeQrF6",
+      "amountXrp": "20",
+      "cancelAfter": 846193249,
+      "proof": {
+        "orderRef": "ORD-2026-1045"
+      },
+      "createHash": "CE7BFECEB5828DF31531E0B349D7D4BE5F0A945F415A0DC510668F574E2217ED",
+      "status": "finished",
+      "registered": "2026-10-24T21:38:25.816Z",
+      "confirmed": {
+        "orderHash": "8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758",
+        "at": "2026-10-24T21:38:25.824Z"
+      },
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "A9A9370A083F7502A632BBC7F5DB4B247C2A0DC395EE495851746F4244248AAA",
+      "lastTry": "2026-10-24T21:38:35.738Z",
+      "lastWhy": "sale confirmed by the merchant, order sha256 8fb00a230b…",
+      "finishedAt": "2026-10-24T21:38:35.738Z",
+      "finishHash": "A9A9370A083F7502A632BBC7F5DB4B247C2A0DC395EE495851746F4244248AAA",
+      "orderHash": "8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "5d773545a2d8",
+      "owner": "rNsBXopp5R73vVkK6smyGXhvDj55Nm8VYo",
+      "sequence": 21796827,
+      "destination": "rhubLmvfsBCJ7XFyN8XUYKXpy1HWMYH6Sd",
+      "amountXrp": "20",
+      "checkAfter": 846193150,
+      "cancelAfter": 846193240,
+      "finishAfter": 846193150,
+      "proof": {
+        "url": "http://127.0.0.1:8791/post.html",
+        "mustContain": "#ad @dareskro"
+      },
+      "createHash": "6DCB9E4DED9BBADF827270A08C22B3F8ED4A1B9B8496E444E2323C2F7D44E040",
+      "status": "finished",
+      "registered": "2026-10-24T21:38:32.526Z",
+      "lastSeen": {
+        "at": "2026-10-24T21:39:19.791Z",
+        "live": true,
+        "why": "live with \"#ad @dareskro\" (97 chars)"
+      },
+      "lastCheck": "2026-10-24T21:39:19.791Z",
+      "checks": 1,
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "1E444BECA0BC5CE71983FA7B59A11E81E04DAC19E2D2563DB284A1BC693ACFEC",
+      "lastTry": "2026-10-24T21:39:26.109Z",
+      "lastWhy": "live with \"#ad @dareskro\" (97 chars)",
+      "finishedAt": "2026-10-24T21:39:26.109Z",
+      "finishHash": "1E444BECA0BC5CE71983FA7B59A11E81E04DAC19E2D2563DB284A1BC693ACFEC"
+    },
+    {
+      "kind": "affiliate",
+      "deliveryId": "3d9e1619aac9",
+      "owner": "rEJM9HqpEFUzHcB4ccumFcjbFLjBKvESv2",
+      "sequence": 21796828,
+      "destination": "rNjnBkdj32dzCtKwv7rGbA1EADqSbeQrF6",
+      "amountXrp": "20",
+      "cancelAfter": 846193193,
+      "proof": {
+        "orderRef": "ORD-2026-1046"
+      },
+      "createHash": "1A399029234565C996622969F8DFE317CEEA4FEAAF1C618E4FCAFF1F290712AA",
+      "status": "expired-refunded",
+      "registered": "2026-10-24T21:38:42.059Z",
+      "lastWhy": "waiting for the merchant's confirmation",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "87A2222325296812EC5DAE6EDC56E97F4B54A2B0AD750CA383911145C7A7E11D",
+      "lastTry": "2026-10-24T21:40:06.442Z",
+      "refundHash": "87A2222325296812EC5DAE6EDC56E97F4B54A2B0AD750CA383911145C7A7E11D"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "fc7aae64d2d9",
+      "owner": "rNsBXopp5R73vVkK6smyGXhvDj55Nm8VYo",
+      "sequence": 21796828,
+      "destination": "rhubLmvfsBCJ7XFyN8XUYKXpy1HWMYH6Sd",
+      "amountXrp": "20",
+      "checkAfter": 846193212,
+      "cancelAfter": 846193302,
+      "finishAfter": 846193212,
+      "proof": {
+        "url": "http://127.0.0.1:8791/post.html",
+        "mustContain": "#ad @dareskro"
+      },
+      "createHash": "1A81CE79F720BF47F6AD18ECB4118F9501051912514101921AD313315EF7FE31",
+      "status": "expired-refunded",
+      "registered": "2026-10-24T21:39:32.222Z",
+      "lastSeen": {
+        "at": "2026-10-24T21:41:48.025Z",
+        "live": false,
+        "why": "HTTP 404"
+      },
+      "lastCheck": "2026-10-24T21:41:48.025Z",
+      "checks": 15,
+      "lastWhy": "HTTP 404",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "CE19FAFF37DB21949F4BDBC62D47CE5B450C5A06568967A577062C2D51B63BE6",
+      "lastTry": "2026-10-24T21:41:56.129Z",
+      "refundHash": "CE19FAFF37DB21949F4BDBC62D47CE5B450C5A06568967A577062C2D51B63BE6"
+    },
+    {
+      "kind": "delivery",
+      "deliveryId": "84d88eca7ab6",
+      "owner": "rMtXpFCVbnAbYt7TdHZ5bDfcW4dUz4eMaJ",
+      "sequence": 21797100,
+      "cancelAfter": 846194284,
+      "destination": "r9ubAo2PctrtCx7twFVHdVYhZmN4XCvSpa",
+      "amountXrp": "40",
+      "proof": {
+        "url": "http://127.0.0.1:8790/livrable.txt",
+        "sha256": "d9a12bc024fe422ba913331fc02705a3e94a13fd966e762def9029087e130a50"
+      },
+      "createHash": "DA435E51DDE7F55F540F340C0076AE26FEA8C158D92A162071A6CCC7219D6CF7",
+      "status": "finished",
+      "registered": "2026-10-24T21:53:10.870Z",
+      "lastCheck": "2026-10-24T21:53:32.543Z",
+      "checks": 6,
+      "lastWhy": "match (75 bytes)",
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "D4FF12DA121ED1C494ACD6329507C379CA1716DFC0CA300FC0F35E5D7B452212",
+      "lastTry": "2026-10-24T21:53:40.012Z",
+      "finishedAt": "2026-10-24T21:53:40.012Z",
+      "finishHash": "D4FF12DA121ED1C494ACD6329507C379CA1716DFC0CA300FC0F35E5D7B452212"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "bddfe01bf3bd",
+      "owner": "rMx6HygYTS8NY4tPpwCEh7AreqYMohGVBL",
+      "sequence": 21797100,
+      "destination": "rnivQF1ZTyEqVDw2jMsaZcMzbA5dsTf3eY",
+      "amountXrp": "20",
+      "checkAfter": 846194036,
+      "cancelAfter": 846194126,
+      "finishAfter": 846194036,
+      "proof": {
+        "url": "http://127.0.0.1:8791/post.html",
+        "mustContain": "#ad @dareskro"
+      },
+      "createHash": "F88D11962F76903EDE345DFC5F6675D854D29F0E2C4E462DC387CCD2D62FA5FB",
+      "status": "finished",
+      "registered": "2026-10-24T21:53:17.550Z",
+      "lastSeen": {
+        "at": "2026-10-24T21:54:04.045Z",
+        "live": true,
+        "why": "live with \"#ad @dareskro\" (97 chars)"
+      },
+      "lastCheck": "2026-10-24T21:54:04.045Z",
+      "checks": 1,
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "D906F9CC28C2075BCAC580EC6F82E9E050C37FD774EDA10819611EBB12FDE463",
+      "lastTry": "2026-10-24T21:54:09.929Z",
+      "lastWhy": "live with \"#ad @dareskro\" (97 chars)",
+      "finishedAt": "2026-10-24T21:54:09.929Z",
+      "finishHash": "D906F9CC28C2075BCAC580EC6F82E9E050C37FD774EDA10819611EBB12FDE463"
+    },
+    {
+      "kind": "delivery",
+      "deliveryId": "4129f0ed0dfb",
+      "owner": "rMtXpFCVbnAbYt7TdHZ5bDfcW4dUz4eMaJ",
+      "sequence": 21797101,
+      "cancelAfter": 846194096,
+      "destination": "r9ubAo2PctrtCx7twFVHdVYhZmN4XCvSpa",
+      "amountXrp": "40",
+      "proof": {
+        "url": "http://127.0.0.1:8790/jamais.txt",
+        "sha256": "6497e4b3d7bed16979a343a7db4efa6d57725529f5ac3cec45c1f08fabcbdafc"
+      },
+      "createHash": "C4DC769CF64C4088788DCB31DE32235DB1535CC638ADD9D5D30E87E39139C770",
+      "status": "expired-refunded",
+      "registered": "2026-10-24T21:53:49.428Z",
+      "lastCheck": "2026-10-24T21:55:02.017Z",
+      "checks": 17,
+      "lastWhy": "HTTP 404",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "7DE733794C1AF43BAF0F5F9D639D11D7E5F57A928DF265BA44B377FEDDD77AE8",
+      "lastTry": "2026-10-24T21:55:13.747Z",
+      "refundHash": "7DE733794C1AF43BAF0F5F9D639D11D7E5F57A928DF265BA44B377FEDDD77AE8"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "eb19d73560bf",
+      "owner": "rMx6HygYTS8NY4tPpwCEh7AreqYMohGVBL",
+      "sequence": 21797101,
+      "destination": "rnivQF1ZTyEqVDw2jMsaZcMzbA5dsTf3eY",
+      "amountXrp": "20",
+      "checkAfter": 846194095,
+      "cancelAfter": 846194185,
+      "finishAfter": 846194095,
+      "proof": {
+        "url": "http://127.0.0.1:8791/post.html",
+        "mustContain": "#ad @dareskro"
+      },
+      "createHash": "0851C4BE32D90E390759D799258CA3E4C86AFB72B1DDE5BBE3462D534EFEF4B1",
+      "status": "expired-refunded",
+      "registered": "2026-10-24T21:54:16.776Z",
+      "lastSeen": {
+        "at": "2026-10-24T21:56:29.862Z",
+        "live": false,
+        "why": "HTTP 404"
+      },
+      "lastCheck": "2026-10-24T21:56:29.862Z",
+      "checks": 21,
+      "lastWhy": "HTTP 404",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "E1BA776BF0A9242AD2813B90A4DD2418B8B3E322F728F9A5F88BCB7F2064DD2C",
+      "lastTry": "2026-10-24T21:56:38.339Z",
+      "refundHash": "E1BA776BF0A9242AD2813B90A4DD2418B8B3E322F728F9A5F88BCB7F2064DD2C"
     }
   ]
 }

@@ -1,0 +1,74 @@
+21:38:06 oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW (dareskro payroll oracle v1)
+21:38:07 funding merchant and affiliate on testnet…
+21:38:19 merchant rEJM9HqpEFUzHcB4ccumFcjbFLjBKvESv2, affiliate rNjnBkdj32dzCtKwv7rGbA1EADqSbeQrF6
+21:38:19 escrow 1 (the sale): condition A0258020FE598F95… (deliveryId 796f8d6a01f7) for ORD-2026-1045; confirmation token (64 hex) handed once to the merchant's sales system
+21:38:25 escrow 1 (the sale): EscrowCreate tesSUCCESS, #21796827, 20 XRP locked before any sale, refund after 150 s — https://testnet.xrpl.org/transactions/CE7BFECEB5828DF31531E0B349D7D4BE5F0A945F415A0DC510668F574E2217ED
+21:38:25 escrow 1 (the sale): oracle watching — nothing to poll, it waits for the merchant's confirmation
+21:38:25 sales system confirms with a WRONG token: HTTP 403 {"error":"bad token"}
+21:38:25 escrow 1 after the wrong token: status waiting — nothing moved
+21:38:25 order record: {"orderRef":"ORD-2026-1045","merchant":"rEJM9HqpEFUzHcB4ccumFcjbFLjBKvESv2","affiliate":"rNjnBkdj32dzCtKwv7rGbA1EADqSbeQrF6","total":"149.00 EUR","customer":"c-7f3a","returnWindowClosed":true,"at":"2026-10-24T21:38:25.823Z"}
+21:38:25 sha256 of the order record: 8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758
+21:38:25 sales system confirms with the right token: HTTP 202 {"ok":true,"note":"release on the next tick; poll /escrows"}
+21:38:25 escrow 1: oracle sees — status waiting, confirmed (order 8fb00a230b…)
+21:38:37 escrow 1: oracle sees — status finished, confirmed (order 8fb00a230b…), last word: sale confirmed by the merchant, order sha256 8fb00a230b…, last result tesSUCCESS
+21:38:37 escrow 1: finished — 20 XRP to the affiliate — https://testnet.xrpl.org/transactions/A9A9370A083F7502A632BBC7F5DB4B247C2A0DC395EE495851746F4244248AAA
+21:38:37 affiliate balance: 100 → 120 XRP
+21:38:38 EscrowFinish read back: by rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW, Fulfillment present, 1 memo(s): dareskro/order-sha256
+21:38:38 memo dareskro/order-sha256 = 8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758
+21:38:38 order hash                 = 8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758
+21:38:38 equal: the release names the order, anyone can check it on the explorer
+21:38:38 escrow 2 (no sale): condition A0258020A1620F96… (deliveryId 3d9e1619aac9) for ORD-2026-1046; confirmation token (64 hex) handed once to the merchant's sales system
+21:38:42 escrow 2 (no sale): EscrowCreate tesSUCCESS, #21796828, 20 XRP locked before any sale, refund after 75 s — https://testnet.xrpl.org/transactions/1A399029234565C996622969F8DFE317CEEA4FEAAF1C618E4FCAFF1F290712AA
+21:38:42 escrow 2 (no sale): oracle watching — nothing to poll, it waits for the merchant's confirmation
+21:38:42 no sale is confirmed; waiting 75 s for the deadline…
+21:38:42 escrow 2: oracle sees — status waiting, no confirmation
+21:38:45 escrow 2: oracle sees — status waiting, no confirmation, last word: waiting for the merchant's confirmation
+21:40:09 escrow 2: oracle sees — status expired-refunded, no confirmation, last word: waiting for the merchant's confirmation, last result tesSUCCESS
+21:40:09 escrow 2: expired-refunded — no sale, the commission goes back — https://testnet.xrpl.org/transactions/87A2222325296812EC5DAE6EDC56E97F4B54A2B0AD750CA383911145C7A7E11D
+21:40:09 merchant balance: 79.999988 → 79.999976 XRP (20 locked then refunded, minus fees)
+21:40:09 summary
+21:40:09   oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW — merchant rEJM9HqpEFUzHcB4ccumFcjbFLjBKvESv2 — affiliate rNjnBkdj32dzCtKwv7rGbA1EADqSbeQrF6
+21:40:09   escrow 1 #21796827 (ORD-2026-1045): lock https://testnet.xrpl.org/transactions/CE7BFECEB5828DF31531E0B349D7D4BE5F0A945F415A0DC510668F574E2217ED
+21:40:09     wrong token: HTTP 403 — right token: HTTP 202
+21:40:09     release: finished https://testnet.xrpl.org/transactions/A9A9370A083F7502A632BBC7F5DB4B247C2A0DC395EE495851746F4244248AAA
+21:40:09     memo dareskro/order-sha256 equals the order hash 8fb00a230b78b113…
+21:40:09   escrow 2 #21796828 (ORD-2026-1046): lock https://testnet.xrpl.org/transactions/1A399029234565C996622969F8DFE317CEEA4FEAAF1C618E4FCAFF1F290712AA
+21:40:09     no sale: expired-refunded https://testnet.xrpl.org/transactions/87A2222325296812EC5DAE6EDC56E97F4B54A2B0AD750CA383911145C7A7E11D
+{
+  "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+  "merchant": "rEJM9HqpEFUzHcB4ccumFcjbFLjBKvESv2",
+  "affiliate": "rNjnBkdj32dzCtKwv7rGbA1EADqSbeQrF6",
+  "escrow1": {
+    "deliveryId": "796f8d6a01f7",
+    "seq": 21796827,
+    "createHash": "CE7BFECEB5828DF31531E0B349D7D4BE5F0A945F415A0DC510668F574E2217ED",
+    "cancelAfter": 846193249,
+    "orderRef": "ORD-2026-1045",
+    "wrongToken": 403,
+    "rightToken": 202,
+    "orderHash": "8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758",
+    "memoHash": "8fb00a230b78b113ce1aa79118d82dbd0789a9468cdc94c541b7fb219c1e2758",
+    "status": "finished",
+    "finishHash": "A9A9370A083F7502A632BBC7F5DB4B247C2A0DC395EE495851746F4244248AAA"
+  },
+  "escrow2": {
+    "deliveryId": "3d9e1619aac9",
+    "seq": 21796828,
+    "createHash": "1A399029234565C996622969F8DFE317CEEA4FEAAF1C618E4FCAFF1F290712AA",
+    "cancelAfter": 846193193,
+    "orderRef": "ORD-2026-1046",
+    "status": "expired-refunded",
+    "refundHash": "87A2222325296812EC5DAE6EDC56E97F4B54A2B0AD750CA383911145C7A7E11D"
+  },
+  "balances": {
+    "affiliate": [
+      100,
+      120
+    ],
+    "merchant": [
+      79.999988,
+      79.999976
+    ]
+  }
+}
+21:40:09 both scenarios behaved as expected

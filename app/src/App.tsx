@@ -33,7 +33,8 @@ import type {
   SignerXrp,
 } from "@ledgerhq/device-signer-kit-xrp";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { EscrowCancel, EscrowCreate, Wallet } from "xrpl";
+import type { EscrowCancel, EscrowCreate, Transaction, Wallet } from "xrpl";
+import { ContractDesk, type ContractKind } from "./ContractDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
 import { SpeculosScreen } from "./SpeculosScreen";
@@ -85,6 +86,16 @@ const transports: { id: Mode; label: string }[] = [
   { id: "software", label: "Test wallet (no device)" },
 ];
 
+/** Who pays whom. The employee case is the payroll escrow; the other three are conditional escrows on the same oracle. */
+type CaseMode = "employee" | ContractKind;
+
+const cases: { id: CaseMode; label: string }[] = [
+  { id: "employee", label: "Employee" },
+  { id: "freelance", label: "Freelancer" },
+  { id: "influencer", label: "Influencer" },
+  { id: "affiliate", label: "Affiliate" },
+];
+
 const speculosModels: { id: DeviceModelId; label: string }[] = [
   { id: DeviceModelId.STAX, label: "Stax" },
   { id: DeviceModelId.FLEX, label: "Flex" },
@@ -133,6 +144,11 @@ function Desk(props: {
   setSpeculosUrl: (url: string) => void;
 }) {
   const { transport } = props;
+
+  // ---- the case: the device cards are shared, the rest depends on who pays whom
+  const [caseMode, setCaseMode] = useState<CaseMode>("employee");
+  const contract = caseMode !== "employee";
+  const payerWord = contract ? "payer" : "employer";
 
   // ---- 1. the statement
   const [statement, setStatement] = useState<Statement>();
@@ -208,6 +224,24 @@ function Desk(props: {
   useEffect(() => {
     oracle.identity().then(setOracleId);
   }, []);
+
+  // ---- the registry: everything the oracle watches, every kind, every 5 s
+  const [registry, setRegistry] = useState<oracle.WatchedEscrow[]>([]);
+
+  useEffect(() => {
+    if (!oracleId) return;
+    let stop = false;
+    const poll = async () => {
+      const all = await oracle.escrows();
+      if (!stop) setRegistry(all);
+    };
+    poll();
+    const t = setInterval(poll, 5000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [oracleId]);
 
   useEffect(() => {
     if (!escrow || !oracleId) return;
@@ -350,8 +384,8 @@ function Desk(props: {
     setBalance(await xrpl.getBalance(address));
   };
 
-  /** Escrow amount in XRP plus the reserve and fees: what the employer must hold. */
-  const neededXrp = Math.ceil(Number(amountXrp ?? 0)) + 5;
+  /** Escrow amount in XRP plus the reserve and fees: what the employer must hold. A contract locks 20 XRP by default. */
+  const neededXrp = contract ? 30 : Math.ceil(Number(amountXrp ?? 0)) + 5;
 
   const fund = async () => {
     if (!employer) return;
@@ -424,6 +458,24 @@ function Desk(props: {
     );
     if (signature) setSignedTxHex(xrpl.encodeSigned(tx, signature));
   };
+
+  /** The contract cases sign through the same session and the same device action as sign() above; only the transaction differs. */
+  const signHex = async (t: Transaction): Promise<string | undefined> => {
+    if (!session) return undefined;
+    if (session.wallet) return session.wallet.sign(t).tx_blob;
+    if (!session.signer) return undefined;
+    const signer = session.signer;
+    const signature = await signAction.run(() =>
+      ledger.signOnDevice(signer, ledger.DERIVATION_PATH, xrpl.encodeUnsigned(t)),
+    );
+    return signature ? xrpl.encodeSigned(t, signature) : undefined;
+  };
+
+  // One device prompt for both desks: a case switch must not show the last case's verdict.
+  useEffect(() => {
+    signAction.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseMode]);
 
   const submit = async () => {
     if (!signedTxHex || !tx || !employer) return;
@@ -534,6 +586,15 @@ function Desk(props: {
 
   return (
     <main className="steps">
+      <div className="segmented cases">
+        {cases.map((k) => (
+          <button key={k.id} className={caseMode === k.id ? "active" : ""} onClick={() => setCaseMode(k.id)}>
+            {k.label}
+          </button>
+        ))}
+      </div>
+
+      {!contract && (
       <Card n="1" title="The statement — computed by code, validated by a human">
         <p className="hint">
           Evidence: the schedule qualifies the hours, the badge proves presence.
@@ -645,8 +706,9 @@ function Desk(props: {
           </>
         )}
       </Card>
+      )}
 
-      <Card n="2" title="The employer's Ledger" disabled={!validation}>
+      <Card n={contract ? "1" : "2"} title={`The ${payerWord}'s Ledger`} disabled={contract ? false : !validation}>
         <div className="segmented">
           {transports.map((t) => (
             <button key={t.id} className={transport === t.id ? "active" : ""} onClick={() => props.setTransport(t.id)} disabled={!!session}>
@@ -676,12 +738,12 @@ function Desk(props: {
           {session ? (
             <button onClick={disconnect}>Disconnect</button>
           ) : (
-            <button className="primary" onClick={connect} disabled={connecting || !validation}>
+            <button className="primary" onClick={connect} disabled={connecting || (!contract && !validation)}>
               {connecting ? "Connecting…" : "Connect the Ledger"}
             </button>
           )}
           <button onClick={getAddress} disabled={!session}>
-            Get the employer's address
+            Get the {payerWord}'s address
           </button>
           <label className="check">
             <input type="checkbox" checked={checkOnDevice} onChange={(e) => setCheckOnDevice(e.target.checked)} />
@@ -701,7 +763,7 @@ function Desk(props: {
         <ActionStatus state={addressAction.state} error={addressAction.error} />
         {employer && (
           <dl>
-            <dt>Employer</dt>
+            <dt>{contract ? "Payer" : "Employer"}</dt>
             <dd>
               <a href={xrpl.explorerAccountUrl(employer.address)} target="_blank">
                 {employer.address}
@@ -714,7 +776,7 @@ function Desk(props: {
                 {faucetBusy ? "Funding (about 100 XRP per faucet call)…" : `Get test XRP (needs ${neededXrp})`}
               </button>
               {balance !== undefined && balance !== null && balance < neededXrp && (
-                <span className="ko"> · too low to lock {amountXrp} XRP</span>
+                <span className="ko"> · too low to lock {contract ? "the contract" : `${amountXrp} XRP`}</span>
               )}
             </dd>
           </dl>
@@ -722,6 +784,23 @@ function Desk(props: {
         <ErrorBox error={faucetError} />
       </Card>
 
+      {contract && (
+        <ContractDesk
+          // a new desk per case and per payer address: a prepared escrow never outlives the address it was built for
+          key={`${caseMode}-${employer?.address ?? ""}`}
+          kind={caseMode as ContractKind}
+          payer={employer}
+          compact={transport === "usb" || transport === "ble"}
+          oracleId={oracleId}
+          signHex={signHex}
+          signStatus={<ActionStatus state={signAction.state} error={signAction.error} />}
+          resetSign={signAction.reset}
+          onPayerChanged={() => employer && refreshBalance(employer.address)}
+        />
+      )}
+
+      {!contract && (
+      <>
       <Card n="3" title="The employee and the pay date" disabled={!employer}>
         <div className="row">
           <label className="grow">
@@ -910,15 +989,87 @@ function Desk(props: {
           </p>
         )}
       </Card>
+      </>
+      )}
+
+      <Card title="Registry — everything the oracle watches, every kind" disabled={!oracleId}>
+        <p className="hint">
+          {oracleId
+            ? `${registry.length} escrows in oracle/registry.json (public). Newest first. Payroll escrows registered before the kinds existed show as payroll.`
+            : "No oracle running: nothing to list."}
+        </p>
+        {registry.length > 0 && (
+          <table className="lines registry">
+            <thead>
+              <tr>
+                <th>Kind</th>
+                <th>Owner</th>
+                <th>#</th>
+                <th>Destination</th>
+                <th className="num">Amount</th>
+                <th>Status</th>
+                <th>Last word</th>
+                <th>Proof</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...registry].reverse().map((e) => {
+                const kind = e.kind ?? "payroll";
+                const proofLink = e.proof?.url ?? (e.payout === "usd" && e.payoutResult && !("error" in e.payoutResult) ? e.payoutResult.redemption_explorer : undefined);
+                return (
+                  <tr key={`${e.owner}-${e.sequence}`}>
+                    <td>{kind}</td>
+                    <td className="muted">
+                      <a href={xrpl.explorerAccountUrl(e.owner)} target="_blank">{e.owner.slice(0, 8)}…</a>
+                    </td>
+                    <td className="num">{e.sequence}</td>
+                    <td className="muted">
+                      <a href={xrpl.explorerAccountUrl(e.destination)} target="_blank">{e.destination.slice(0, 8)}…</a>
+                    </td>
+                    <td className="num">{e.amountXrp ? `${e.amountXrp} XRP` : e.amount ? `${e.amount} ${e.currency ?? ""}`.trim() : "?"}</td>
+                    <td className={e.status === "finished" ? "ok" : e.status === "waiting" ? "pending" : e.status === "expired-refunded" ? "ko" : "muted"}>
+                      {e.status}
+                      {e.finishHash && (
+                        <>
+                          {" "}
+                          <a href={xrpl.explorerTxUrl(e.finishHash)} target="_blank">finish</a>
+                        </>
+                      )}
+                      {e.refundHash && (
+                        <>
+                          {" "}
+                          <a href={xrpl.explorerTxUrl(e.refundHash)} target="_blank">refund</a>
+                        </>
+                      )}
+                    </td>
+                    <td className="muted">{e.lastWhy ?? e.note ?? e.lastResult ?? (e.orderHash ? `order ${e.orderHash.slice(0, 10)}…` : "")}</td>
+                    <td className="muted">
+                      {proofLink ? (
+                        <a href={proofLink} target="_blank">{e.proof?.url ? "url" : "AP4M"}</a>
+                      ) : e.proof?.orderRef ? (
+                        e.proof.orderRef
+                      ) : e.statementSha256 ? (
+                        `sha256 ${e.statementSha256.slice(0, 10)}…`
+                      ) : (
+                        ""
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Card>
     </main>
   );
 }
 
-function Card(props: { n: string; title: string; disabled?: boolean; children: ReactNode }) {
+function Card(props: { n?: string; title: string; disabled?: boolean; children: ReactNode }) {
   return (
     <section className={props.disabled ? "card disabled" : "card"}>
       <h2>
-        <span className="step">Step {props.n}</span> {props.title}
+        {props.n && <span className="step">Step {props.n}</span>} {props.title}
       </h2>
       {props.children}
     </section>

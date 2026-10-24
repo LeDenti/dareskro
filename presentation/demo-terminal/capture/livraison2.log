@@ -1,0 +1,29 @@
+21:52:48 oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW (dareskro payroll oracle v1)
+21:52:50 funding client and freelancer on testnet…
+21:53:04 client rMtXpFCVbnAbYt7TdHZ5bDfcW4dUz4eMaJ, freelancer r9ubAo2PctrtCx7twFVHdVYhZmN4XCvSpa
+21:53:10 escrow 1 (the job): EscrowCreate tesSUCCESS, #21797100, 40 XRP locked behind the condition, refund after 300 s — https://testnet.xrpl.org/transactions/DA435E51DDE7F55F540F340C0076AE26FEA8C158D92A162071A6CCC7219D6CF7
+21:53:10 freelancer publishes the WRONG file…
+21:53:16 oracle says: published sha256 19d309b9f6… ≠ agreed d9a12bc024… — status waiting
+21:53:32 third party finish without the secret: tecCRYPTOCONDITION_ERROR — https://testnet.xrpl.org/transactions/EEE21FE00E7016BC60DF9B4E1E8465BEC5E0B7630A40355C19B2B50A02C4333B
+21:53:32 freelancer publishes the RIGHT file…
+21:53:41 escrow 1: finished — match (75 bytes) — https://testnet.xrpl.org/transactions/D4FF12DA121ED1C494ACD6329507C379CA1716DFC0CA300FC0F35E5D7B452212
+21:53:41 freelancer balance: 140 XRP
+21:53:49 escrow 2 (no delivery): EscrowCreate tesSUCCESS, #21797101, 40 XRP locked behind the condition, refund after 75 s — https://testnet.xrpl.org/transactions/C4DC769CF64C4088788DCB31DE32235DB1535CC638ADD9D5D30E87E39139C770
+21:53:49 waiting 75 s for the deadline…
+21:55:16 escrow 2: expired-refunded — https://testnet.xrpl.org/transactions/7DE733794C1AF43BAF0F5F9D639D11D7E5F57A928DF265BA44B377FEDDD77AE8
+21:55:16 client balance: 59.999976 XRP
+{
+  "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+  "client": "rMtXpFCVbnAbYt7TdHZ5bDfcW4dUz4eMaJ",
+  "freelancer": "r9ubAo2PctrtCx7twFVHdVYhZmN4XCvSpa",
+  "escrow1": {
+    "seq": 21797100,
+    "createHash": "DA435E51DDE7F55F540F340C0076AE26FEA8C158D92A162071A6CCC7219D6CF7",
+    "cancelAfter": 846194284
+  },
+  "escrow2": {
+    "seq": 21797101,
+    "createHash": "C4DC769CF64C4088788DCB31DE32235DB1535CC638ADD9D5D30E87E39139C770",
+    "cancelAfter": 846194096
+  }
+}

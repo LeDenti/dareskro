@@ -1,0 +1,94 @@
+21:52:48 oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW (dareskro payroll oracle v1)
+21:52:50 funding brand, influencer and a bystander on testnet…
+21:53:11 brand rMx6HygYTS8NY4tPpwCEh7AreqYMohGVBL, influencer rnivQF1ZTyEqVDw2jMsaZcMzbA5dsTf3eY, bystander r9vopEgyCp7vBrhCbeqUJcdhRososGxMou
+21:53:11 influencer publishes the post at http://127.0.0.1:8791/post.html
+21:53:11 escrow 1 (post stays live): condition A025802043AE3A23… (deliveryId bddfe01bf3bd) for http://127.0.0.1:8791/post.html containing "#ad @dareskro"
+21:53:17 escrow 1 (post stays live): EscrowCreate tesSUCCESS, #21797100, 20 XRP locked — payable at the date (in 45 s) if the post is live, refund 90 s after the date — https://testnet.xrpl.org/transactions/F88D11962F76903EDE345DFC5F6675D854D29F0E2C4E462DC387CCD2D62FA5FB
+21:53:17 escrow 1 (post stays live): oracle watching
+21:53:17 bystander tries EscrowFinish without the secret, 38 s before the date…
+21:53:25 bystander finish: tecNO_PERMISSION (too early, FinishAfter not reached) — https://testnet.xrpl.org/transactions/9779DC7D2039227985577A9FEC35253E95D6D84951D6E637C1D6FBF15175DB9B
+21:53:25 waiting for the date (31 s), the oracle only looks until then…
+21:53:25 escrow 1: oracle sees — status waiting, post live (live with "#ad @dareskro" (97 chars))
+21:54:10 escrow 1: oracle sees — status finished, post live (live with "#ad @dareskro" (97 chars)), last word: live with "#ad @dareskro" (97 chars), checks 1
+21:54:10 escrow 1: finished — live with "#ad @dareskro" (97 chars) — https://testnet.xrpl.org/transactions/D906F9CC28C2075BCAC580EC6F82E9E050C37FD774EDA10819611EBB12FDE463
+21:54:10 influencer balance: 100 → 120 XRP
+21:54:10 escrow 2 (post deleted): condition A0258020602E1E49… (deliveryId eb19d73560bf) for http://127.0.0.1:8791/post.html containing "#ad @dareskro"
+21:54:16 escrow 2 (post deleted): EscrowCreate tesSUCCESS, #21797101, 20 XRP locked — payable at the date (in 45 s) if the post is live, refund 90 s after the date — https://testnet.xrpl.org/transactions/0851C4BE32D90E390759D799258CA3E4C86AFB72B1DDE5BBE3462D534EFEF4B1
+21:54:16 escrow 2 (post deleted): oracle watching
+21:54:16 escrow 2: oracle sees — status waiting, not looked yet
+21:54:19 escrow 2: oracle sees — status waiting, post live (live with "#ad @dareskro" (97 chars))
+21:54:19 influencer DELETES the post (http://127.0.0.1:8791/post.html now answers 404), 35 s before the date
+21:54:19 waiting for the date, then for the refund (125 s)…
+21:54:19 escrow 2: oracle sees — status waiting, post live (live with "#ad @dareskro" (97 chars))
+21:54:40 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404)
+21:55:04 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 1
+21:55:13 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 2
+21:55:19 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 3
+21:55:22 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 4
+21:55:25 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 5
+21:55:31 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 6
+21:55:34 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 7
+21:55:37 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 8
+21:55:43 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 9
+21:55:46 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 10
+21:55:49 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 11
+21:55:55 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 12
+21:55:58 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 13
+21:56:01 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 14
+21:56:07 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 15
+21:56:10 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 16
+21:56:13 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 17
+21:56:20 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 18
+21:56:23 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 19
+21:56:26 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 20
+21:56:32 escrow 2: oracle sees — status waiting, post NOT live (HTTP 404), last word: HTTP 404, checks 21
+21:56:41 escrow 2: oracle sees — status expired-refunded, post NOT live (HTTP 404), last word: HTTP 404, checks 21
+21:56:41 escrow 2: expired-refunded — deleted post, no pay — https://testnet.xrpl.org/transactions/E1BA776BF0A9242AD2813B90A4DD2418B8B3E322F728F9A5F88BCB7F2064DD2C
+21:56:41 brand balance: 79.999988 → 79.999976 XRP (20 locked then refunded, minus fees)
+21:56:41 the platform served the post 4 time(s) and answered 404 23 time(s)
+21:56:41 summary
+21:56:41   oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW — brand rMx6HygYTS8NY4tPpwCEh7AreqYMohGVBL — influencer rnivQF1ZTyEqVDw2jMsaZcMzbA5dsTf3eY
+21:56:41   escrow 1 #21797100: lock https://testnet.xrpl.org/transactions/F88D11962F76903EDE345DFC5F6675D854D29F0E2C4E462DC387CCD2D62FA5FB
+21:56:41     bystander before the date: tecNO_PERMISSION https://testnet.xrpl.org/transactions/9779DC7D2039227985577A9FEC35253E95D6D84951D6E637C1D6FBF15175DB9B
+21:56:41     at the date, post live: finished https://testnet.xrpl.org/transactions/D906F9CC28C2075BCAC580EC6F82E9E050C37FD774EDA10819611EBB12FDE463
+21:56:41   escrow 2 #21797101: lock https://testnet.xrpl.org/transactions/0851C4BE32D90E390759D799258CA3E4C86AFB72B1DDE5BBE3462D534EFEF4B1
+21:56:41     post deleted before the date: expired-refunded https://testnet.xrpl.org/transactions/E1BA776BF0A9242AD2813B90A4DD2418B8B3E322F728F9A5F88BCB7F2064DD2C
+{
+  "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+  "brand": "rMx6HygYTS8NY4tPpwCEh7AreqYMohGVBL",
+  "influencer": "rnivQF1ZTyEqVDw2jMsaZcMzbA5dsTf3eY",
+  "postUrl": "http://127.0.0.1:8791/post.html",
+  "escrow1": {
+    "deliveryId": "bddfe01bf3bd",
+    "seq": 21797100,
+    "createHash": "F88D11962F76903EDE345DFC5F6675D854D29F0E2C4E462DC387CCD2D62FA5FB",
+    "checkAfter": 846194036,
+    "cancelAfter": 846194126,
+    "bystander": {
+      "code": "tecNO_PERMISSION",
+      "hash": "9779DC7D2039227985577A9FEC35253E95D6D84951D6E637C1D6FBF15175DB9B"
+    },
+    "status": "finished",
+    "finishHash": "D906F9CC28C2075BCAC580EC6F82E9E050C37FD774EDA10819611EBB12FDE463"
+  },
+  "escrow2": {
+    "deliveryId": "eb19d73560bf",
+    "seq": 21797101,
+    "createHash": "0851C4BE32D90E390759D799258CA3E4C86AFB72B1DDE5BBE3462D534EFEF4B1",
+    "checkAfter": 846194095,
+    "cancelAfter": 846194185,
+    "status": "expired-refunded",
+    "refundHash": "E1BA776BF0A9242AD2813B90A4DD2418B8B3E322F728F9A5F88BCB7F2064DD2C"
+  },
+  "balances": {
+    "influencer": [
+      100,
+      120
+    ],
+    "brand": [
+      79.999988,
+      79.999976
+    ]
+  }
+}
+21:56:41 both scenarios behaved as expected

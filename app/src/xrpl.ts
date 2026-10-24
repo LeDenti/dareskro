@@ -221,6 +221,50 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
   }));
 }
 
+export type ConditionalEscrowDraft = {
+  account: string;
+  publicKey: string;
+  destination: string;
+  amountXrp: string;
+  /** PREIMAGE-SHA-256 condition issued by the oracle (uppercase DER hex). The oracle keeps the secret. */
+  condition: string;
+  /** Past this date the payer is refunded: the oracle's power to block ends here. */
+  cancelAfter: Date;
+  /** Optional floor on the release (influencer: the post must still be there at the date). */
+  finishAfter?: Date;
+  /** Text memos: the case, the agreed proof, the oracle. Never the deliverable itself. */
+  memos: { type: string; data: string }[];
+  /** No MemoFormat on a real device: see EscrowDraft.compact. */
+  compact?: boolean;
+};
+
+/**
+ * The conditional escrow (freelance, influencer, affiliate), ready for the device.
+ * Condition + CancelAfter is the shape that gives the oracle power to decide
+ * *whether*, bounded by the refund date. Same signing path as the payroll escrow.
+ */
+export async function prepareConditionalEscrowCreate(d: ConditionalEscrowDraft): Promise<EscrowCreate> {
+  return withRetry(async (c) => c.autofill<EscrowCreate>({
+    TransactionType: "EscrowCreate",
+    Account: d.account,
+    Destination: d.destination,
+    Amount: xrpToDrops(d.amountXrp),
+    Condition: d.condition,
+    CancelAfter: rippleTime(d.cancelAfter),
+    ...(d.finishAfter ? { FinishAfter: rippleTime(d.finishAfter) } : {}),
+    Memos: d.memos.map((m) => ({
+      Memo: {
+        MemoType: toHex(m.type),
+        MemoData: toHex(m.data),
+        ...(d.compact ? {} : { MemoFormat: toHex("text/plain") }),
+      },
+    })),
+    SigningPubKey: d.publicKey.toUpperCase(),
+    // autofill() gives about 1 minute. Give 10 minutes to read the device screen.
+    LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+  }));
+}
+
 /** The employer trying to take the money back. Must fail: tecNO_PERMISSION. */
 export async function prepareEscrowCancel(args: {
   account: string;
