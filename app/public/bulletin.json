@@ -58,17 +58,17 @@
     },
     {
       "item": "indemnite de fin de contrat",
-      "detail": "1E+1 % du brut de la garde (CDD, L1243-8)",
+      "detail": "10 % du brut de la garde (CDD, L1243-8)",
       "amount": "46.66"
     },
     {
       "item": "indemnite compensatrice de conges payes",
-      "detail": "1E+1 % du brut, indemnite de fin de contrat incluse (L1242-16)",
+      "detail": "10 % du brut, indemnite de fin de contrat incluse (L1242-16)",
       "amount": "51.32"
     }
   ],
-  "total": "564.55",
-  "gross": "564.55",
+  "total": "564.56",
+  "gross": "564.56",
   "currency": "USD",
   "contributions": {
     "recipient": "URSSAF",
@@ -80,12 +80,12 @@
     },
     "employer": {
       "rate": "0.42",
-      "amount": "237.11"
+      "amount": "237.12"
     },
-    "total_to_urssaf": "361.31",
+    "total_to_urssaf": "361.32",
     "rates_source": "purchased with the rules (fixed_term, contributions)"
   },
-  "net_to_pay": "440.35",
+  "net_to_pay": "440.36",
   "withholding": {
     "recipient": "DGFiP",
     "due": "2026-11-15",
@@ -93,8 +93,8 @@
     "rate": "0.0750",
     "amount": "33.03"
   },
-  "net_paid": "407.32",
-  "employer_cost": "801.66",
+  "net_paid": "407.33",
+  "employer_cost": "801.68",
   "rest_hours_outside_escrow": "12.00",
   "rest_note": "repos d egale duree — le texte ne prevoit pas de le remplacer par une indemnite",
   "sources": [
@@ -118,7 +118,7 @@
     "valid_from": "2026-01-19"
   },
   "computed_by": "officine.garde — deterministic, replayable to the cent",
-  "computed_at": "2026-10-25T10:11:06+00:00",
+  "computed_at": "2026-10-25T14:33:40+00:00",
   "status": "PROPOSITION",
-  "sha256": "ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e"
+  "sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf"
 }

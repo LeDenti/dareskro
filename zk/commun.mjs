@@ -109,6 +109,7 @@ export function cddTotal(gardeCents) {
 // `coefficient` restricts the search to one value (when a memo already leaks it).
 export function candidates(pub, coefficient = null) {
   const DEN = 2426720n, HALF = 1213360n, SUNDAY = 91002n;
+  const line = (n) => (n + HALF) / DEN; // one printed line, rounded half up to the cent (same as main.nr)
   const pvm = BigInt(pub.point_value_milli);
   // With a fixed-term contract the public total is cddTotal(shift gross): invert that first.
   const want = Number(pub.total_cents);
@@ -130,12 +131,17 @@ export function candidates(pub, coefficient = null) {
     const t2 = fin16 > lo2 ? fin16 - lo2 : 0n;
     const sunday = pub.dimanche ? SUNDAY * hq * pvm : 0n;
     for (let k = 0n; k <= 15n; k += 3n) {
-      const m = (100n + k) * retenu16 + 25n * t1 + 50n * t2; // n = coefficient * pvm * m + sunday
+      const m = (100n + k) * retenu16 + 25n * t1 + 50n * t2; // exact sum: n = coefficient * pvm * m + sunday
       const unit = pvm * m;
-      let cMin = (lo - sunday + unit - 1n) / unit, cMax = (hi - sunday) / unit;
+      // the lines are rounded one by one, so the exact sum may miss the total by up to two cents
+      // either way: bound the coefficient with that margin, then check the per-line rounding exactly
+      let cMin = (lo - 2n * DEN - sunday + unit - 1n) / unit, cMax = (hi + 2n * DEN - sunday) / unit;
       if (cMin < 100n) cMin = 100n;
       if (cMax > 2000n) cMax = 2000n;
       for (let c = cMin; c <= cMax; c += 1n) {
+        const b = c * pvm;
+        const cents = line(100n * retenu16 * b) + line(25n * t1 * b + 50n * t2 * b) + line(sunday) + line(k * retenu16 * b);
+        if (cents !== total) continue;
         if (coefficient === null || c === BigInt(coefficient)) out.push({ hours: Number(hq) / 4, coefficient: Number(c), seniority_rate: Number(k) });
       }
     }

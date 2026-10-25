@@ -27,6 +27,12 @@ import os
 import sys
 from decimal import Decimal, ROUND_HALF_UP
 
+
+def pct(t):
+    """A rate as a percentage for a label: 0.10 -> '10', 0.075 -> '7.5' (never '1E+1')."""
+    v = Decimal(t) * 100
+    return str(v.quantize(Decimal("1")) if v == v.to_integral_value() else v.normalize())
+
 ICI = os.path.dirname(os.path.abspath(__file__))
 # Le moteur de calcul officine.garde est ANTERIEUR au hackathon (dossier sources/paie,
 # hors du depot public). Sans lui, ce script ne calcule pas : agent/sortie/bulletin.json
@@ -202,16 +208,18 @@ def main():
     cent = Decimal("0.01")
     lignes = [{"item": l["poste"], "detail": l["detail"], "amount": l["montant"]}
               for l in r["lignes"]]
-    brut_garde = Decimal(r["total_euros"])
+    # Each line is printed rounded to the cent, so the shift gross is the sum of the lines as
+    # printed, not the rounding of their exact sum: the statement adds up on paper, to the cent.
+    brut_garde = sum((Decimal(l["montant"]) for l in r["lignes"]), Decimal("0")).quantize(cent, ROUND_HALF_UP)
     cdd = plan.get("contrat", "").lower().startswith("cdd")
     if cdd:
         fin_contrat = (brut_garde * taux_fin_contrat).quantize(cent, ROUND_HALF_UP)
         conges = ((brut_garde + fin_contrat) * taux_conges).quantize(cent, ROUND_HALF_UP)
         lignes.append({"item": "indemnite de fin de contrat",
-                       "detail": "%s %% du brut de la garde (CDD, L1243-8)" % (taux_fin_contrat * 100).normalize(),
+                       "detail": "%s %% du brut de la garde (CDD, L1243-8)" % pct(taux_fin_contrat),
                        "amount": str(fin_contrat)})
         lignes.append({"item": "indemnite compensatrice de conges payes",
-                       "detail": "%s %% du brut, indemnite de fin de contrat incluse (L1242-16)" % (taux_conges * 100).normalize(),
+                       "detail": "%s %% du brut, indemnite de fin de contrat incluse (L1242-16)" % pct(taux_conges),
                        "amount": str(conges)})
         brut = brut_garde + fin_contrat + conges
         contrat = {"type": plan["contrat"], "fixed_term": True,
@@ -320,13 +328,13 @@ def main():
     print("  %-26s %10s %s   (+ %s h de repos, hors sequestre)"
           % ("BRUT", bulletin["total"], DEVISE, bulletin["rest_hours_outside_escrow"]))
     c = bulletin["contributions"]
-    print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations salariales", "-" + c["employee"]["amount"], DEVISE, (Decimal(c["employee"]["rate"]) * 100).normalize()))
+    print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations salariales", "-" + c["employee"]["amount"], DEVISE, pct(Decimal(c["employee"]["rate"]))))
     print("  %-26s %10s %s" % ("NET AVANT IMPOT", bulletin["net_to_pay"], DEVISE))
     w = bulletin["withholding"]
     print("  %-26s %10s %s   (taux personnalise %s %%, DGFiP via DSN)" % ("prelevement a la source", "-" + w["amount"], DEVISE, (Decimal(w["rate"]) * 100).normalize()))
     print("  %-26s %10s %s   -> sequestre 1, le salarie, a la date de paie" % ("NET PAYE", bulletin["net_paid"], DEVISE))
     print("  %-26s %10s %s   -> escrow vers la DGFiP, exigible le %s" % ("A LA DGFIP", w["amount"], DEVISE, w["due"]))
-    print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations patronales", c["employer"]["amount"], DEVISE, (Decimal(c["employer"]["rate"]) * 100).normalize()))
+    print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations patronales", c["employer"]["amount"], DEVISE, pct(Decimal(c["employer"]["rate"]))))
     print("  %-26s %10s %s   -> Check XRPL que %s encaisse elle-meme, exigible le %s" % ("A L'URSSAF", c["total_to_urssaf"], DEVISE, c["recipient"], c["due"]))
     print("  %-26s %10s %s" % ("COUT EMPLOYEUR", bulletin["employer_cost"], DEVISE))
     print("taux       %s" % c["rates_source"])

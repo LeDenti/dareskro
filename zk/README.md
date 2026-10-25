@@ -14,7 +14,7 @@ pure npm, in WebAssembly. No binary was installed.
 hours, coefficient and seniority *from the proof*. It cannot hide them from the public, because
 the amount is public on the escrow and the rules are public: anyone can enumerate the inputs
 that give the total. For the shipped escrow, `verify.mjs` counts **11** (hours, coefficient,
-seniority rate) triples compatible with 466.57 over every integer coefficient the circuit admits,
+seniority rate) triples compatible with 564.56 (shift 466.58) over every integer coefficient the circuit admits,
 and the escrow's own `dareskro/statement-id` memo (`garde-2026-10-25-coef600`, written by the
 pay desk) names the coefficient, which leaves **1** candidate: 12 h, coefficient 600, 15 %.
 What the layer does guarantee: the amount is the agreement's formula for admissible inputs (the
@@ -38,7 +38,7 @@ verification key and the public inputs:
 
 | public (anyone reads them) | private (never leave `zk/.witness/`, sealed for the administration) |
 |---|---|
-| `total_cents` = 46657 | `heures_q` hours worked, in quarter hours |
+| `total_cents` = 56456 (gross 564.56: shift 466.58 + 46.66 + 51.32) | `heures_q` hours worked, in quarter hours |
 | `point_value_milli` = 5277 (5.277 EUR) | `coefficient` |
 | `dimanche` = true | `anciennete_annees` |
 | `volets_ouverts` = true | `badge_id` = sha256(badge) reduced to the field |
@@ -78,10 +78,12 @@ the time retained, full time) stays an integer. Overtime is placed in the week a
 Two facts a verifier should know, both measured:
 
 - **The engine's total is not the sum of the printed lines.** The statement shows
-  250.51 + 83.50 + 94.99 + 37.58 = 466.58, but the engine rounds the exact sum once:
-  466.5714 -> **466.57**. The circuit follows the engine. A statement edited to 466.58 is
+  250.51 + 83.50 + 94.99 + 37.58 = **466.58**: since 25/10 10:45 NY the engine rounds each
+  line to the cent and adds the rounded lines (before, it rounded the exact sum once,
+  466.5714 -> 466.57, and the printed lines missed the total by a cent). The circuit follows
+  the engine, line by line. A statement edited to 466.57 is
   rejected at witness generation ("Cannot satisfy constraint", exit 1).
-- **Replayed against the engine** (1 124 352 combinations by the implementers, 20 000 random
+- **Replayed against the engine** after the per-line rounding (25/10, 20 000 random combinations: identical whenever the week held at most 43 h before the shift, 14 368 of them; every divergence beyond, as before). Earlier, with the sum rounding: 1 124 352 combinations by the implementers, 20 000 random
   cases by the verifier, two independent reimplementations): the circuit's integer formula and
   the engine agree on every case where the week held at most 43 h before the shift. Beyond
   43 h they differ: the engine's `majorations_hs` resets the +50 % tranche start to 43 h
@@ -100,10 +102,11 @@ Noir also fails the proof on any unsigned overflow.
 The circuit's formula is public, so is the total. `commun.mjs: candidates()` runs the same
 integers as `main.nr` backwards: for each of the 96 hour values and 6 seniority rates it solves
 the coefficient range that lands on `total_cents` (96 x 6 loop, 0.13 ms). On the shipped public
-inputs (46657 cents, point 5.277, Sunday, shutters open, 35 h before):
+inputs (56456 cents = 564.56 with the one-day contract, point 5.277, Sunday, shutters open, 35 h before):
 
-- **11 triples** over all integer coefficients 100..2000: 5.25 h / 1662 / 15 %, 6 h / 1606 / 0 %,
-  8 h / 1159 / 0 %, 8.25 h / 1061 / 6 %, 10.5 h / 750 / 9 %, 11.75 h / 672 / 3 %,
+- **4 triples** over all integer coefficients 100..2000: 5.25 h / 1662 / 15 %, **12 h / 600 / 15 %** (the
+  real one), 15.25 h / 466 / 3 %, 22.75 h / 251 / 3 %. (With Saturday's sum rounding and no
+  contract, 11 triples fit 466.57.)
   **12 h / 600 / 15 %**, 12.5 h / 617 / 3 %, 13.75 h / 497 / 15 %, 18.75 h / 316 / 15 %,
   19.75 h / 316 / 3 %;
 - the escrow's `dareskro/statement-id` memo says `coef600`: **1 triple** left, so hours and
@@ -126,7 +129,7 @@ random id kept inside the sealed statement). The compact 3-memo mode already omi
   some admissible inputs". The link to reality is the statement, whose SHA-256 is on the escrow
   and inside the commitment, and which the administration opens with layer B.
 - Lawfulness beyond the formula: any integer coefficient 100..2000 passes (5.25 h at coefficient
-  1662 with 15 % seniority is a valid preimage of 46657 cents). Constraining the coefficient to
+  1662 with 15 % seniority is a valid preimage of 56456 cents). Constraining the coefficient to
   the agreement's grid in-circuit is a few hundred gates once a grid is part of the purchased
   rules; it is not today.
 - The amount. The XRP `Amount` is public on every escrow and the `dareskro/fiat` memo states the
@@ -232,7 +235,7 @@ after the change.
 | sealed statement | `bulletin.chiffre.json` 5 837 bytes: ciphertext 3 072 (statement 2 987 padded to 1 kB), zk opening 400, two wrapped keys |
 | `zk/node_modules` | 199 MB (131 MB are bb's native binaries, unused) |
 
-Checks run end to end on the real statement (total 466.57, escrow sequence 21789944 of
+Checks run end to end on Saturday's statement (total 466.57 then, escrow sequence 21789944 of
 rGJsjkfmASA2ezXYDpTQJZDp9tRgCJAPhw), after the fixes of this evening:
 
 - proof VERIFIED; statement memo 7cad8a6d… MATCHES the proof's public hash; 361.141858 XRP

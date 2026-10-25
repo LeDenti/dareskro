@@ -38,7 +38,7 @@ Only this counts for judging, and we say so.
 
 | Piece | Where | Status |
 |---|---|---|
-| Evidence → statement agent (schedule + badge → lines, total, SHA-256); since Sunday morning the statement is a **one-day fixed-term contract**: end-of-contract bonus and paid-leave allowance (10 % + 10 %), the contributions (rates bought from the rules service), the income tax withheld at source (personalised rate from DGFiP), the net paid, the employer cost | `agent/bulletin_garde.py` | done: shift 466.57, gross 564.55, net 440.35, tax 33.03, paid 407.32, 361.31 to URSSAF (USD; `--devise EUR` for euros) |
+| Evidence → statement agent (schedule + badge → lines, total, SHA-256); since Sunday morning the statement is a **one-day fixed-term contract**: end-of-contract bonus and paid-leave allowance (10 % + 10 %), the contributions (rates bought from the rules service), the income tax withheld at source (personalised rate from DGFiP), the net paid, the employer cost | `agent/bulletin_garde.py` | done: shift 466.57, gross 564.56, net 440.35, tax 33.03, paid 407.32, 361.31 to URSSAF (USD; `--devise EUR` for euros) |
 | Pay desk web app: statement, human validation, Ledger connect, `EscrowCreate` signed on device, proofs, third-party release | `app/` | done, run end to end on Speculos (Nano X, XRP app 2.8.1) **and on a real Nano S Plus (XRP app 2.8.2), Saturday 19:40 UTC** |
 | Ledger integration: Device Management Kit + `device-signer-kit-xrp` (pre-release), USB / Bluetooth / Speculos | `app/src/ledger.ts` | done |
 | Escrow builder for the device, memo with statement hash, early-finish / cancel / release proofs | `app/src/xrpl.ts` | done |
@@ -114,22 +114,34 @@ when measured on 08/09/2026 because its issuer had not set
 by an outside pharmacist is a fixed-term contract of one day, so the statement carries,
 on top of the four shift lines (466.57), the end-of-contract bonus (10 %, Code du travail
 L1243-8: 46.66) and the paid-leave allowance (10 % of the gross including that bonus,
-L1242-16: 51.32): **gross 564.55**. Then the contributions, at aggregated indicative
+L1242-16: 51.32): **gross 564.56**. Then the contributions, at aggregated indicative
 rates bought from the rules service with the point value (`fixed_term`, `contributions`
 in the resource; the DSN computes line by line in production): employee 22 % (124.20),
-employer 42 % (237.11). **Net before tax 440.35; 361.31 to URSSAF**, due the 15th of the
-next month; employer cost 801.66. Then the **income tax withheld at source** at the
+employer 42 % (237.12). **Net before tax 440.36; 361.32 to URSSAF**, due the 15th of the
+next month; employer cost 801.68. Then the **income tax withheld at source** at the
 employee's personalised rate, transmitted by DGFiP through the DSN (7.5 % here, in the
-schedule file): 33.03 to DGFiP, **net paid 407.32**.
+schedule file): 33.03 to DGFiP, **net paid 407.33**.
 
 Three transactions leave the pay desk for one validated shift, and the ledger carries
 each to the right place:
 
 | Leg | To whom | How | When |
 |---|---|---|---|
-| the net paid, 407.32 | the employee (a fresh account per period) | an **escrow**, FinishAfter only, released by the oracle | the pay date |
-| the contributions, 361.31 | URSSAF | a **Check** (XLS-18) with the statement hash as `InvoiceID`: the employer signs once, URSSAF cashes it itself (`CheckCash`) for the amount due before it expires — the ledger's direct-debit mandate | whenever URSSAF wants, before the due date + grace |
+| the net paid, 407.33 | the employee (a fresh account per period) | an **escrow**, FinishAfter only, released by the oracle | the pay date |
+| the contributions, 361.32 | URSSAF | a **Check** (XLS-18) with the statement hash as `InvoiceID`: the employer signs once, URSSAF cashes it itself (`CheckCash`) for the amount due before it expires — the ledger's direct-debit mandate | whenever URSSAF wants, before the due date + grace |
 | the income tax, 33.03 | DGFiP | an **escrow**, released by the oracle | the due date |
+
+**Rounding, fixed at 10:45 NY on Sunday.** The four shift lines are printed rounded to the
+cent (250.51 + 83.50 + 94.99 + 37.58 = 466.58) but the engine rounded their *exact* sum once
+(466.5714 → 466.57): the statement did not add up on paper. Since then each line is rounded,
+then added: shift 466.58, gross 564.56, net 440.36, URSSAF 361.32, DGFiP 33.03, net paid 407.33,
+employer cost 801.68 (rates labelled "10 %", no more "1E+1 %"). The Noir circuit rounds line by
+line too (replayed on 20 000 random combinations: identical whenever the week held at most
+43 h before the shift), the statement was regenerated (sha256 384ec59c…), proven again
+(commitment 0x20613f4b…, 4 compatible triples instead of 11) and sealed. Every run measured
+**before** that moment carried the previous statement (ede5c5fd…, one cent apart on four
+lines); the runs after it are marked.
+
 
 **One signature.** The three are inner transactions of one **Batch** (XLS-56,
 `tfAllOrNothing`): the employer approves once on the device, the ledger applies all three
@@ -422,6 +434,25 @@ verified with `verify-receipt.mjs` (`verified: true`, amount 0.41, payout wallet
 (0x125490fb… at 9.34 redeemed, 0x32b199da… at 4.40 redeemed: 0x5434ac29…, 0x9323e003…),
 giving 1.44 RLUSD back: 20 allocated, 14.30 spent, 1.44 held, **4.26 free** for one
 more payout at 1/100.
+
+### Run with the regenerated statement, 14:35 UTC (script, after the rounding fix)
+
+Same script (`oracle/demo_confidentialite.mjs`, capture
+`presentation/demo-terminal/capture/confidentialite_arrondi.log`), statement **384ec59c…**
+(shift 466.58, gross 564.56, net 440.36, net paid 407.33, URSSAF 361.32, DGFiP 33.03),
+commitment 0x20613f4b…, 4 compatible triples:
+
+| Step | Result |
+|---|---|
+| **Batch, one signature, three inner transactions, all or nothing** | `tesSUCCESS` [443DBC60…](https://testnet.xrpl.org/transactions/443DBC6026CCE1100AC6D7EB04C7D4029CBC4F2F08B0057469CF014668044BCE) |
+| inner 1 — pay escrow: the **net paid** 407.33 USD = 315.500441 XRP at 1.29106; memos: statement hash 384ec59c…, opaque id, fiat, `dareskro/gross` = gross 564.56, net 440.36, employee rate 0.22, tax rate 0.075, paid 407.33, oracle, zk commitment 0x20613f4b… | [99DBC2B3…](https://testnet.xrpl.org/transactions/99DBC2B3F8DCB1F50BAC12F12B34B0DD5E85A264FC9FAB8095D5A27A32BD2972) |
+| inner 2 — **Check** for URSSAF: 361.32 USD, `InvoiceID` = the statement hash | [7AF31E37…](https://testnet.xrpl.org/transactions/7AF31E37EA05918D22DAEC6A537CC78A22951A30DF09529B673E2CEDD0412605) |
+| inner 3 — tax escrow: 33.03 USD to DGFiP, FinishAfter = the due date | [C1C3720B…](https://testnet.xrpl.org/transactions/C1C3720B90A2885C3D6A6CE72959EE8C454CAFF63FF33639A31CB02A67F7933D) |
+| Public verification: hash, commitment and amount bound (gross − 22 % = net, net − 7.5 % = paid) | `RESULT: OK` |
+| The administration opens the statement: hash = memo, fiat memo = net paid, gross memo = gross, net, paid | `MATCH` |
+| **URSSAF cashes its check itself** at the due date (`CheckCash`) | [A2B3CAF0…](https://testnet.xrpl.org/transactions/A2B3CAF0EC7FEC366BE40469F67A37CD30DBB3D8173898885F8AECD1B9EFB201) |
+| The oracle releases the pay, then the income tax to DGFiP | [235B2CF8…](https://testnet.xrpl.org/transactions/235B2CF8D5DDA16B9D693BE6C25225BD1BF8E066F12B7E2DD49EEE83B0AD65DC), [A96035DF…](https://testnet.xrpl.org/transactions/A96035DFDC9E56A34FBBE442F423D9C87FC7E6CACD873FAB405D18457CD6BFF0) |
+
 
 One more thing said plainly: this repository publishes the demo statement itself
 (`agent/sortie/bulletin.json`, served by the desk as `/bulletin.json`), because it is the

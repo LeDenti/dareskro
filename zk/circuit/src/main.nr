@@ -6,8 +6,9 @@
 // amount and the rules are public, so the public can enumerate the compatible inputs
 // (verify.mjs prints how many).
 //
-// Arithmetic. The payroll engine works in Decimal and rounds the SUM of the exact
-// lines to the cent (ROUND_HALF_UP). Every line is a rational number with a
+// Arithmetic. The payroll engine works in Decimal and rounds EACH line to the cent
+// (ROUND_HALF_UP), then adds the rounded lines (since 25/10, 10:30 NY: before that it rounded
+// the exact sum, and the printed lines could miss the total by a cent). Every line is a rational number with a
 // denominator that divides 242 672 000 = 2^7 * 5^3 * 15167 (151.67 h = 15167/100):
 //   hourly rate   = coefficient * point / 151.67       (point = point_value_milli / 1000)
 //   shift pay     = retained hours * hourly rate       (retained = hours, or 25 % with shutters closed, full time)
@@ -16,9 +17,8 @@
 //   seniority     = retained hours * hourly rate * 3 % per 3 years, capped at 15 % (>= 15 years)
 //   fixed-term    = +10 % of the shift gross (end of contract), then +10 % of that sum (paid leave), each rounded to the cent
 // Hours are carried in sixteenths of an hour so that the 25 % shutters-closed case stays an
-// integer. With N = total * 242 672 000, the engine's rounding is cents = floor((N + 1 213 360) / 2 426 720).
-// Measured against the engine on 1 124 352 input combinations: identical whenever the week
-// held at most 43 h before the shift (see zk/README.md for the one divergence beyond).
+// integer. With n = line * 242 672 000, the engine's rounding of a line is cents = floor((n + 1 213 360) / 2 426 720).
+// Replayed against the engine on random input combinations after the change (see zk/README.md).
 use std::hash::pedersen_hash;
 
 global WEEK_35H_16: u64 = 560; // 35 h in sixteenths of an hour
@@ -75,8 +75,13 @@ fn main(
     let k = if steps > 5 { 15 } else { steps * 3 };
 
     let sunday = if dimanche { SUNDAY_FACTOR * hq * pvm } else { 0 };
-    let n = 100 * retenu16 * base + 25 * t1 * base + 50 * t2 * base + sunday + k * retenu16 * base;
-    let garde_cents = (n + ROUND_HALF) / ROUND_DEN;
+    // Each line is rounded to the cent on its own, as the statement prints it, then the lines
+    // are added: shift pay, overtime (one line for both rates), Sunday allowance, seniority.
+    let l_garde = (100 * retenu16 * base + ROUND_HALF) / ROUND_DEN;
+    let l_sup = (25 * t1 * base + 50 * t2 * base + ROUND_HALF) / ROUND_DEN;
+    let l_dim = (sunday + ROUND_HALF) / ROUND_DEN;
+    let l_anc = (k * retenu16 * base + ROUND_HALF) / ROUND_DEN;
+    let garde_cents = l_garde + l_sup + l_dim + l_anc;
     // Fixed-term contract (Code du travail L1243-8, L1242-16): each indemnity is 10 % of its
     // basis, rounded to the cent half up — (x + 5) / 10 on cents is exactly that rounding.
     let fin_contrat = if cdd { (garde_cents + 5) / 10 } else { 0 };

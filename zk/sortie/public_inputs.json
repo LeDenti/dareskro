@@ -13,13 +13,13 @@
     "commitment"
   ],
   "note": "statement_hi/lo are the two halves of statement_sha256, a public input of the proof and the escrow memo",
-  "total_cents": 56455,
+  "total_cents": 56456,
   "point_value_milli": 5277,
   "dimanche": true,
   "volets_ouverts": true,
   "heures_semaine_avant": 35,
   "cdd": true,
-  "statement_sha256": "ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e",
-  "commitment": "0x29534add91eb55dd45c3cd1e3cc493e648c7b888d2530cf80b786f82a1949956",
-  "generated": "2026-10-25T10:14:26.199Z"
+  "statement_sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+  "commitment": "0x20613f4b2d866d2c331ec42fabd258b7916cbdb8363cbe1fb8d7bcaf495e8e7f",
+  "generated": "2026-10-25T14:34:11.642Z"
 }
