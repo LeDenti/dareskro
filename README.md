@@ -402,6 +402,19 @@ finished the escrow at the date, then ran `ap4m/payout.mjs` by itself.
 | Settlement and payout: RLUSD to the employee's payout wallet, 4.77 → 9.44 RLUSD | settlement [0x2e10a168…](https://explorer.testnet.xrplevm.org/tx/0x2e10a168e142fc749fc71543527c59cfdc5066c01ed8e6056027f6d884a7cab2), payout [0x83310afd…](https://explorer.testnet.xrplevm.org/tx/0x83310afd9aff69059f4a31300ea061d8f2f5889796997933db0a692e365877a8) |
 | Mastercard receipt (`ap4m.claim-receipt.v1`), with the payout observation | [claims/0xf4470eea…/0x6764e0ad….json](https://hackathon.ap4m.build/public/evidence/claims/0xf4470eea92e6363f93031203cad3d3163bb19f44bc102c3ca55eb2cb0351f3fd/0x6764e0ad071e562281d1a1b312f8555e0f28d3b1689720c67825c89b79968013.json) |
 | The oracle's own log and registry (`payoutResult`), shown on the pay desk | `20:28:03 escrow #21789944: 4.67 RLUSD settled via AP4M` |
+| The payout receipt checked on chain with Mastercard's `verify-receipt.mjs`: `verified: true`, amount 4.67, payout 0x83310afd…, settlement 0x2e10a168…, against ledger 0xcAB42800…, vault 0x83DD9cD0…, RLUSD 0x27b57a9D… | `presentation/demo-terminal/capture/recu_paie.log` |
+
+### The spend limit, enforced — 25/10/2026 00:28 UTC, two over-cap attempts refused
+
+Mastercard's own demo blueprint asks for an over-cap attempt rejected. `ap4m/plafond.mjs`
+stages two, on purpose, and pays nothing (`presentation/demo-terminal/capture/plafond.log`):
+
+| Attempt | Refused by | Words |
+|---|---|---|
+| Pay the payslip, 4.67 RLUSD, on the channel `0x125490fb…` that has 0.66 RLUSD left (cap 10.00, redeemed 9.34) | the Merchant (payee facilitator), reading the channel on chain: it issues no 402 challenge for a price the channel cannot cover | `HTTP 503: payment_pending_or_unavailable` — and had a challenge been issued, the kit refuses to sign a Voucher above cap: `settled ≤ redeemed ≤ cap`, 9.34 + 4.67 = 14.01 > 10.00 |
+| Open a new channel with a 52.82 RLUSD cap while the team's limit is 20.00 and 2.82 is unassigned | the platform (the Authorized Spend Limit) | `channel request failed (400): cap exceeds the unassigned deposit (2.82 RLUSD available)` |
+
+The agent cannot spend beyond what the employer funded, at either layer, and no signature exists that could.
 
 One honest detail, and the rule it produced. The first attempt (20:12 UTC) *was*
 redeemed on chain, but the script died before collecting the proof, leaving the

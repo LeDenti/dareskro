@@ -1,0 +1,28 @@
+  [merchant] submitter 0x1f9265e1E9efab936589500dA5b8Ef2fc25ff323 holds 42.9995783219245 XRP for gas
+  [merchant] dareskro rules service: http://127.0.0.1:4310/resource — 4.67 RLUSD a query — payout 0x1f9265e1E9efab936589500dA5b8Ef2fc25ff323
+00:30:58 channel 0xe2c30cf9… open: cap 2.00, redeemed 0.10, left 1.90 RLUSD
+00:30:58 channel 0x125490fb… open: cap 10.00, redeemed 9.34, left 0.66 RLUSD
+00:30:58 channel 0x32b199da… open: cap 5.18, redeemed 0.00, left 5.18 RLUSD
+00:30:58 attempt 1: pay the payslip, 4.67 RLUSD, on channel 0x125490fb… which has 0.66 RLUSD left
+00:31:00 attempt 1: REFUSED by the Merchant, reading the channel on chain: no 402 challenge issued — Merchant must return an x402 payment requirement (HTTP 503: payment_pending_or_unavailable)
+00:31:00   the rule: settled <= redeemed <= cap. redeemed 9.34 + 4.67 = 14.01 > cap 10.00: no Voucher is signed, so none can be redeemed
+00:31:00 attempt 2: open a new channel with cap 52.82 RLUSD, while the team's limit is 20.00 and 2.82 is unassigned
+00:31:00 attempt 2: REFUSED — channel request failed (400): cap exceeds the unassigned deposit (2.82 RLUSD available).
+{
+  "measured_at": "2026-10-25T00:31:00.620Z",
+  "verdicts": [
+    {
+      "attempt": "channel cap",
+      "refused": true,
+      "by": "the Merchant, reading the channel on chain: no 402 challenge issued",
+      "message": "Merchant must return an x402 payment requirement (HTTP 503: payment_pending_or_unavailable)"
+    },
+    {
+      "attempt": "spend limit",
+      "refused": true,
+      "by": "the platform",
+      "message": "channel request failed (400): cap exceeds the unassigned deposit (2.82 RLUSD available)."
+    }
+  ],
+  "conclusion": "both over-cap attempts refused: the agent cannot spend beyond what the employer funded"
+}
