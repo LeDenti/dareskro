@@ -119,29 +119,26 @@ def mono(size):
 
 
 def draw_code(d, bg, code, t, t_end):
-    """The lines appear one after the other, typed; a cursor blinks at the pencil's place."""
+    """The code is there from the start of the card: the lines fall into place one after the
+    other in the first two seconds, whole, and stay; a cursor blinks while they come."""
     size, step, x0, y0 = 17, 23, 56, 76
+    t0, per = 0.2, 0.18                       # first line at 0.2 s, then one line every 0.18 s
     f = mono(size)
     dim = tuple(int(c * 0.35 + w * 0.65) for c, w in zip(bg, WHITE))   # comments, a little softer
-    total = sum(len(l) + 1 for l in code)
-    t0, t1 = 0.6, max(2.6, t_end - 0.4)
-    k = int(clamp((t - t0) / (t1 - t0)) * total)
-    cursor = None
+    n = 0 if t < t0 else min(len(code), int((t - t0) / per) + 1)
     y = y0
-    for ln in code:
-        if k <= 0:
-            break
-        shown = ln[:k]
-        at = shown.find("//")
+    cursor = None
+    for ln in code[:n]:
+        at = ln.find("//")
         if at >= 0:
-            d.text((x0, y), shown[:at], font=f, fill=WHITE)
-            d.text((x0 + d.textlength(shown[:at], font=f), y), shown[at:], font=f, fill=dim)
+            d.text((x0, y), ln[:at], font=f, fill=WHITE)
+            d.text((x0 + d.textlength(ln[:at], font=f), y), ln[at:], font=f, fill=dim)
         else:
-            d.text((x0, y), shown, font=f, fill=WHITE)
-        cursor = (x0 + d.textlength(shown, font=f) + 2, y)
-        k -= len(ln) + 1
+            d.text((x0, y), ln, font=f, fill=WHITE)
+        cursor = (x0 + d.textlength(ln, font=f) + 2, y)
         y += step
-    if cursor is not None and int(t * 2.5) % 2 == 0:
+    done_at = t0 + per * len(code)
+    if cursor is not None and t < done_at + 1.5 and int(t * 2.5) % 2 == 0:
         cx, cy = cursor
         d.rectangle((cx, cy + 1, cx + 9, cy + size + 2), fill=WHITE)
 
@@ -438,6 +435,64 @@ def riff(path):
     return path
 
 
+def folk_loop(path):
+    """An original fingerpicked guitar loop, 12 bars in G at 90 bpm (32 s), in the spirit of a
+    gentle folk ballad: plucked strings by Karplus-Strong, bass on the beat, arpeggio between.
+    Nothing is borrowed from any recording. The note tails wrap around, so the loop is seamless."""
+    if os.path.exists(path):
+        return path
+    import numpy as np
+    import wave
+    fs, bpm = 48000, 90
+    eighth = 60.0 / bpm / 2
+    # voicings, low string first (Hz): G, C, D, Em
+    G = [98.00, 123.47, 146.83, 196.00, 246.94, 392.00]
+    C = [130.81, 164.81, 196.00, 261.63, 329.63, 392.00]
+    D = [146.83, 220.00, 293.66, 369.99, 440.00, 587.33]
+    Em = [82.41, 123.47, 164.81, 196.00, 246.94, 329.63]
+    bars = [G, G, C, G, G, D, Em, C, G, D, G, G]
+    # one bar of picking, eight eighths: (string, velocity); bass on 1 and 3, thumb-and-fingers
+    pattern = [(0, 1.0), (3, 0.55), (2, 0.65), (4, 0.55), (1, 0.85), (3, 0.55), (5, 0.7), (4, 0.5)]
+    L = int(round(len(bars) * 8 * eighth * fs))
+    left, right = np.zeros(L), np.zeros(L)
+    rng = np.random.default_rng(7)
+
+    def pluck(f, vel, secs=2.2):
+        n = int(fs / f)
+        buf = rng.uniform(-1, 1, n)
+        buf = np.convolve(buf, [0.5, 0.5], mode="same")          # a softer attack than raw noise
+        periods = int(secs * fs / n)
+        out = np.empty(periods * n)
+        decay = 0.996 if f < 200 else 0.993
+        for k in range(periods):
+            out[k * n:(k + 1) * n] = buf
+            buf = decay * 0.5 * (buf + np.roll(buf, -1))
+        return vel * out * np.linspace(1, 0.2, out.size)
+
+    for b, chord in enumerate(bars):
+        for e, (string, vel) in enumerate(pattern):
+            t0 = int(round((b * 8 + e) * eighth * fs))
+            vel *= 0.92 + 0.16 * rng.random()                        # a human hand, not a machine
+            t0 += int(rng.integers(-fs // 400, fs // 400))             # a few milliseconds early or late
+            note = pluck(chord[string], vel)
+            idx = (np.arange(note.size) + t0) % L                       # wrap: the tails cross the loop point
+            pan = 0.35 + 0.3 * string / 5                              # bass a little left, trebles a little right
+            np.add.at(left, idx, note * (1 - pan))
+            np.add.at(right, idx, note * pan)
+    # a touch of room: one short echo
+    d = int(0.083 * fs)
+    left += 0.18 * np.roll(right, d)
+    right += 0.18 * np.roll(left, d)
+    peak = max(np.abs(left).max(), np.abs(right).max())
+    pcm = (np.stack([left, right], axis=1) / peak * 0.6 * 32767).astype("<i2")
+    raw = path.replace(".wav", "_raw.wav")
+    with wave.open(raw, "wb") as w:
+        w.setnchannels(2); w.setsampwidth(2); w.setframerate(fs); w.writeframes(pcm.tobytes())
+    # a fixed loudness, so the mix volume below means something
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-af", "loudnorm=I=-22:TP=-3:LRA=9", "-ar", str(fs), "-ac", "2", path], check=True)
+    return path
+
+
 def mumble(i, path):
     if os.path.exists(path):
         return path
@@ -450,7 +505,7 @@ def mumble(i, path):
 
 def build(only=None):
     os.makedirs(OUT, exist_ok=True)
-    riff_wav = riff(os.path.join(OUT, "riff.wav"))
+    riff_wav = folk_loop(os.path.join(OUT, "folk32.wav"))      # the music under everything, looped
     segments, total = [], 0.0
     for i, (bg, title, caption, items, narr) in enumerate(CARDS):
         if only and i not in only:
@@ -464,7 +519,7 @@ def build(only=None):
         cmd = ["ffmpeg", "-v", "error", "-y",
                "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "%dx%d" % (W, H), "-r", str(FPS), "-i", "-",
                "-i", wav, "-stream_loop", "-1", "-i", riff_wav]
-        filt = "[1]apad[v];[2]volume=0.07[r];"
+        filt = "[1]apad[v];[2]volume=0.32[r];"
         if i in MUMBLE_AT:
             m = mumble(i, os.path.join(OUT, "mumble%d.wav" % (i % 3)))
             cmd += ["-itsoffset", "%.2f" % (t_end + 0.5), "-i", m]
