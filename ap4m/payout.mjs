@@ -91,12 +91,24 @@ const available = Number(me.paymentState?.allocation_cap ?? 0) - spent - held; /
 log(`budget: ${Number(me.paymentState?.allocation_cap ?? 0).toFixed(2)} RLUSD allocated, ${spent.toFixed(2)} spent, ${held.toFixed(2)} held by open Channels, ${available.toFixed(2)} free`);
 const fits = (needed) => available >= needed || Object.values(onChain).some((ch) => ch.open && ch.remaining >= needed);
 const requestedScale = scale;
-while (!fits(Number(eur) / scale + 0.01) && scale < requestedScale * 100) scale *= 10;
-if (!fits(Number(eur) / scale + 0.01)) {
-  console.error(`payout failed: budget exhausted: ${available.toFixed(2)} RLUSD unassigned, ${(Number(eur) / scale + 0.01).toFixed(2)} needed even at 1/${scale} — ask the organizer to fund the team`);
-  process.exit(3);
+// An earlier attempt of THIS payout may be on disk (voucher signed, outcome lost): it must be
+// resumed at the price it was signed for, whatever the budget says now — resuming pays nothing new.
+const earlier = readPending(agentState);
+const resumable = !!earlier && !earlier.complete && earlier.intent?.operation === operation;
+if (resumable) {
+  const signedEarlier = JSON.parse(Buffer.from(earlier.header, "base64").toString("utf8"));
+  const amt = Number(ethers.formatUnits(BigInt(signedEarlier.accepted.amount), 18));
+  const match = [requestedScale, requestedScale * 10, requestedScale * 100].find((s) => (Number(eur) / s).toFixed(2) === amt.toFixed(2));
+  if (match) scale = match;
+  log(`an earlier attempt of this payout is on disk (${amt.toFixed(2)} RLUSD, channel ${earlier.intent.channelId.slice(0, 10)}…): resuming it at the same price, 1/${scale}`);
+} else {
+  while (!fits(Number(eur) / scale + 0.01) && scale < requestedScale * 100) scale *= 10;
+  if (!fits(Number(eur) / scale + 0.01)) {
+    console.error(`payout failed: budget exhausted: ${available.toFixed(2)} RLUSD unassigned, ${(Number(eur) / scale + 0.01).toFixed(2)} needed even at 1/${scale} — ask the organizer to fund the team`);
+    process.exit(3);
+  }
+  if (scale !== requestedScale) log(`sandbox budget: 1/${requestedScale} of the pay no longer fits (${available.toFixed(2)} RLUSD unassigned) — settling at 1/${scale} instead, written in the record`);
 }
-if (scale !== requestedScale) log(`sandbox budget: 1/${requestedScale} of the pay no longer fits (${available.toFixed(2)} RLUSD unassigned) — settling at 1/${scale} instead, written in the record`);
 
 // --- 3. the one-shot payslip merchant: payout wallet = the employee's dollar account
 const amountRlusd = (Number(eur) / scale).toFixed(2);
