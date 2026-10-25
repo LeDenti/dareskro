@@ -37,7 +37,7 @@ const arg = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const escrowHash = arg("--escrow");
 const eur = arg("--amount", arg("--eur"));
 const currency = arg("--currency", "USD");
-const scale = Number(arg("--scale", "100"));
+let scale = Number(arg("--scale", "100"));
 const sequence = arg("--sequence", "");
 if (!escrowHash || !eur) {
   console.error("usage: node payout.mjs --escrow <EscrowFinish hash> --amount 466.57 [--currency USD] [--scale 100]");
@@ -61,7 +61,44 @@ if (txType !== "EscrowFinish" || txResult !== "tesSUCCESS" || !tx.validated) {
 }
 log(`XRPL: EscrowFinish ${escrowHash.slice(0, 8)}… validated, tesSUCCESS — the pay is released, the dollar payout may run`);
 
-// --- 2. the one-shot payslip merchant: payout wallet = the employee's dollar account
+// --- 2. the budget, read before anything is priced: the open Channels on chain and
+// what the team allocation still has unassigned. In production the scale is 1; the
+// sandbox holds 20 RLUSD for the whole weekend, so when the pay at the requested scale
+// no longer fits, the payout settles one notch smaller (1/1000, then 1/10000) and
+// says so in its record rather than failing the demo.
+const config = await (await fetch(`${API}/public/config`)).json();
+const provider = new ethers.JsonRpcProvider(config.network.rpcUrl);
+const agent = new ethers.Wallet(need("AGENT_PRIVATE_KEY"), provider);
+const ledger = config.contracts.paymentLedger;
+const { token } = await signIn(API, TEAM, agent);
+const agentState = path.join(HERE, "agent-state");
+const operation = `payout-${escrowHash.slice(0, 10).toLowerCase()}`;
+let spent = 0; // redeemed on every Channel, open or closed: gone from the allocation for good
+let held = 0; // still unspent inside the open Channels: not free for a new one
+const onChain = {}; // open channel id → { cap, redeemed, open, remaining }
+const channels = await listChannels(API, token);
+for (const c of channels) {
+  const st = await getChannelState(provider, ledger, c.channel_id);
+  spent += Number(ethers.formatUnits(st.redeemed, 18));
+  if (!["open", "bound", "requested"].includes(c.channel_status)) continue;
+  const remaining = Number(ethers.formatUnits(st.cap - st.redeemed, 18));
+  held += remaining;
+  onChain[c.channel_id] = { cap: st.cap, redeemed: st.redeemed, open: c.channel_status === "open", remaining };
+  log(`channel ${c.channel_id.slice(0, 10)}… ${c.channel_status}: ${remaining.toFixed(2)} RLUSD left`);
+}
+const me = await (await fetch(`${API}/public/participant/me`, { headers: { Authorization: `Bearer ${token}` } })).json();
+const available = Number(me.paymentState?.allocation_cap ?? 0) - spent - held; // what a new Channel may still take
+log(`budget: ${Number(me.paymentState?.allocation_cap ?? 0).toFixed(2)} RLUSD allocated, ${spent.toFixed(2)} spent, ${held.toFixed(2)} held by open Channels, ${available.toFixed(2)} free`);
+const fits = (needed) => available >= needed || Object.values(onChain).some((ch) => ch.open && ch.remaining >= needed);
+const requestedScale = scale;
+while (!fits(Number(eur) / scale + 0.01) && scale < requestedScale * 100) scale *= 10;
+if (!fits(Number(eur) / scale + 0.01)) {
+  console.error(`payout failed: budget exhausted: ${available.toFixed(2)} RLUSD unassigned, ${(Number(eur) / scale + 0.01).toFixed(2)} needed even at 1/${scale} — ask the organizer to fund the team`);
+  process.exit(3);
+}
+if (scale !== requestedScale) log(`sandbox budget: 1/${requestedScale} of the pay no longer fits (${available.toFixed(2)} RLUSD unassigned) — settling at 1/${scale} instead, written in the record`);
+
+// --- 3. the one-shot payslip merchant: payout wallet = the employee's dollar account
 const amountRlusd = (Number(eur) / scale).toFixed(2);
 const content = {
   schema: "dareskro/payslip-settlement.v1",
@@ -69,7 +106,8 @@ const content = {
   xrpl_escrow_finish: escrowHash, sequence: sequence || null,
   note: "paid in RLUSD through Mastercard Agent Pay for Machines, once the XRP Ledger released the escrow",
 };
-const stateDir = path.join(HERE, "merchant-state-payout", escrowHash.slice(0, 12));
+// one merchant store per payout and per price: the kit refuses a store whose configuration changed
+const stateDir = path.join(HERE, "merchant-state-payout", escrowHash.slice(0, 12) + (scale === requestedScale ? "" : `-1_${scale}`));
 mkdirSync(stateDir, { recursive: true });
 const merchant = spawn("node", [path.join(HERE, "merchant.mjs")], {
   cwd: HERE,
@@ -82,28 +120,12 @@ merchant.stderr.on("data", (d) => process.stdout.write("  [merchant] " + d));
 await sleep(7000);
 
 try {
-  // --- 3. the agent pays, inside the employer's budget
-  const config = await (await fetch(`${API}/public/config`)).json();
-  const provider = new ethers.JsonRpcProvider(config.network.rpcUrl);
-  const agent = new ethers.Wallet(need("AGENT_PRIVATE_KEY"), provider);
-  const ledger = config.contracts.paymentLedger;
-  const { token } = await signIn(API, TEAM, agent);
+  // --- 4. the agent pays, inside the employer's budget
   const needed = Number(amountRlusd) + 0.01;
   let maximumAmount = ethers.parseUnits(String(needed), 18).toString();
-  const agentState = path.join(HERE, "agent-state");
-  const operation = `payout-${escrowHash.slice(0, 10).toLowerCase()}`;
   let channelId = "";
-  let assigned = 0;
-  const onChain = {}; // channel id → { cap, redeemed, open }
-  const channels = await listChannels(API, token);
-  for (const c of channels) {
-    if (!["open", "bound", "requested"].includes(c.channel_status)) continue;
-    const st = await getChannelState(provider, ledger, c.channel_id);
-    assigned += Number(ethers.formatUnits(st.cap, 18));
-    const remaining = Number(ethers.formatUnits(st.cap - st.redeemed, 18));
-    onChain[c.channel_id] = { cap: st.cap, redeemed: st.redeemed, open: c.channel_status === "open" };
-    log(`channel ${c.channel_id.slice(0, 10)}… ${c.channel_status}: ${remaining.toFixed(2)} RLUSD left`);
-    if (!channelId && c.channel_status === "open" && remaining >= needed) channelId = c.channel_id;
+  for (const [id, ch] of Object.entries(onChain)) {
+    if (!channelId && ch.open && ch.remaining >= needed) channelId = id;
   }
   // An earlier attempt may have signed a voucher and stopped there (crash, timeout, channel
   // short of funds). The kit insists it be resumed with the same arguments, and that is also
@@ -132,8 +154,6 @@ try {
   }
   if (!channelId) {
     // the team budget minus what the open channels already hold: the cap must fit in it
-    const me = await (await fetch(`${API}/public/participant/me`, { headers: { Authorization: `Bearer ${token}` } })).json();
-    const available = Number(me.paymentState?.allocation_cap ?? 0) - assigned;
     const cap = Math.min(available, Math.max(needed + 0.5, 5));
     if (cap < needed) throw new Error(`budget exhausted: ${available.toFixed(2)} RLUSD unassigned, ${needed.toFixed(2)} needed — ask the organizer to fund the team`);
     log(`opening a payout Channel, cap ${cap.toFixed(2)} RLUSD (the employer's budget for this payout; ${available.toFixed(2)} unassigned)…`);

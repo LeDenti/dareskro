@@ -160,7 +160,13 @@ two options, chosen on the pay desk before the lock:
   "payslip settlement" merchant priced at the pay, the agent answers the 402 inside
   the employer's budget, `VoucherRedeemed` on XRPL EVM, RLUSD settled, receipt. The
   sandbox budget is 20 RLUSD, so the demo settles at 1/100 of the pay (4.67 RLUSD
-  for $466.57) and says so in the resource and the receipt.
+  for $466.57) and says so in the resource and the receipt. The payout reads the
+  budget before it prices anything: when 1/100 of the pay no longer fits in the
+  unassigned allocation nor in an open Channel, it settles one notch smaller
+  (1/1000, then 1/10000), writes the scale it used in the record, and only then
+  gives up with "ask the organizer to fund the team". `ap4m/channels-close.mjs`
+  closes the near-empty Channels so their unused cap is unassigned again; in
+  production the scale is 1 and none of this exists.
 
 The first runs below, before 18:55 UTC, locked 466.57 XRP as a stand-in; from
 then on the page converts at the day's rate. Run from a terminal at 18:56 UTC
@@ -396,6 +402,26 @@ From the pay desk, same morning, test wallet: one click on "Sign once on the Led
 Batch [CEF73AAD…](https://testnet.xrpl.org/transactions/CEF73AAD0D33F52333C4657F2773578A1982348FF338E4366B39496283C3883B)
 `tesSUCCESS` with the pay escrow, the Check and the tax escrow inside, then the button
 "URSSAF cashes its check": `CheckCash` [31C16FFF…](https://testnet.xrpl.org/transactions/31C16FFF95357AA098FB5C2AB0FE1F6E144649E1C181F2790493FF963CCD1973).
+Second desk run at 10:28 UTC, after the inner sequences were renumbered (the first
+run had watched the Batch's own sequence): Batch [9E38E027…](https://testnet.xrpl.org/transactions/9E38E0273305951D943FD367BC111A57A0A905B51FFA3A13BE2C94427B91BF7B)
+with pay escrow #21810938, Check #21810939 and tax escrow #21810940 inside;
+`CheckCash` by URSSAF [E9B92D54…](https://testnet.xrpl.org/transactions/E9B92D54DDE5681D4709B948AC6EE7FEB65B7384A065E0D41715CA6DD10CFFCD);
+the oracle released the pay at 10:29:24 [3D7B3308…](https://testnet.xrpl.org/transactions/3D7B3308CD7F200BBD7FD8F20EE57FF953BD8B55C826C777F42CFA7E8655BE26)
+and the income tax to DGFiP at 10:29:55 [65248360…](https://testnet.xrpl.org/transactions/65248360031CABB75F1790328DBECFA5F28E7D494A80530A251B74E12A522E7F).
+The dollar leg of that run met the sandbox budget: at 10:29 the payout found 2.82 RLUSD
+unassigned for 4.08 needed and stopped ("ask the organizer to fund the team"); the
+payout was then taught to read the budget first and settle one notch smaller, and
+`POST /payout/retry` at 10:37 settled **0.41 RLUSD at 1/1000**, written in the record,
+on the existing Channel 0xe2c30cf9…: `VoucherRedeemed`
+[0x24374e5e…](https://explorer.testnet.xrplevm.org/tx/0x24374e5ef554b9b73528234e7f0e3246424dc86d714560e1bdf72fac54032604),
+settlement 0x22e123b7…, payout 0xf8da93b8…, receipt
+[claims/0xbe2ede57…/0xadbf78e6…](https://hackathon.ap4m.build/public/evidence/claims/0xbe2ede5761bd7ea40e6362a7af76a5efa7f1e604104c4bd4f8a4ddbabb50a92c/0xadbf78e6e4e760cebb12bba3db46fb069339d85c2554fbcf43cb269f00a628b4.json)
+verified with `verify-receipt.mjs` (`verified: true`, amount 0.41, payout wallet
+0x1f9265e1…; `presentation/demo-terminal/capture/recu_pupitre_batch.log`). Then
+`channels-close.mjs --keep 0xe2c30cf9` closed the two near-empty Channels
+(0x125490fb… at 9.34 redeemed, 0x32b199da… at 4.40 redeemed: 0x5434ac29…, 0x9323e003…),
+giving 1.44 RLUSD back: 20 allocated, 14.30 spent, 1.44 held, **4.26 free** for one
+more payout at 1/100.
 
 One more thing said plainly: this repository publishes the demo statement itself
 (`agent/sortie/bulletin.json`, served by the desk as `/bulletin.json`), because it is the
