@@ -2,6 +2,7 @@
 
 **AI & Fintech XRP Ledger Hackathon, New York, 24–25 October 2026.**
 Demo video (3 min 49, English): [dareskro explainer v2 — La Linea, with the one-day contract, URSSAF, and the oracle's real loop typed on its card](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea2.mp4) · earlier cut with the terminal logs: [split screen](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea_split.mp4) · release [v0.1-hackathon-nyc](https://github.com/LeDenti/dareskro/releases/tag/v0.1-hackathon-nyc).
+The spoken pitch: [PITCH.md](PITCH.md) (full, with the Q&A) and [PITCH_3MIN.md](PITCH_3MIN.md) (the 3-minute track version).
 Track: Agentic Finance. Partner prizes targeted: Ledger (Agentic Finance), Mastercard.
 
 > The agent reads the evidence. The code computes the amount. A human signs on a
