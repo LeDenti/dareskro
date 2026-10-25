@@ -360,7 +360,7 @@ of 29 in mid-October), and its first version excludes escrow. Until then, poolin
 periods into one payment is the other way to make a total uninformative.
 
 Measured end to end on testnet, 24/10/2026 22:10 UTC (`oracle/demo_confidentialite.mjs`,
-capture in `presentation/demo-terminal/capture/confidentialite.log`): a pay escrow of
+capture in `presentation/demo-terminal/capture/confidentialite_v1.log`): a pay escrow of
 361.127881 XRP (466.57 USD at 1.29198) to a fresh employee account, whose memos leak nothing.
 
 | Step | Proof |
@@ -373,7 +373,7 @@ capture in `presentation/demo-terminal/capture/confidentialite.log`): a pay escr
 | The oracle releases at the date: the employee holds 461.127881 XRP | [C38552EE…](https://testnet.xrpl.org/transactions/C38552EEFB074CF3668B14D4F182BE03AAFA0BD5748D00AA344ADE3D77AB3504) |
 
 Re-run on Sunday 25/10/2026 09:45 UTC with the one-day contract and the contributions
-(`presentation/demo-terminal/capture/confidentialite.log`; the Saturday run is kept as
+(`presentation/demo-terminal/capture/confidentialite_v2.log`; the Saturday run is kept as
 `confidentialite_v1.log`): gross 564.55, two escrows locked together, both released by the oracle.
 
 | Step | Proof |
