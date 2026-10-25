@@ -88,7 +88,7 @@ if (escrowHash) {
     const proven = pub.total_cents / 100;
     // With contributions, the employee's escrow holds the NET: the gross memo says so, and the
     // net must be the proven gross minus the employee contributions at the public rate (half up).
-    const gross = /gross=(\d+\.\d\d);net=(\d+\.\d\d);employee_rate=(\d+\.\d+)/.exec(byType['dareskro/gross'] || '');
+    const gross = /gross=(\d+\.\d\d);net=(\d+\.\d\d);employee_rate=(\d+\.\d+)(?:;tax_rate=(\d+\.\d+);paid=(\d+\.\d\d))?/.exec(byType['dareskro/gross'] || '');
     let expected = proven;
     if (gross) {
       const g = Math.round(Number(gross[1]) * 100), net = Math.round(Number(gross[2]) * 100), r = Number(gross[3]);
@@ -98,6 +98,15 @@ if (escrowHash) {
       console.log(`escrow ${escrowHash.slice(0, 8)}...: gross memo ${(g / 100).toFixed(2)} ${grossOk ? 'MATCHES' : 'DIFFERS FROM'} the proven total; net ${(net / 100).toFixed(2)} = gross - ${Math.round(r * 100)} % employee contributions: ${netOk ? 'MATCHES' : 'DIFFERS'}`);
       if (!grossOk || !netOk) failed = true;
       expected = net / 100;
+      if (gross[4] !== undefined) {
+        // income tax withheld at source, at the employee's personalised rate: the escrow holds what is paid
+        const tr = Number(gross[4]), paid = Math.round(Number(gross[5]) * 100);
+        const tax = Math.floor(net * tr + 0.5);
+        const paidOk = paid === net - tax;
+        console.log(`escrow ${escrowHash.slice(0, 8)}...: paid ${(paid / 100).toFixed(2)} = net - ${(tr * 100).toFixed(1)} % income tax withheld at source (${(tax / 100).toFixed(2)}): ${paidOk ? 'MATCHES' : 'DIFFERS'}`);
+        if (!paidOk) failed = true;
+        expected = paid / 100;
+      }
     }
     const diff = Math.abs(xrp * rate - expected);
     const amountOk = diff <= 0.01;

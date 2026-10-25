@@ -33,7 +33,7 @@ import type {
   SignerXrp,
 } from "@ledgerhq/device-signer-kit-xrp";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { EscrowCancel, EscrowCreate, Transaction, Wallet } from "xrpl";
+import type { EscrowCancel, EscrowCreate, SubmittableTransaction, Transaction, Wallet } from "xrpl";
 import { ContractDesk, type ContractKind } from "./ContractDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
@@ -65,6 +65,9 @@ type Statement = {
     employee: { rate: string; amount: string }; employer: { rate: string; amount: string };
     total_to_urssaf: string; rates_source: string;
   };
+  /** Income tax withheld at source at the employee's personalised rate, remitted to DGFiP. */
+  withholding?: { recipient: string; due: string; basis: string; rate: string; amount: string };
+  net_paid?: string;
   rest_hours_outside_escrow: string;
   rest_note: string;
   sources: string[];
@@ -170,10 +173,12 @@ function Desk(props: {
   const [rate, setRate] = useState<xrpl.Rate>();
   const [rateError, setRateError] = useState<unknown>();
   // the employee's escrow holds the net when the statement carries contributions; the contributions go to URSSAF in a second escrow
-  const netFiat = statement ? (statement.net_to_pay ?? statement.total) : undefined;
+  const netFiat = statement ? (statement.net_paid ?? statement.net_to_pay ?? statement.total) : undefined;
   const amountXrp = statement && rate && netFiat ? xrpl.eurToXrp(netFiat, rate.eurPerXrp) : undefined;
   const contribFiat = statement?.contributions?.total_to_urssaf;
   const contribXrp = contribFiat && rate ? xrpl.eurToXrp(contribFiat, rate.eurPerXrp) : undefined;
+  const taxFiat = statement?.withholding?.amount;
+  const taxXrp = taxFiat && rate ? xrpl.eurToXrp(taxFiat, rate.eurPerXrp) : undefined;
   const sym = statement?.currency === "EUR" ? "€" : "$";
   // how the employee wants to be paid: the XRP the ledger releases, or dollars (RLUSD) through Mastercard AP4M
   const [payoutMode, setPayoutMode] = useState<"crypto" | "usd">("usd");
@@ -216,12 +221,21 @@ function Desk(props: {
   // ---- 4. lock on the device
   const [tx, setTx] = useState<EscrowCreate>();
   const [prepareError, setPrepareError] = useState<unknown>();
-  // the second leg: the contributions, locked at the same time, released at the due date, to a stand-in account for URSSAF
-  const [urssaf, setUrssaf] = useState("");
-  const [tx2, setTx2] = useState<EscrowCreate>();
-  const [signedTx2Hex, setSignedTx2Hex] = useState<string>();
-  const [escrow2, setEscrow2] = useState<{ owner: string; sequence: number; hash: string; result: string; finishAfter: Date }>();
-  const [watched2, setWatched2] = useState<oracle.WatchedEscrow>();
+  // the other legs, signed in the same session: a Check for URSSAF (it cashes it itself), an escrow for DGFiP
+  // (released by the oracle at the due date); both payees are stand-in accounts on testnet
+  type Leg = {
+    id: "urssaf" | "dgfip"; kind: "check" | "escrow"; label: string; fiat: string; xrp: string;
+    tx: Transaction; signedHex?: string; outcome?: { hash: string; result: string; sequence: number }; watched?: oracle.WatchedEscrow; cashed?: xrpl.Outcome;
+  };
+  const [standIns, setStandIns] = useState<{ urssaf?: Wallet; dgfip?: Wallet }>({});
+  const [legs, setLegs] = useState<Leg[]>([]);
+  // one signature for everything (Batch, XLS-56, all or nothing) — or one approval per transaction, the mode a device
+  // whose XRP app does not know Batch yet needs; the choice is the employer's, the result on the ledger is the same
+  const [batchMode, setBatchMode] = useState(true);
+  const [batchTx, setBatchTx] = useState<Transaction>();
+  const [signedBatchHex, setSignedBatchHex] = useState<string>();
+  const [cashBusy, setCashBusy] = useState(false);
+  const [cashError, setCashError] = useState<unknown>();
   const signAction = useDeviceAction<SignTransactionDAOutput, SignTransactionDAError, SignTransactionDAIntermediateValue>();
   const [signedTxHex, setSignedTxHex] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -277,9 +291,12 @@ function Desk(props: {
       const all = await oracle.escrows();
       const mine = all.find((e) => e.owner === escrow.owner && e.sequence === escrow.sequence);
       if (!stop && mine) setWatched(mine);
-      if (escrow2) {
-        const second = all.find((e) => e.owner === escrow2.owner && e.sequence === escrow2.sequence);
-        if (!stop && second) setWatched2(second);
+      if (!stop) {
+        setLegs((ls) => ls.map((l) => {
+          if (l.kind !== "escrow" || !l.outcome) return l;
+          const w = all.find((e) => e.owner === escrow.owner && e.sequence === l.outcome!.sequence);
+          return w ? { ...l, watched: w } : l;
+        }));
       }
     };
     poll();
@@ -288,7 +305,7 @@ function Desk(props: {
       stop = true;
       clearInterval(t);
     };
-  }, [escrow, escrow2, oracleId]);
+  }, [escrow, oracleId]);
 
   useEffect(() => {
     if (watched?.status === "finished" && employeeBalance === undefined) {
@@ -337,10 +354,10 @@ function Desk(props: {
 
   const resetLock = () => {
     setTx(undefined);
-    setTx2(undefined);
-    setSignedTx2Hex(undefined);
-    setEscrow2(undefined);
-    setWatched2(undefined);
+    setLegs([]);
+    setBatchTx(undefined);
+    setSignedBatchHex(undefined);
+    setCashError(undefined);
     setPrepareError(undefined);
     signAction.reset();
     setSignedTxHex(undefined);
@@ -479,38 +496,63 @@ function Desk(props: {
         oracle: oracleId?.address,
         // the proof's commitment rides in a memo: the compliance proof binds to this escrow, not to any escrow of the same amount
         zkCommitment: zkPub?.commitment,
-        // the escrow holds the net: the gross the proof binds, and the public rate that links them
+        // the escrow holds what is paid: the gross the proof binds, and the public rates that lead to it
         gross: statement.contributions ? statement.total : undefined,
         employeeRate: statement.contributions?.employee.rate,
+        taxRate: statement.withholding?.rate,
+        paid: statement.withholding ? net : undefined,
         compact,
       });
       setTx(first);
-      // The contributions: a second escrow, same signature session, released at the due date (here 30 s after the pay).
+      // The other legs, same signature session. Stand-in accounts for URSSAF and DGFiP are created once.
+      const ins = { ...standIns };
+      const next: Leg[] = [];
+      let seq = first.Sequence! + 1;
+      const due = new Date(finishAfter.getTime() + 30_000); // here 30 s after the pay; in real life the 15th of the next month
       if (statement.contributions) {
-        let dest = urssaf;
-        if (!dest) {
-          dest = (await xrpl.newFundedWallet()).classicAddress; // a stand-in account for URSSAF on testnet
-          setUrssaf(dest);
-        }
+        if (!ins.urssaf) ins.urssaf = await xrpl.newFundedWallet();
         const c = statement.contributions;
-        setTx2(
-          await xrpl.prepareEscrowCreate({
-            account: employer.address,
-            publicKey: employer.publicKey,
-            destination: dest,
-            amountXrp: xrpl.eurToXrp(c.total_to_urssaf, fresh.eurPerXrp),
-            eur: c.total_to_urssaf,
-            rate: fresh,
-            finishAfter: new Date(finishAfter.getTime() + 30_000),
-            statementSha256: statement.sha256,
-            statementId: statement.statement_id,
-            oracle: oracleId?.address,
-            extraMemos: [{ type: "dareskro/urssaf", data: `contributions=${c.total_to_urssaf};employee=${c.employee.amount};employer=${c.employer.amount};period=${statement.period};due=${c.due}` }],
-            sequence: first.Sequence! + 1,
-            compact,
+        const xrp = xrpl.eurToXrp(c.total_to_urssaf, fresh.eurPerXrp);
+        // a Check: the employer signs once, URSSAF cashes it itself before it expires — the ledger's direct debit
+        next.push({
+          id: "urssaf", kind: "check", label: `${c.recipient}: contributions, a Check it cashes itself`, fiat: c.total_to_urssaf, xrp,
+          tx: await xrpl.prepareCheckCreate({
+            account: employer.address, publicKey: employer.publicKey, destination: ins.urssaf.classicAddress, amountXrp: xrp,
+            expiration: new Date(due.getTime() + 600_000), invoiceSha256: statement.sha256,
+            memos: [{ type: "dareskro/urssaf", data: `contributions=${c.total_to_urssaf};employee=${c.employee.amount};employer=${c.employer.amount};period=${statement.period};due=${c.due}` }],
+            sequence: seq++, compact,
           }),
-        );
+        });
       }
+      if (statement.withholding) {
+        if (!ins.dgfip) ins.dgfip = await xrpl.newFundedWallet();
+        const w = statement.withholding;
+        const xrp = xrpl.eurToXrp(w.amount, fresh.eurPerXrp);
+        // an escrow: the income tax withheld goes to DGFiP at the due date, released by the oracle
+        next.push({
+          id: "dgfip", kind: "escrow", label: `${w.recipient}: income tax withheld at source, an escrow released at the due date`, fiat: w.amount, xrp,
+          tx: await xrpl.prepareEscrowCreate({
+            account: employer.address, publicKey: employer.publicKey, destination: ins.dgfip.classicAddress, amountXrp: xrp,
+            eur: w.amount, rate: fresh, finishAfter: due, statementSha256: statement.sha256, statementId: statement.statement_id,
+            oracle: oracleId?.address,
+            extraMemos: [{ type: "dareskro/dgfip", data: `withheld=${w.amount};rate=${w.rate};period=${statement.period};due=${w.due}` }],
+            sequence: seq++, compact,
+          }),
+        });
+      }
+      setStandIns(ins);
+      setBatchTx(undefined);
+      if (batchMode && next.length) {
+        // inside a Batch the outer transaction takes the account's sequence and the inner ones the next: renumber
+        // what the desk shows and hands to the oracle, so sequences and hashes line up with the ledger
+        const b = await xrpl.prepareBatch({ account: employer.address, publicKey: employer.publicKey, inner: [first, ...next.map((l) => l.tx)] });
+        const base = (b as unknown as { Sequence: number }).Sequence;
+        first.Sequence = base + 1;
+        next.forEach((l, i) => { l.tx.Sequence = base + 2 + i; });
+        setTx({ ...first });
+        setBatchTx(b);
+      }
+      setLegs(next);
     } catch (e) {
       setPrepareError(e);
     }
@@ -519,10 +561,26 @@ function Desk(props: {
   const sign = async () => {
     if (!session || !tx) return;
     setSignedTxHex(undefined);
-    setSignedTx2Hex(undefined);
+    setSignedBatchHex(undefined);
+    setLegs((ls) => ls.map((l) => ({ ...l, signedHex: undefined })));
+    if (batchTx) {
+      // one signature: the Batch carries the pay escrow, the Check and the tax escrow, all or nothing
+      if (session.wallet) {
+        setSignedBatchHex(session.wallet.sign(batchTx as SubmittableTransaction).tx_blob);
+        return;
+      }
+      if (!session.signer) return;
+      const signer = session.signer;
+      const signature = await signAction.run(() =>
+        ledger.signOnDevice(signer, ledger.DERIVATION_PATH, xrpl.encodeUnsigned(batchTx)),
+      );
+      if (signature) setSignedBatchHex(xrpl.encodeSigned(batchTx, signature));
+      return;
+    }
     if (session.wallet) {
-      setSignedTxHex(session.wallet.sign(tx).tx_blob);
-      if (tx2) setSignedTx2Hex(session.wallet.sign(tx2).tx_blob);
+      const w = session.wallet;
+      setSignedTxHex(w.sign(tx).tx_blob);
+      setLegs((ls) => ls.map((l) => ({ ...l, signedHex: w.sign(l.tx).tx_blob })));
       return;
     }
     if (!session.signer) return;
@@ -532,12 +590,14 @@ function Desk(props: {
     );
     if (!signature) return;
     setSignedTxHex(xrpl.encodeSigned(tx, signature));
-    // the contributions leg: a second approval on the same device, the amount and URSSAF's address on its screen
-    if (tx2) {
-      const signature2 = await signAction.run(() =>
-        ledger.signOnDevice(signer, ledger.DERIVATION_PATH, xrpl.encodeUnsigned(tx2)),
+    // the other legs: one more approval each on the same device, the amount and the payee's address on its screen
+    for (const l of legs) {
+      const sig = await signAction.run(() =>
+        ledger.signOnDevice(signer, ledger.DERIVATION_PATH, xrpl.encodeUnsigned(l.tx)),
       );
-      if (signature2) setSignedTx2Hex(xrpl.encodeSigned(tx2, signature2));
+      if (!sig) return;
+      const hex = xrpl.encodeSigned(l.tx, sig);
+      setLegs((ls) => ls.map((m) => (m.id === l.id ? { ...m, signedHex: hex } : m)));
     }
   };
 
@@ -559,7 +619,51 @@ function Desk(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseMode]);
 
+  const submitBatch = async () => {
+    if (!signedBatchHex || !tx || !employer || !statement) return;
+    setSubmitting(true);
+    setSubmitError(undefined);
+    try {
+      const out = await xrpl.submit(signedBatchHex);
+      if (out.result !== "tesSUCCESS") throw new Error(`Batch ${out.result} — nothing was applied (all or nothing): ${out.hash}`);
+      // the inner transactions have their own hashes: read them back from the account's history
+      const seqs = [tx.Sequence!, ...legs.map((l) => l.tx.Sequence!)];
+      let hashes: Record<number, string> = {};
+      for (let i = 0; i < 5 && Object.keys(hashes).length < seqs.length; i++) {
+        hashes = await xrpl.hashesBySequence(employer.address, seqs);
+        if (Object.keys(hashes).length < seqs.length) await new Promise((r) => setTimeout(r, 1500));
+      }
+      const payHash = hashes[tx.Sequence!] ?? out.hash;
+      setEscrow({ owner: employer.address, sequence: tx.Sequence!, hash: payHash, result: "tesSUCCESS", finishAfter: xrpl.fromRippleTime(tx.FinishAfter!) });
+      refreshBalance(employer.address);
+      setSealInfo(undefined);
+      setViewOut(undefined);
+      privacy.seal(payHash).then(setSealInfo);
+      setLegs((ls) => ls.map((l) => ({ ...l, outcome: { hash: hashes[l.tx.Sequence!] ?? out.hash, result: "tesSUCCESS", sequence: l.tx.Sequence! } })));
+      if (oracleId) {
+        oracle.watch({
+          owner: employer.address, sequence: tx.Sequence!, finishAfter: tx.FinishAfter!, destination: employee,
+          amountXrp: amountXrp ?? statement.total, payout: payoutMode, amount: netFiat ?? statement.total, currency: statement.currency,
+          statementSha256: statement.sha256, createHash: payHash,
+        }).catch(setOracleError);
+        for (const l of legs) {
+          if (l.kind !== "escrow") continue;
+          const e = l.tx as EscrowCreate;
+          oracle.watch({
+            owner: employer.address, sequence: e.Sequence!, finishAfter: e.FinishAfter!, destination: e.Destination,
+            amountXrp: l.xrp, payout: "crypto", amount: l.fiat, currency: statement.currency, statementSha256: statement.sha256, createHash: hashes[e.Sequence!],
+          }).catch(setOracleError);
+        }
+      }
+    } catch (e) {
+      setSubmitError(e);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const submit = async () => {
+    if (signedBatchHex) return submitBatch();
     if (!signedTxHex || !tx || !employer) return;
     setSubmitting(true);
     setSubmitError(undefined);
@@ -577,16 +681,20 @@ function Desk(props: {
       setSealInfo(undefined);
       setViewOut(undefined);
       if (out.result === "tesSUCCESS") privacy.seal(out.hash).then(setSealInfo);
-      // The contributions leg, right behind: same employer, next sequence, URSSAF's stand-in as destination.
-      if (out.result === "tesSUCCESS" && tx2 && signedTx2Hex && statement?.contributions) {
-        const out2 = await xrpl.submit(signedTx2Hex);
-        setEscrow2({ owner: employer.address, sequence: tx2.Sequence!, hash: out2.hash, result: out2.result, finishAfter: xrpl.fromRippleTime(tx2.FinishAfter!) });
-        if (out2.result === "tesSUCCESS" && oracleId) {
-          oracle.watch({
-            owner: employer.address, sequence: tx2.Sequence!, finishAfter: tx2.FinishAfter!, destination: tx2.Destination,
-            amountXrp: xrpl.dropsToXrpString(tx2.Amount as string), payout: "crypto", amount: statement.contributions.total_to_urssaf,
-            currency: statement.currency, statementSha256: statement.sha256, createHash: out2.hash,
-          }).catch(setOracleError);
+      // The other legs, right behind: same employer, next sequences. Escrows are handed to the oracle; a Check waits for its payee.
+      if (out.result === "tesSUCCESS" && statement) {
+        for (const l of legs) {
+          if (!l.signedHex) continue;
+          const o = await xrpl.submit(l.signedHex);
+          const outcome = { hash: o.hash, result: o.result, sequence: l.tx.Sequence! };
+          setLegs((ls) => ls.map((m) => (m.id === l.id ? { ...m, outcome } : m)));
+          if (l.kind === "escrow" && o.result === "tesSUCCESS" && oracleId) {
+            const e = l.tx as EscrowCreate;
+            oracle.watch({
+              owner: employer.address, sequence: e.Sequence!, finishAfter: e.FinishAfter!, destination: e.Destination,
+              amountXrp: l.xrp, payout: "crypto", amount: l.fiat, currency: statement.currency, statementSha256: statement.sha256, createHash: o.hash,
+            }).catch(setOracleError);
+          }
         }
       }
       // Hand the escrow to the oracle. If this fails, nothing is lost: anyone can finish it.
@@ -612,6 +720,26 @@ function Desk(props: {
       setSubmitError(e);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  /** The payee's own move: URSSAF finds the check made out to it for this statement and cashes it. */
+  const cashUrssaf = async () => {
+    const leg = legs.find((l) => l.id === "urssaf");
+    if (!leg?.outcome || !standIns.urssaf || !statement) return;
+    setCashBusy(true);
+    setCashError(undefined);
+    try {
+      const checks = await xrpl.pendingChecks(standIns.urssaf.classicAddress);
+      const mine = checks.find((c) => (c.invoiceId ?? "").toUpperCase() === statement.sha256.toUpperCase());
+      if (!mine) throw new Error("no check for this statement on URSSAF's account yet");
+      const cashed = await xrpl.cashCheck({ payee: standIns.urssaf, checkId: mine.index, amountXrp: leg.xrp });
+      setLegs((ls) => ls.map((m) => (m.id === "urssaf" ? { ...m, cashed } : m)));
+      refreshBalance(employer!.address);
+    } catch (e) {
+      setCashError(e);
+    } finally {
+      setCashBusy(false);
     }
   };
 
@@ -747,10 +875,22 @@ function Desk(props: {
                       <td className="muted">{Number(statement.contributions.employee.rate) * 100} % of the gross · {statement.contributions.basis} · {statement.contributions.rates_source}</td>
                       <td className="num">− {statement.contributions.employee.amount} {sym}</td>
                     </tr>
-                    <tr className="total">
-                      <td>NET TO LOCK — escrow 1, the employee</td>
-                      <td className="muted">released at the pay date</td>
+                    <tr>
+                      <td>net before tax</td>
+                      <td className="muted">gross − employee contributions</td>
                       <td className="num">{statement.net_to_pay} {sym}</td>
+                    </tr>
+                    {statement.withholding && (
+                      <tr>
+                        <td>income tax withheld at source</td>
+                        <td className="muted">{Number(statement.withholding.rate) * 100} % personalised rate · {statement.withholding.basis} · to {statement.withholding.recipient} by {statement.withholding.due}, in an escrow</td>
+                        <td className="num">− {statement.withholding.amount} {sym}</td>
+                      </tr>
+                    )}
+                    <tr className="total">
+                      <td>NET PAID — escrow 1, the employee</td>
+                      <td className="muted">released at the pay date</td>
+                      <td className="num">{statement.net_paid ?? statement.net_to_pay} {sym}</td>
                     </tr>
                     <tr>
                       <td>employer contributions</td>
@@ -758,8 +898,8 @@ function Desk(props: {
                       <td className="num">{statement.contributions.employer.amount} {sym}</td>
                     </tr>
                     <tr className="total">
-                      <td>TO {statement.contributions.recipient} — escrow 2</td>
-                      <td className="muted">employee + employer contributions, released at the due date {statement.contributions.due}</td>
+                      <td>TO {statement.contributions.recipient} — a Check it cashes itself</td>
+                      <td className="muted">employee + employer contributions, due {statement.contributions.due}; the ledger's direct debit, signed once on the device</td>
                       <td className="num">{statement.contributions.total_to_urssaf} {sym}{contribXrp ? ` = ${contribXrp} XRP` : ""}</td>
                     </tr>
                   </>
@@ -945,10 +1085,11 @@ function Desk(props: {
         </p>
         {statement?.contributions && (
           <p className="hint">
-            <b>Two escrows, one signature session.</b> The net {statement.net_to_pay} {sym} goes to the employee at the pay date; the contributions{" "}
-            {statement.contributions.total_to_urssaf} {sym} (employee {statement.contributions.employee.amount} + employer {statement.contributions.employer.amount}) go to{" "}
-            {statement.contributions.recipient} in a second escrow, due {statement.contributions.due} (here 30 s after the pay), released by the same oracle.
-            {urssaf ? <> Stand-in account for {statement.contributions.recipient} on testnet: <code>{urssaf}</code>.</> : " A stand-in account for URSSAF is created at Prepare."}
+            <b>One signature session, three transactions.</b> The net paid {netFiat} {sym} goes to the employee in an escrow released at the pay date.
+            The contributions {statement.contributions.total_to_urssaf} {sym} (employee {statement.contributions.employee.amount} + employer {statement.contributions.employer.amount}) are a{" "}
+            <b>Check</b> made out to {statement.contributions.recipient}, with the statement hash as InvoiceID: {statement.contributions.recipient} cashes it itself before it expires, the ledger's direct debit.
+            {statement.withholding && <> The income tax withheld at source, {statement.withholding.amount} {sym} ({Number(statement.withholding.rate) * 100} % personalised rate), goes to {statement.withholding.recipient} in an escrow released at the due date {statement.withholding.due} (here 30 s after the pay).</>}
+            {standIns.urssaf ? <> Stand-ins on testnet: {statement.contributions.recipient} <code>{standIns.urssaf.classicAddress}</code>{standIns.dgfip && <>, {statement.withholding?.recipient} <code>{standIns.dgfip.classicAddress}</code></>}.</> : " Stand-in accounts for the payees are created at Prepare."}
           </p>
         )}
         <div className="row">
@@ -987,11 +1128,17 @@ function Desk(props: {
             1. Prepare
           </button>
           <button className="primary" onClick={sign} disabled={!tx}>
-            2. Sign on the Ledger
+            {batchTx ? "2. Sign once on the Ledger (Batch)" : legs.length ? `2. Sign on the Ledger (${legs.length + 1} approvals)` : "2. Sign on the Ledger"}
           </button>
-          <button onClick={submit} disabled={!signedTxHex || submitting}>
+          <button onClick={submit} disabled={!(signedTxHex || signedBatchHex) || submitting}>
             {submitting ? "Submitting…" : "3. Submit to XRPL"}
           </button>
+          {statement?.contributions && (
+            <label className="check">
+              <input type="checkbox" checked={batchMode} onChange={(e) => { setBatchMode(e.target.checked); resetLock(); }} />
+              &nbsp;one signature for all (Batch, XLS-56, all or nothing) — untick for one approval per transaction
+            </label>
+          )}
         </div>
         <ErrorBox error={prepareError} />
         {tx && (
@@ -1011,15 +1158,22 @@ function Desk(props: {
           </details>
         )}
         <ErrorBox error={submitError} />
-        {tx2 && (
+        {batchTx && (
           <details>
             <summary>
-              Unsigned EscrowCreate for the contributions · {xrpl.dropsToXrpString(tx2.Amount as string)} XRP = {statement?.contributions?.total_to_urssaf} {sym} to {statement?.contributions?.recipient} · due{" "}
-              {xrpl.fromRippleTime(tx2.FinishAfter!).toLocaleTimeString()}{signedTx2Hex ? " · signed" : " · to sign (second approval on the device)"}
+              Unsigned Batch · {legs.length + 1} inner transactions, all or nothing · one signature{signedBatchHex ? " · signed" : ""}
             </summary>
-            <pre>{JSON.stringify(tx2, null, 2)}</pre>
+            <pre>{JSON.stringify(batchTx, null, 2)}</pre>
           </details>
         )}
+        {legs.map((l) => (
+          <details key={l.id}>
+            <summary>
+              Unsigned {l.tx.TransactionType} · {l.xrp} XRP = {l.fiat} {sym} · {l.label}{l.signedHex ? " · signed" : " · to sign (one more approval on the device)"}
+            </summary>
+            <pre>{JSON.stringify(l.tx, null, 2)}</pre>
+          </details>
+        ))}
         {escrow && (
           <p className={escrow.result === "tesSUCCESS" ? "ok" : "ko"}>
             {escrow.result} · pay escrow #{escrow.sequence} ·{" "}
@@ -1028,15 +1182,17 @@ function Desk(props: {
             </a>
           </p>
         )}
-        {escrow2 && (
-          <p className={escrow2.result === "tesSUCCESS" ? "ok" : "ko"}>
-            {escrow2.result} · contributions escrow #{escrow2.sequence} to {statement?.contributions?.recipient} ·{" "}
-            <a href={xrpl.explorerTxUrl(escrow2.hash)} target="_blank">
-              see it on the explorer
-            </a>
-            {watched2 && <> · oracle: {watched2.status}{watched2.finishHash && <> · <a href={xrpl.explorerTxUrl(watched2.finishHash)} target="_blank">released to {statement?.contributions?.recipient}</a></>}</>}
+        {legs.filter((l) => l.outcome).map((l) => (
+          <p key={l.id} className={l.outcome!.result === "tesSUCCESS" ? "ok" : "ko"}>
+            {l.outcome!.result} · {l.tx.TransactionType} #{l.outcome!.sequence} · {l.label} ·{" "}
+            <a href={xrpl.explorerTxUrl(l.outcome!.hash)} target="_blank">see it on the explorer</a>
+            {l.watched && <> · oracle: {l.watched.status}{l.watched.finishHash && <> · <a href={xrpl.explorerTxUrl(l.watched.finishHash)} target="_blank">released</a></>}</>}
+            {l.kind === "check" && (l.cashed
+              ? <> · cashed by {statement?.contributions?.recipient}: {l.cashed.result} · <a href={xrpl.explorerTxUrl(l.cashed.hash)} target="_blank">CheckCash</a></>
+              : <> · <button onClick={cashUrssaf} disabled={cashBusy || l.outcome!.result !== "tesSUCCESS"}>{cashBusy ? "Cashing…" : `${statement?.contributions?.recipient} cashes its check`}</button></>)}
           </p>
-        )}
+        ))}
+        <ErrorBox error={cashError} />
       </Card>
 
       <Card n="5" title="Proof — what must fail, and the release" disabled={!escrow}>

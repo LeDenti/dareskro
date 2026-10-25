@@ -18,9 +18,12 @@ import {
   Client,
   encode,
   xrpToDrops,
+  type CheckCash,
+  type CheckCreate,
   type EscrowCancel,
   type EscrowCreate,
   type EscrowFinish,
+  type SubmittableTransaction,
   type Transaction,
   type Wallet,
 } from "xrpl";
@@ -175,6 +178,9 @@ export type EscrowDraft = {
   /** When the escrow holds the net: the gross the proof binds and the employee contribution rate that links them (memo dareskro/gross). */
   gross?: string;
   employeeRate?: string;
+  /** Income tax withheld at source: the employee's personalised rate and what is finally paid (memo dareskro/gross). */
+  taxRate?: string;
+  paid?: string;
   /** Free memos (type, data), full mode only: e.g. the contributions leg's dareskro/urssaf memo. */
   extraMemos?: { type: string; data: string }[];
   /** Explicit sequence, for a second escrow prepared right after a first one (autofill would reuse the same number). */
@@ -234,7 +240,7 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
         : []),
       // The escrow holds the net: say what gross the proof binds, and at which public rate.
       ...(d.gross && d.eur && d.employeeRate
-        ? [{ Memo: { MemoType: toHex("dareskro/gross"), MemoData: toHex(`gross=${d.gross};net=${d.eur};employee_rate=${d.employeeRate}`) } }]
+        ? [{ Memo: { MemoType: toHex("dareskro/gross"), MemoData: toHex(`gross=${d.gross};net=${d.eur};employee_rate=${d.employeeRate}${d.taxRate && d.paid ? `;tax_rate=${d.taxRate};paid=${d.paid}` : ""}`) } }]
         : []),
       ...(d.extraMemos ?? []).map((m) => ({ Memo: { MemoType: toHex(m.type), MemoData: toHex(m.data) } })),
       // The ZK commitment: the compliance proof is bound to this escrow, not to any escrow of the same amount.
@@ -294,6 +300,117 @@ export async function prepareConditionalEscrowCreate(d: ConditionalEscrowDraft):
     // autofill() gives about 1 minute. Give 10 minutes to read the device screen.
     LastLedgerSequence: (await c.getLedgerIndex()) + 150,
   }));
+}
+
+/**
+ * A Check: the payer signs once, the payee cashes when it wants, up to SendMax,
+ * before Expiration. The native "pull" of the XRP Ledger — a direct-debit
+ * mandate for URSSAF, signed on the device, with the statement hash as InvoiceID.
+ */
+export type CheckDraft = {
+  account: string;
+  publicKey: string;
+  destination: string;
+  amountXrp: string;
+  expiration: Date;
+  /** The statement's SHA-256: the check is for that pay and no other. */
+  invoiceSha256: string;
+  memos?: { type: string; data: string }[];
+  sequence?: number;
+  compact?: boolean;
+};
+
+export async function prepareCheckCreate(d: CheckDraft): Promise<CheckCreate> {
+  return withRetry(async (c) => c.autofill<CheckCreate>({
+    TransactionType: "CheckCreate",
+    Account: d.account,
+    Destination: d.destination,
+    SendMax: xrpToDrops(d.amountXrp),
+    Expiration: rippleTime(d.expiration),
+    InvoiceID: d.invoiceSha256.toUpperCase(),
+    ...(d.memos && d.memos.length && !d.compact
+      ? { Memos: d.memos.map((m) => ({ Memo: { MemoType: toHex(m.type), MemoData: toHex(m.data) } })) }
+      : {}),
+    SigningPubKey: d.publicKey.toUpperCase(),
+    ...(d.sequence !== undefined ? { Sequence: d.sequence } : {}),
+    LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+  }));
+}
+
+/** The checks waiting on an account (the payee's), with their InvoiceID, so the payee finds the one for this pay. */
+export async function pendingChecks(destination: string): Promise<{ index: string; sendMaxXrp: string; invoiceId?: string; account: string }[]> {
+  return withRetry(async (c) => {
+    const r = await c.request({ command: "account_objects", account: destination, type: "check" });
+    return (r.result.account_objects as unknown as Array<Record<string, unknown>>).map((o) => ({
+      index: o.index as string,
+      sendMaxXrp: dropsToXrpString(o.SendMax as string),
+      invoiceId: o.InvoiceID as string | undefined,
+      account: o.Account as string,
+    }));
+  });
+}
+
+/** The payee cashes the check for its full amount: that is the pull. Signed by the payee's own key. */
+export async function cashCheck(args: { payee: Wallet; checkId: string; amountXrp: string }): Promise<Outcome> {
+  return withRetry(async (c) => {
+    const tx: CheckCash = { TransactionType: "CheckCash", Account: args.payee.classicAddress, CheckID: args.checkId, Amount: xrpToDrops(args.amountXrp) };
+    const res = await c.submitAndWait(tx, { wallet: args.payee, autofill: true });
+    const meta = res.result.meta;
+    return { hash: res.result.hash, result: typeof meta === "object" ? meta.TransactionResult : "unknown" };
+  });
+}
+
+/**
+ * One signature, several transactions: Batch (XLS-56). The inner transactions carry
+ * no fee, no signature and the inner flag; the outer one is signed once on the device
+ * and applied all or nothing (tfAllOrNothing). Measured on testnet 25/10/2026: one
+ * signature, two inner payments, tesSUCCESS.
+ */
+export const TF_INNER_BATCH_TXN = 0x40000000;
+export const TF_ALL_OR_NOTHING = 0x00010000;
+
+export function innerForBatch(tx: Transaction, sequence: number): Transaction {
+  const inner = { ...tx } as Record<string, unknown>;
+  delete inner.Fee;
+  delete inner.LastLedgerSequence;
+  delete inner.TxnSignature;
+  inner.Fee = "0";
+  inner.SigningPubKey = "";
+  inner.Sequence = sequence;
+  inner.Flags = ((inner.Flags as number) ?? 0) | TF_INNER_BATCH_TXN;
+  return inner as unknown as Transaction;
+}
+
+export async function prepareBatch(args: { account: string; publicKey: string; inner: Transaction[] }): Promise<Transaction> {
+  return withRetry(async (c) => {
+    const seq = (await c.request({ command: "account_info", account: args.account })).result.account_data.Sequence;
+    const raw = args.inner.map((t, i) => ({ RawTransaction: innerForBatch(t, seq + 1 + i) }));
+    const tx = await c.autofill({
+      TransactionType: "Batch",
+      Account: args.account,
+      Flags: TF_ALL_OR_NOTHING,
+      RawTransactions: raw,
+      Sequence: seq,
+      SigningPubKey: args.publicKey.toUpperCase(),
+      LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+    } as unknown as SubmittableTransaction);
+    return tx as unknown as Transaction;
+  });
+}
+
+/** After a Batch is validated: the hash of each inner transaction, by its sequence (from the account's history). */
+export async function hashesBySequence(account: string, sequences: number[]): Promise<Record<number, string>> {
+  return withRetry(async (c) => {
+    const r = await c.request({ command: "account_tx", account: account, limit: 20 });
+    const out: Record<number, string> = {};
+    for (const t of r.result.transactions as unknown as Array<Record<string, unknown>>) {
+      const tx = (t.tx_json ?? t.tx) as Record<string, unknown> | undefined;
+      const h = (t.hash ?? tx?.hash) as string | undefined;
+      const sq = tx?.Sequence as number | undefined;
+      if (sq !== undefined && h && sequences.includes(sq)) out[sq] = h;
+    }
+    return out;
+  });
 }
 
 /** The employer trying to take the money back. Must fail: tecNO_PERMISSION. */

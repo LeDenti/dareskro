@@ -38,14 +38,15 @@ Only this counts for judging, and we say so.
 
 | Piece | Where | Status |
 |---|---|---|
-| Evidence → statement agent (schedule + badge → lines, total, SHA-256); since Sunday morning the statement is a **one-day fixed-term contract**: end-of-contract bonus and paid-leave allowance (10 % + 10 %), then the contributions, the net to pay and the employer cost, with rates bought from the rules service | `agent/bulletin_garde.py` | done: shift 466.57, gross 564.55, net 440.35, 361.31 to URSSAF (USD; `--devise EUR` for euros) |
+| Evidence → statement agent (schedule + badge → lines, total, SHA-256); since Sunday morning the statement is a **one-day fixed-term contract**: end-of-contract bonus and paid-leave allowance (10 % + 10 %), the contributions (rates bought from the rules service), the income tax withheld at source (personalised rate from DGFiP), the net paid, the employer cost | `agent/bulletin_garde.py` | done: shift 466.57, gross 564.55, net 440.35, tax 33.03, paid 407.32, 361.31 to URSSAF (USD; `--devise EUR` for euros) |
 | Pay desk web app: statement, human validation, Ledger connect, `EscrowCreate` signed on device, proofs, third-party release | `app/` | done, run end to end on Speculos (Nano X, XRP app 2.8.1) **and on a real Nano S Plus (XRP app 2.8.2), Saturday 19:40 UTC** |
 | Ledger integration: Device Management Kit + `device-signer-kit-xrp` (pre-release), USB / Bluetooth / Speculos | `app/src/ledger.ts` | done |
 | Escrow builder for the device, memo with statement hash, early-finish / cancel / release proofs | `app/src/xrpl.ts` | done |
 | Ledger developer-experience feedback | `LEDGER_FEEDBACK.md` | done |
 | Delivery oracle (example 3): conditional escrow, proof = URL + SHA-256 read online by the oracle, secret revealed on match, refund at the deadline | `oracle/oracle.mjs`, `oracle/demo_livraison.mjs` | done, run on testnet 24/10 18:35 UTC |
 | Four payers on one desk (examples 1, 3, 4): the oracle gains the "presence" shape (influencer: the post must be live at the end of the period) and the "affiliate" shape (the merchant's sales system confirms the order; the release carries the order hash); the pay desk gets a case selector, a contract desk signed on the same device path, and a registry of every escrow | `oracle/oracle.mjs` (`KINDS`), `app/src/ContractDesk.tsx`, `oracle/demo_influenceur.mjs`, `oracle/demo_affiliation.mjs` | done, measured 21:38–21:56 UTC |
-| Privacy: the salary invisible to the public, visible to the administration — a fresh payee account per period, the statement sealed for two readers (employee, administration), a zero-knowledge compliance proof (Noir, UltraHonk in wasm) bound to the escrow by hash and commitment, a privacy service behind the desk's Privacy card | `agent/confidentiel.mjs`, `agent/divulgation.mjs`, `zk/` (`circuit/src/main.nr`, `prove.mjs`, `verify.mjs`, `ouvrir.mjs`), `agent/service_confidentialite.mjs`, `oracle/demo_confidentialite.mjs` | done, measured 22:10 UTC |
+| Privacy: the salary invisible to the public, visible to the administration — a fresh payee account per period, the statement sealed for two readers (employee, administration), a zero-knowledge compliance proof (Noir, UltraHonk in wasm) bound to the escrow by hash and commitment, a privacy service behind the desk's Privacy card |
+| One signature, three transactions: the net paid (escrow), the contributions as a Check URSSAF cashes itself, the income tax to DGFiP (escrow), inside one Batch (XLS-56, all or nothing) signed once on the device | `app/src/xrpl.ts` (`prepareCheckCreate`, `cashCheck`, `prepareBatch`), `app/src/App.tsx`, `oracle/demo_confidentialite.mjs` | done, measured 25/10 | `agent/confidentiel.mjs`, `agent/divulgation.mjs`, `zk/` (`circuit/src/main.nr`, `prove.mjs`, `verify.mjs`, `ouvrir.mjs`), `agent/service_confidentialite.mjs`, `oracle/demo_confidentialite.mjs` | done, measured 22:10 UTC |
 | Mastercard Agent Pay for Machines (AP4M): the agent buys its evidence over x402 in RLUSD on XRPL EVM testnet, inside a cap the employer approved | `ap4m/agent.mjs`, `ap4m/merchant.mjs` | done, run live 24/10 17:44 UTC: channel, 402, voucher, redemption, RLUSD settlement, receipt verified on-chain |
 
 ### Measured on testnet, 24/10/2026, signed on the Ledger XRP app (2.8.1, Nano X emulated by Speculos)
@@ -116,15 +117,33 @@ L1243-8: 46.66) and the paid-leave allowance (10 % of the gross including that b
 L1242-16: 51.32): **gross 564.55**. Then the contributions, at aggregated indicative
 rates bought from the rules service with the point value (`fixed_term`, `contributions`
 in the resource; the DSN computes line by line in production): employee 22 % (124.20),
-employer 42 % (237.11). **Net to pay 440.35; 361.31 to URSSAF**, due the 15th of the next
-month; employer cost 801.66. The pay desk then locks **two escrows in one signature
-session**: the net to the employee at the pay date, the contributions to URSSAF at the
-due date (a stand-in account on testnet; in production, euros to URSSAF's account with
-the DSN reference, the way the dollar leg works today). The same oracle releases both.
-Nobody can forget the contributions, nobody can divert them: they were locked the day
-the shift was validated. The zero-knowledge proof binds the gross; the escrow's
-`dareskro/gross` memo states gross, net and the public rate, and the verifier checks
-net = gross − contributions.
+employer 42 % (237.11). **Net before tax 440.35; 361.31 to URSSAF**, due the 15th of the
+next month; employer cost 801.66. Then the **income tax withheld at source** at the
+employee's personalised rate, transmitted by DGFiP through the DSN (7.5 % here, in the
+schedule file): 33.03 to DGFiP, **net paid 407.32**.
+
+Three transactions leave the pay desk for one validated shift, and the ledger carries
+each to the right place:
+
+| Leg | To whom | How | When |
+|---|---|---|---|
+| the net paid, 407.32 | the employee (a fresh account per period) | an **escrow**, FinishAfter only, released by the oracle | the pay date |
+| the contributions, 361.31 | URSSAF | a **Check** (XLS-18) with the statement hash as `InvoiceID`: the employer signs once, URSSAF cashes it itself (`CheckCash`) for the amount due before it expires — the ledger's direct-debit mandate | whenever URSSAF wants, before the due date + grace |
+| the income tax, 33.03 | DGFiP | an **escrow**, released by the oracle | the due date |
+
+**One signature.** The three are inner transactions of one **Batch** (XLS-56,
+`tfAllOrNothing`): the employer approves once on the device, the ledger applies all three
+or none. Measured on testnet 25/10/2026: a Batch with two inner payments, one signature,
+`tesSUCCESS` ([5BAB5020…](https://testnet.xrpl.org/transactions/5BAB5020D0B1A7DA0BA288B51F41238DBF034002049279DA5BD1BB5FAA3070C2)),
+then the three legs of the pay in one Batch (table below). The desk keeps "one approval
+per transaction" as a switch, for a device whose XRP app does not know Batch yet.
+Nobody can forget the contributions or the tax, nobody can divert them: they were
+locked the day the shift was validated. The zero-knowledge proof binds the gross; the
+pay escrow's `dareskro/gross` memo states gross, net, the contribution rate, the tax
+rate and what is paid, and the verifier checks net = gross − contributions and
+paid = net − tax. URSSAF and DGFiP are stand-in accounts on testnet; in production the
+euro leg does the last mile to their bank accounts with the DSN reference, the way the
+dollar leg works today.
 
 **Dollars owed, XRP locked, and the employee chooses how to be paid.** The
 statement is in dollars: that is what the employee is owed (`--devise EUR` for
@@ -357,6 +376,26 @@ contributions escrow #21810280 [7780DEBB…](https://testnet.xrpl.org/transactio
 released to the URSSAF stand-in 30 s later
 [CFD2DE92…](https://testnet.xrpl.org/transactions/CFD2DE92650D885BAED93D5CC3BF7B95AF1421BC5FAD64630ADB42250890A404).
 The statement was sealed for the two readers, bound to the pay escrow, from the desk's Privacy card.
+
+Re-run on Sunday 25/10/2026 10:23 UTC with the income tax and **one signature for the three
+legs** (`presentation/demo-terminal/capture/confidentialite.log`; the one-approval-per-transaction
+run of 10:15 UTC is kept as `confidentialite_v3_pertx.log`):
+
+| Step | Proof |
+|---|---|
+| **Batch, one signature, three inner transactions, all or nothing** (XLS-56, `tfAllOrNothing`) | `tesSUCCESS` [80BBBB36…](https://testnet.xrpl.org/transactions/80BBBB36088BC2BDEEAE095D99501821AC7B52443ED3AADD5B243DF44928F393) |
+| inner 1 — pay escrow #21810889: the **net paid** 407.32 USD = 315.14 XRP to a fresh employee account; memos: statement hash (ede5c5fd…), opaque id, fiat at rate, `dareskro/gross` = gross 564.55, net 440.35, employee rate 0.22, tax rate 0.075, paid 407.32, oracle, zk commitment 0x29534add… | [1FE4BFC0…](https://testnet.xrpl.org/transactions/1FE4BFC0C3DF654982F5D08F95098C3D06E6465C443BAD7D5687AD24ADE20E6B) |
+| inner 2 — **Check** #21810890 for URSSAF: up to 361.31 USD = 279.55 XRP, `InvoiceID` = the statement hash, expires 10 min after the due date | [E4AAF2B8…](https://testnet.xrpl.org/transactions/E4AAF2B8EFCDD98AEEA72A33773F878D8F478CEF9A0926B6C82E17E32BC09E9E) |
+| inner 3 — tax escrow #21810891: the income tax withheld, 33.03 USD = 25.56 XRP to DGFiP, FinishAfter = the due date | [44CA07EA…](https://testnet.xrpl.org/transactions/44CA07EA5C07BD26AB3D46061B7CCB4475BFEE93B2376A9C001) |
+| The public reads the file and the chain: nothing private; the proof verifies and binds by hash, by commitment, and by amount through gross − 22 % = net, net − 7.5 % = paid | `RESULT: OK` twice |
+| The administration opens the statement: hash = memo, fiat memo = net paid, gross memo = gross, net, paid; six lines, contributions, tax, URSSAF, DGFiP | `bound to escrow 1FE4BFC0…: MATCH` |
+| **URSSAF cashes its check itself** at the due date, with its own key (`CheckCash`) | [AF896B56…](https://testnet.xrpl.org/transactions/AF896B563E7D796C040FE67FDDF4FACBB68E3F56645B0BF2678186CB78CA647B) |
+| The oracle releases the pay at the date, then the income tax to DGFiP at the due date | [D7CADBD4…](https://testnet.xrpl.org/transactions/D7CADBD47257BEA4B2E0A8EE2AC4CD5FB6650001E0638126070C6DC778097187), [148B533C…](https://testnet.xrpl.org/transactions/148B533CD64F96E6201FF926183270A5BB1E04A9B43E2BE1419B8A71E1487E9B) |
+
+From the pay desk, same morning, test wallet: one click on "Sign once on the Ledger (Batch)",
+Batch [CEF73AAD…](https://testnet.xrpl.org/transactions/CEF73AAD0D33F52333C4657F2773578A1982348FF338E4366B39496283C3883B)
+`tesSUCCESS` with the pay escrow, the Check and the tax escrow inside, then the button
+"URSSAF cashes its check": `CheckCash` [31C16FFF…](https://testnet.xrpl.org/transactions/31C16FFF95357AA098FB5C2AB0FE1F6E144649E1C181F2790493FF963CCD1973).
 
 One more thing said plainly: this repository publishes the demo statement itself
 (`agent/sortie/bulletin.json`, served by the desk as `/bulletin.json`), because it is the

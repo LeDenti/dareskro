@@ -224,6 +224,12 @@ def main():
     cot_salariales = (brut * taux_salarial).quantize(cent, ROUND_HALF_UP)
     cot_patronales = (brut * taux_patronal).quantize(cent, ROUND_HALF_UP)
     net = brut - cot_salariales
+    # --- 3c. le prelevement a la source : le taux personnalise du salarie, transmis par la
+    # DGFiP via la DSN (ici dans le planning), applique au net (assiette simplifiee : la DSN
+    # calcule le net imposable exact). Retenu par l'employeur, reverse a la DGFiP le 15.
+    taux_pas = (Decimal(plan.get("taux_pas", "0")) / 100).quantize(Decimal("0.0001"))
+    impot_retenu = (net * taux_pas).quantize(cent, ROUND_HALF_UP)
+    net_paye = net - impot_retenu
     # Exigibilite : le 15 du mois suivant la paie (employeurs de moins de 50 salaries).
     annee, mois = int(plan["date"][:4]), int(plan["date"][5:7])
     echeance_urssaf = "%04d-%02d-15" % ((annee + 1, 1) if mois == 12 else (annee, mois + 1))
@@ -264,6 +270,16 @@ def main():
             "rates_source": taux_source,
         },
         "net_to_pay": str(net),
+        # L'impot sur le revenu, retenu a la source : un troisieme versement, vers la DGFiP.
+        "withholding": {
+            "recipient": "DGFiP",
+            "due": echeance_urssaf,
+            "basis": "personalised rate transmitted by DGFiP through the DSN, applied to the net to pay "
+                     "(simplified basis: the DSN computes the exact taxable net)",
+            "rate": str(taux_pas),
+            "amount": str(impot_retenu),
+        },
+        "net_paid": str(net_paye),
         "employer_cost": str(brut + cot_patronales),
         "rest_hours_outside_escrow": r["repos_compensateur_heures"],
         "rest_note": r["note_repos"],
@@ -278,6 +294,8 @@ def main():
             "indemnite de fin de contrat incluse dans l'assiette)",
             "cotisations : taux agreges indicatifs (bareme URSSAF 2026), "
             "la DSN calcule ligne par ligne ; exigibilite le 15 du mois suivant",
+            "prelevement a la source (CGI art. 204 A et suivants) : taux personnalise "
+            "transmis par la DGFiP, retenu par l'employeur, reverse le 15 du mois suivant",
         ],
         "rules_source": rules_source,
         "computed_by": "officine.garde — deterministic, replayable to the cent",
@@ -303,9 +321,13 @@ def main():
           % ("BRUT", bulletin["total"], DEVISE, bulletin["rest_hours_outside_escrow"]))
     c = bulletin["contributions"]
     print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations salariales", "-" + c["employee"]["amount"], DEVISE, (Decimal(c["employee"]["rate"]) * 100).normalize()))
-    print("  %-26s %10s %s   -> sequestre 1, le salarie, a la date de paie" % ("NET A PAYER", bulletin["net_to_pay"], DEVISE))
+    print("  %-26s %10s %s" % ("NET AVANT IMPOT", bulletin["net_to_pay"], DEVISE))
+    w = bulletin["withholding"]
+    print("  %-26s %10s %s   (taux personnalise %s %%, DGFiP via DSN)" % ("prelevement a la source", "-" + w["amount"], DEVISE, (Decimal(w["rate"]) * 100).normalize()))
+    print("  %-26s %10s %s   -> sequestre 1, le salarie, a la date de paie" % ("NET PAYE", bulletin["net_paid"], DEVISE))
+    print("  %-26s %10s %s   -> escrow vers la DGFiP, exigible le %s" % ("A LA DGFIP", w["amount"], DEVISE, w["due"]))
     print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations patronales", c["employer"]["amount"], DEVISE, (Decimal(c["employer"]["rate"]) * 100).normalize()))
-    print("  %-26s %10s %s   -> sequestre 2, %s, exigible le %s" % ("A L'URSSAF", c["total_to_urssaf"], DEVISE, c["recipient"], c["due"]))
+    print("  %-26s %10s %s   -> Check XRPL que %s encaisse elle-meme, exigible le %s" % ("A L'URSSAF", c["total_to_urssaf"], DEVISE, c["recipient"], c["due"]))
     print("  %-26s %10s %s" % ("COUT EMPLOYEUR", bulletin["employer_cost"], DEVISE))
     print("taux       %s" % c["rates_source"])
     print("regles     %s" % rules_source["how"])

@@ -67,9 +67,13 @@ function printStatement(b) {
   if (b.contributions) {
     const c = b.contributions;
     console.log(`  ${"employee contributions".padEnd(28)} ${("-" + c.employee.amount).padStart(8)} ${b.currency}  (${Number(c.employee.rate) * 100} %)`);
-    console.log(`  ${"NET TO PAY".padEnd(28)} ${String(b.net_to_pay).padStart(8)} ${b.currency}  -> the employee's escrow`);
+    console.log(`  ${"net before tax".padEnd(28)} ${String(b.net_to_pay).padStart(8)} ${b.currency}`);
+    if (b.withholding) {
+      console.log(`  ${"income tax withheld".padEnd(28)} ${("-" + b.withholding.amount).padStart(8)} ${b.currency}  (${Number(b.withholding.rate) * 100} % personalised rate, to ${b.withholding.recipient} by ${b.withholding.due})`);
+      console.log(`  ${"NET PAID".padEnd(28)} ${String(b.net_paid).padStart(8)} ${b.currency}  -> the employee's escrow`);
+    } else console.log(`  ${"NET TO PAY".padEnd(28)} ${String(b.net_to_pay).padStart(8)} ${b.currency}  -> the employee's escrow`);
     console.log(`  ${"employer contributions".padEnd(28)} ${String(c.employer.amount).padStart(8)} ${b.currency}  (${Number(c.employer.rate) * 100} %)`);
-    console.log(`  ${("to " + c.recipient).padEnd(28)} ${String(c.total_to_urssaf).padStart(8)} ${b.currency}  -> the contributions escrow, due ${c.due}`);
+    console.log(`  ${("to " + c.recipient).padEnd(28)} ${String(c.total_to_urssaf).padStart(8)} ${b.currency}  -> a Check ${c.recipient} cashes itself, due ${c.due}`);
   }
   console.log(`  status    ${b.status}, computed by ${b.computed_by}`);
 }
@@ -131,14 +135,15 @@ async function asRole(role, file, escrow) {
     if (fiat) {
       // The escrow holds the net when the statement carries contributions (the gross goes to the
       // proof, the contributions to URSSAF's escrow): "440.35 USD @ 1.28865 ..." must agree with it.
-      const expected = bulletin.net_to_pay ?? bulletin.total;
+      const expected = bulletin.net_paid ?? bulletin.net_to_pay ?? bulletin.total;
       const same = fiat.startsWith(`${expected} ${bulletin.currency} `);
-      console.log(`  memo dareskro/fiat "${fiat}" vs statement ${bulletin.net_to_pay ? "net to pay" : "total"} ${expected} ${bulletin.currency}: ${same ? "MATCH" : "MISMATCH"}`);
+      console.log(`  memo dareskro/fiat "${fiat}" vs statement ${bulletin.net_paid ? "net paid" : bulletin.net_to_pay ? "net to pay" : "total"} ${expected} ${bulletin.currency}: ${same ? "MATCH" : "MISMATCH"}`);
       if (!same) ok = false;
       const gross = memos.find((m) => m.type === "dareskro/gross")?.data;
       if (gross) {
-        const sameGross = gross.startsWith(`gross=${bulletin.total};net=${expected};`);
-        console.log(`  memo dareskro/gross "${gross}" vs statement gross ${bulletin.total} and net ${expected}: ${sameGross ? "MATCH" : "MISMATCH"}`);
+        const sameGross = gross.startsWith(`gross=${bulletin.total};net=${bulletin.net_to_pay ?? bulletin.total};`)
+          && (!bulletin.net_paid || gross.endsWith(`;paid=${bulletin.net_paid}`));
+        console.log(`  memo dareskro/gross "${gross}" vs statement gross ${bulletin.total}, net ${bulletin.net_to_pay ?? bulletin.total}${bulletin.net_paid ? `, paid ${bulletin.net_paid}` : ""}: ${sameGross ? "MATCH" : "MISMATCH"}`);
         if (!sameGross) ok = false;
       }
     }

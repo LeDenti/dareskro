@@ -1,0 +1,113 @@
+10:14:26 oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW (dareskro payroll oracle v1)
+10:14:27 statement ede5c5fdbbec… gross 564.55 USD, net 440.35, paid 407.32 = 314.783187 XRP at 1.29397 (Kraken), contributions 361.31 = 279.225948 XRP to URSSAF, income tax 33.03 = 25.526094 XRP to DGFiP
+10:14:28 funding the employer, a fresh account for the employee (one per pay period: nobody can name the payee) and a stand-in for URSSAF…
+10:15:46 EscrowCreate tesSUCCESS #21810747 — https://testnet.xrpl.org/transactions/12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+10:15:46   memos: statement sha256, opaque id stmt-ffff3dd0e216, fiat at rate, oracle, zk commitment 0x29534add91eb55dd…
+10:15:46 handed to the oracle (payout: crypto — the employee keeps the XRP)
+10:15:54 CheckCreate tesSUCCESS #21810748 — up to 279.225948 XRP for URSSAF (stand-in rwBxSQJHEFGNagugkeXJ4gNAwGNiAkc7aY), InvoiceID = the statement hash, expires 10 min after the due date — https://testnet.xrpl.org/transactions/285DA8438FAC401F8F58A4EAF49BE42686844E96A8FB23DF5C2128596B8FCFDE
+10:15:54 nothing to watch: URSSAF holds a check it can cash itself, for the amount due, before it expires
+10:16:01 EscrowCreate tesSUCCESS #21810749 — 25.526094 XRP to DGFiP (stand-in rhgsweB6bXydwm3D179YpCQhns9NynaQrC), due 2026-11-15 — https://testnet.xrpl.org/transactions/9EA08477F913EAD0BC79678DEB980A512DE0A686925C04A3E3014AACF400F548
+10:16:01 handed to the oracle: the income tax goes to DGFiP at the due date, by the ledger
+10:16:01 — sealing the statement for the employee and the administration, bound to this escrow
+10:16:01 $ node agent/confidentiel.mjs --chiffre --escrow 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+    escrow 12279CFD...: memo hash = statement hash (1548 ms on testnet)
+    sealed agent/sortie/bulletin.json: 4 849 bytes plain -> 8 569 bytes file, 2 recipients, 1558.8 ms
+           -> agent/sortie/bulletin.chiffre.json  and  app/public/bulletin.chiffre.json
+    what the public sees in that file:
+      version       dareskro/confidential-statement.v1
+      sha256_plain  ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e  (= the escrow memo)
+      escrow        12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+      ciphertext    5 120 bytes, iv 12, tag 16  (statement padded to 1024 bytes: a size class, content opaque)
+      zk opening    400 bytes sealed under the same key, commitment 0x29534add91eb55dd... in clear (it is public already)
+      recipients    employee, administration: ephemeral pk 32, wrapped key 32, tag 16 each
+      nothing else: no name, no hours, no coefficient, no lines, no amount, no nonce.
+10:16:03 — what the public sees
+10:16:03 $ node agent/divulgation.mjs --role public --escrow 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+    what anyone sees in agent/sortie/bulletin.chiffre.json:
+      version       dareskro/confidential-statement.v1
+      sha256_plain  ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e
+      escrow        12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+      ciphertext    5 120 bytes, opaque (spaces to a 1024-byte multiple)
+      zk opening    400 bytes, opaque; commitment 0x29534add91eb55dd... (public already)
+      recipients    employee, administration (wrapped content key each)
+    what anyone sees on testnet, EscrowCreate 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82 (1351 ms):
+      from          rsEPoQiQRPyW4SAbF2FEzLWnDQKpNHaNBG
+      to            rGWZPWEw1e93o5ME54qeoU4XboZVpwAdiS
+      amount        314.783187 XRP  (public: the XRP amount is never hidden on an escrow)
+      payable at    2026-10-25T10:17:12Z
+      memo          dareskro/statement-sha256  ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e
+      memo          dareskro/statement-id      stmt-ffff3dd0e216
+      memo          dareskro/fiat              407.32 USD @ 1.29397 USD/XRP Kraken 2026-10-25T10:15Z
+      memo          dareskro/gross             gross=564.55;net=440.35;employee_rate=0.22;tax_rate=0.0750;paid=407.32
+      memo          dareskro/oracle            rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+      memo          dareskro/zk-commitment     0x29534add91eb55dd45c3cd1e3cc493e648c7b888d2530cf80b786f82a1949956
+      => the escrow cites the same statement hash as the sealed file: same statement, content unreadable
+    what the public cannot do: open it.
+      tried to unwrap the employee block with a random key: refused ("Unsupported state or unable to authenticate data")
+      the two private keys are the only way in: who worked, how many hours, which lines stay sealed in the file.
+    RESULT: OK, the file and the escrow show the public nothing private
+10:16:04 — the proof, verified against the chain as anyone can
+10:16:04 $ node zk/verify.mjs --escrow 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+    proof VERIFIED in 15 ms (14656 bytes, vk 3680 bytes, 9 public fields)
+    escrow 12279CFD...: statement memo ede5c5fdbbec9179... MATCHES the proof's public statement hash
+    escrow 12279CFD...: gross memo 564.55 MATCHES the proven total; net 440.35 = gross - 22 % employee contributions: MATCHES
+    escrow 12279CFD...: paid 407.32 = net - 7.5 % income tax withheld at source (33.03): MATCHES
+    escrow 12279CFD...: 314.783187 XRP x 1.29397 USD/XRP (rate declared by the payer) = 407.3200 USD vs net 407.32 -> MATCH (|diff| 0.0000), fiat memo MATCHES
+    escrow 12279CFD...: zk-commitment memo MATCHES the public commitment
+      WHAT THE PUBLIC LEARNS                                            | WHAT STAYS HIDDEN (measured)
+      ------------------------------------------------------------------+------------------------------
+      total 564.55 equals the IDCC 1996 formula for some                | who (badge, name): the commitment opens on nothing without the nonce
+      admissible hours, coefficient (100..2000) and seniority           | the nonce
+      Sunday shift: true; shutters open: true                           | hours, coefficient, seniority: hidden by the proof, but 11 triples fit the public total
+      35 h already worked that week                                     | 
+      fixed-term contract of one day: +10 % end-of-contract, +10 % paid leave| 
+      point value 5.277                                                 | 
+      commitment 0x29534add91eb... (badge, inputs, nonce, statement)    | 
+      statement ede5c5fdbbec9179... (public input = escrow memo)        | 
+      escrow rsEPoQiQRP... -> rGWZPWEw1e...                             | 
+      314.783187 XRP, bound to this total and statement                 | 
+    enumeration: 11 (hours, coefficient, seniority rate) triples give 564.55 under the public context; the proof hides which one, the public amount does not. Hiding the amount needs XLS-96 (no escrow in v1) or pooled periods.
+    RESULT: OK
+10:16:06 — what the administration sees
+10:16:06 $ node agent/divulgation.mjs --role administration --escrow 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82
+    role administration: unwrapped with agent/cles/administration.key, decrypted 4 841 bytes (+ padding) in 1.9 ms
+      recomputed sha256 ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e
+      = sha256_plain of the sealed file = sha256 field of the statement
+    what anyone sees on testnet, EscrowCreate 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82 (1264 ms):
+      from          rsEPoQiQRPyW4SAbF2FEzLWnDQKpNHaNBG
+      to            rGWZPWEw1e93o5ME54qeoU4XboZVpwAdiS
+      amount        314.783187 XRP  (public: the XRP amount is never hidden on an escrow)
+      payable at    2026-10-25T10:17:12Z
+      memo          dareskro/statement-sha256  ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e
+      memo          dareskro/statement-id      stmt-ffff3dd0e216
+      memo          dareskro/fiat              407.32 USD @ 1.29397 USD/XRP Kraken 2026-10-25T10:15Z
+      memo          dareskro/gross             gross=564.55;net=440.35;employee_rate=0.22;tax_rate=0.0750;paid=407.32
+      memo          dareskro/oracle            rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+      memo          dareskro/zk-commitment     0x29534add91eb55dd45c3cd1e3cc493e648c7b888d2530cf80b786f82a1949956
+      bound to escrow 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82: MATCH
+      memo dareskro/fiat "407.32 USD @ 1.29397 USD/XRP Kraken 2026-10-25T10:15Z" vs statement net paid 407.32 USD: MATCH
+      memo dareskro/gross "gross=564.55;net=440.35;employee_rate=0.22;tax_rate=0.0750;paid=407.32" vs statement gross 564.55, net 440.35, paid 407.32: MATCH
+      zk opening sealed under the same key: node zk/ouvrir.mjs --role administration recomputes the commitment 0x29534add91eb55dd...
+    --- statement (sealed for the public, open for this role) ---
+      employee  Pharmacien adjoint, coefficient 600, 18 ans d'anciennete  (badge A-0412)
+      period    2026-10, 2026-10-25 09:00-21:00, garde dimanche, volets ouverts
+      temps de garde                 250.51
+      majorations heures sup.         83.50
+      indemnite de dimanche           94.99
+      prime d anciennete              37.58
+      indemnite de fin de contrat     46.66
+      indemnite compensatrice de conges payes    51.32
+      gross                          564.55 USD  (CDD d'un jour (journee de garde))
+      employee contributions        -124.20 USD  (22 %)
+      net before tax                 440.35 USD
+      income tax withheld            -33.03 USD  (7.5 % personalised rate, to DGFiP by 2026-11-15)
+      NET PAID                       407.32 USD  -> the employee's escrow
+      employer contributions         237.11 USD  (42 %)
+      to URSSAF                      361.31 USD  -> a Check URSSAF cashes itself, due 2026-11-15
+      status    PROPOSITION, computed by officine.garde — deterministic, replayable to the cent
+10:16:07 — waiting for the oracle to release the pay at the date (90 s), then the income tax 30 s later; URSSAF cashes its check at the due date…
+10:17:49 URSSAF cashes its check: CheckCash tesSUCCESS — https://testnet.xrpl.org/transactions/08EB284A22A0E9C37E397F2C596CDE8018D7F8D0D20919CBEBE35689D4124623
+10:17:59 pay released by the oracle: https://testnet.xrpl.org/transactions/01F86962A2A194C2AE8BB5B5C6AE70BDDC77CED7C13544FA47814AB24E268C4B — employee balance 414.783187 XRP
+10:17:59 income tax released by the oracle to DGFiP: https://testnet.xrpl.org/transactions/0866555DD95F1DFB7F13322B4DC9CFD70993A22606327CB7012F7D5FE4ACE2E8 — balance 125.526094 XRP
+10:18:00 URSSAF balance after cashing: 379.225936 XRP
+10:18:00 SUMMARY: pay escrow 12279CFDE208FB39EFD82D73DAA97EAB43CB2F3C21CC4C1F6088E7B407EB3B82 | URSSAF check 285DA8438FAC401F8F58A4EAF49BE42686844E96A8FB23DF5C2128596B8FCFDE | DGFiP escrow 9EA08477F913EAD0BC79678DEB980A512DE0A686925C04A3E3014AACF400F548 | seal ok | public sees nothing extra | proof verified | administration MATCH | pay release ok | check cashed ok | tax release ok

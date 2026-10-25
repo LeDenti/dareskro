@@ -86,6 +86,14 @@
     "rates_source": "purchased with the rules (fixed_term, contributions)"
   },
   "net_to_pay": "440.35",
+  "withholding": {
+    "recipient": "DGFiP",
+    "due": "2026-11-15",
+    "basis": "personalised rate transmitted by DGFiP through the DSN, applied to the net to pay (simplified basis: the DSN computes the exact taxable net)",
+    "rate": "0.0750",
+    "amount": "33.03"
+  },
+  "net_paid": "407.32",
   "employer_cost": "801.66",
   "rest_hours_outside_escrow": "12.00",
   "rest_note": "repos d egale duree — le texte ne prevoit pas de le remplacer par une indemnite",
@@ -94,7 +102,8 @@
     "art. 7 -> accord du 23/03/2000 revise le 09/04/2008, art. 4 (garde dimanche : 1,5 point par heure, repos d'egale duree)",
     "valeur du point 5,277 EUR, accord du 19/01/2026, A CONFIRMER",
     "Code du travail L1243-8 (indemnite de fin de contrat, 10 % du brut) et L1242-16 (indemnite compensatrice de conges payes, 10 %, indemnite de fin de contrat incluse dans l'assiette)",
-    "cotisations : taux agreges indicatifs (bareme URSSAF 2026), la DSN calcule ligne par ligne ; exigibilite le 15 du mois suivant"
+    "cotisations : taux agreges indicatifs (bareme URSSAF 2026), la DSN calcule ligne par ligne ; exigibilite le 15 du mois suivant",
+    "prelevement a la source (CGI art. 204 A et suivants) : taux personnalise transmis par la DGFiP, retenu par l'employeur, reverse le 15 du mois suivant"
   ],
   "rules_source": {
     "how": "purchased by the agent over x402 on Mastercard AP4M",
@@ -109,7 +118,7 @@
     "valid_from": "2026-01-19"
   },
   "computed_by": "officine.garde — deterministic, replayable to the cent",
-  "computed_at": "2026-10-25T09:39:03+00:00",
+  "computed_at": "2026-10-25T10:11:06+00:00",
   "status": "PROPOSITION",
-  "sha256": "b0c852ded64b174dd4c0522b433ab106e00a8f6816c44c758c9b8cd161d8327d"
+  "sha256": "ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e"
 }

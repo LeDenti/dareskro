@@ -19,7 +19,7 @@
   "volets_ouverts": true,
   "heures_semaine_avant": 35,
   "cdd": true,
-  "statement_sha256": "b0c852ded64b174dd4c0522b433ab106e00a8f6816c44c758c9b8cd161d8327d",
-  "commitment": "0x02d19cac5b1e2728ef40af87fa829282955168e3fee494ee5716d0fa14ea797d",
-  "generated": "2026-10-25T09:39:58.885Z"
+  "statement_sha256": "ede5c5fdbbec91791904cdb2e3f9f862f85d301451be3ba5ae3871002728dd8e",
+  "commitment": "0x29534add91eb55dd45c3cd1e3cc493e648c7b888d2530cf80b786f82a1949956",
+  "generated": "2026-10-25T10:14:26.199Z"
 }
