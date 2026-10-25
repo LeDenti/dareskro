@@ -143,6 +143,22 @@ line too (replayed on 20 000 random combinations: identical whenever the week he
 lines); the runs after it are marked.
 
 
+**Where the money is, and when it must be there.** At `EscrowCreate` the XRP leave the
+employer's spendable balance and sit in an **Escrow object of the ledger** — owner the
+employer, `Destination` the employee, `Amount`, `FinishAfter` — that no account can spend:
+not the employer (no cancel date), not the employee (not before the date), not the oracle
+(it never holds anything, it only submits the finish). The ledger refuses the lock if the
+account cannot fund it on top of its reserve (`tecUNFUNDED_ESCROW`, `tecINSUFFICIENT_RESERVE`),
+so the pay and the income tax are **provisioned at the moment of the lock**: when the human
+validates the statement, before the pay date — and, for the freelancer, the influencer and the
+affiliate, before the work is judged. The desk checks the balance first and says "too low:
+N XRP needed for the escrows, the reserve and the fees". The **Check** is the honest
+exception: a Check is a right to pull, not a lock. The 361.32 for URSSAF stay in the
+employer's balance until `CheckCash`; if they are not there at that moment the cash fails
+(`tecUNFUNDED`). We kept the Check to show the ledger's native direct debit; a payroll in
+production would lock that leg too, and the desk already carries the form (`kind: "escrow"`
+on the URSSAF leg gives it the DGFiP treatment, one line).
+
 **One signature.** The three are inner transactions of one **Batch** (XLS-56,
 `tfAllOrNothing`): the employer approves once on the device, the ledger applies all three
 or none. Measured on testnet 25/10/2026: a Batch with two inner payments, one signature,
