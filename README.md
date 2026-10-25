@@ -451,6 +451,30 @@ verified with `verify-receipt.mjs` (`verified: true`, amount 0.41, payout wallet
 giving 1.44 RLUSD back: 20 allocated, 14.30 spent, 1.44 held, **4.26 free** for one
 more payout at 1/100.
 
+### Live with the Mastercard engineer, 15:38 UTC — the dollar leg at 1/100, and a resume
+
+Run from the terminal in front of the Mastercard engineer, on the pay escrow of the 14:35 run
+(`EscrowFinish` 235B2CF8…, 407.33 USD): the payout read the budget (20 allocated, 14.30 spent,
+1.44 held, 4.26 free), opened Channel 0xa4b92b60… with a 4.26 RLUSD cap and paid **4.07 RLUSD
+at 1/100**. The voucher was redeemed on chain at once
+([0xbe6bc867…](https://explorer.testnet.xrplevm.org/tx/0xbe6bc867f39a949d5965075f0c60eaa2378c43fc11d338da53b5c84facbab9c0))
+but the purchase outcome came back `503`: the script stopped without signing anything else.
+The first retry exposed a flaw: it re-read the budget (now 0 free), scaled to 1/1000 and clashed
+with the first attempt's merchant store (`409`). Fixed on the spot (commit de8ef6d): a pending
+attempt is read before the budget and resumed at the price it was signed for. The second retry
+resumed — "its voucher is already redeemed on chain: collecting the result, nothing is paid
+twice" — and collected the resource. The settle call then failed to fetch (the laptop changed
+Wi-Fi), so the settlement was read back from the chain: claim paid
+[0x718dd5df…](https://explorer.testnet.xrplevm.org/tx/0x718dd5df4b269b8f096cc11302161557a0b3949d10e695893529ecb52a22f2b8),
+settlement recorded
+[0x60a28968…](https://explorer.testnet.xrplevm.org/tx/0x60a28968cf9bb96b67e4ca1dfda3844d7ebd4bbc2700487a41378b17c883040c),
+receipt
+[claims/0x0f424d47…/0xf37082fc…](https://hackathon.ap4m.build/public/evidence/claims/0x0f424d47e76d0960bf43c3e24af5d27d6c342a5443640adc20b0ca73c12153fd/0xf37082fcbaaf9184029e06436b2383358a761c12d0188214263d424d465dde1b.json)
+verified with `verify-receipt.mjs` (`verified: true`, 4.07 RLUSD to 0x1f9265e1…;
+`presentation/demo-terminal/capture/recu_live_mastercard.log`). Budget after: 18.37 of 20 RLUSD
+spent, 0.19 + 1.44 held in two open Channels, nothing free — the next payout settles at 1/1000
+by itself, unless the team allocation is topped up.
+
 ### Run with the regenerated statement, 14:35 UTC (script, after the rounding fix)
 
 Same script (`oracle/demo_confidentialite.mjs`, capture

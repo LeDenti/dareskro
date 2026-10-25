@@ -8,9 +8,9 @@
   "channel": "0xa4b92b6048e912928218779888e8b4b026d2cdca7e307af4c128b2e73c8c2bc0",
   "redemption_tx": "0xbe6bc867f39a949d5965075f0c60eaa2378c43fc11d338da53b5c84facbab9c0",
   "redemption_explorer": "https://explorer.testnet.xrplevm.org/tx/0xbe6bc867f39a949d5965075f0c60eaa2378c43fc11d338da53b5c84facbab9c0",
-  "settlement_tx": null,
-  "payout_tx": null,
-  "receipt_url": null,
+  "settlement_tx": "0x60a28968cf9bb96b67e4ca1dfda3844d7ebd4bbc2700487a41378b17c883040c",
+  "payout_tx": "0x718dd5df4b269b8f096cc11302161557a0b3949d10e695893529ecb52a22f2b8",
+  "receipt_url": "https://hackathon.ap4m.build/public/evidence/claims/0x0f424d47e76d0960bf43c3e24af5d27d6c342a5443640adc20b0ca73c12153fd/0xf37082fcbaaf9184029e06436b2383358a761c12d0188214263d424d465dde1b.json",
   "payout_wallet": "0x1f9265e1E9efab936589500dA5b8Ef2fc25ff323",
   "resource": {
     "amount_rlusd": "4.07",
@@ -20,5 +20,6 @@
     "schema": "dareskro/payslip-settlement.v1",
     "sequence": "21815488",
     "xrpl_escrow_finish": "235B2CF8D5DDA16B9D693BE6C25225BD1BF8E066F12B7E2DD49EEE83B0AD65DC"
-  }
+  },
+  "settled_note": "settlement read back from the chain and the evidence service after the settle call failed to fetch (network)"
 }
