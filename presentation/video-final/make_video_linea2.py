@@ -519,7 +519,7 @@ def build(only=None):
         cmd = ["ffmpeg", "-v", "error", "-y",
                "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "%dx%d" % (W, H), "-r", str(FPS), "-i", "-",
                "-i", wav, "-stream_loop", "-1", "-i", riff_wav]
-        filt = "[1]apad[v];[2]volume=0.32[r];"
+        filt = "[1]apad[v];[2]volume=0.7[r];"
         if i in MUMBLE_AT:
             m = mumble(i, os.path.join(OUT, "mumble%d.wav" % (i % 3)))
             cmd += ["-itsoffset", "%.2f" % (t_end + 0.5), "-i", m]
