@@ -1,7 +1,7 @@
 # dareskro — agentic payroll escrow on the XRP Ledger, signed on a Ledger device
 
 **AI & Fintech XRP Ledger Hackathon, New York, 24–25 October 2026.**
-Demo video (3 min 49, English): [dareskro explainer v2 — La Linea, with the one-day contract and URSSAF](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea2.mp4) · earlier cut with the terminal logs: [split screen](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea_split.mp4) · release [v0.1-hackathon-nyc](https://github.com/LeDenti/dareskro/releases/tag/v0.1-hackathon-nyc).
+Demo video (3 min 49, English): [dareskro explainer v2 — La Linea, with the one-day contract, URSSAF, and the oracle's real loop typed on its card](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea2.mp4) · earlier cut with the terminal logs: [split screen](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea_split.mp4) · release [v0.1-hackathon-nyc](https://github.com/LeDenti/dareskro/releases/tag/v0.1-hackathon-nyc).
 Track: Agentic Finance. Partner prizes targeted: Ledger (Agentic Finance), Mastercard.
 
 > The agent reads the evidence. The code computes the amount. A human signs on a

@@ -16,7 +16,7 @@ import os
 import subprocess
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import linea  # noqa: E402
@@ -93,6 +93,57 @@ CARDS = [
   "Dareskro. The AI reads. Code calculates. A human signs. The ledger pays. Not before."),
 ]
 MUMBLE_AT = {1, 4, 8, 9, 12, 13}   # cards where the end-of-line complaint gets a voice
+
+# Code typed line by line over the flat colour, on the cards that name it. Card 7: the oracle's
+# real loop (oracle/oracle.mjs, tick), trimmed to what the voice says: wait, finish, pay the fee.
+MONO = "/System/Library/Fonts/Menlo.ttc"
+CODE_AT = {
+ 7: [
+  "// oracle.mjs — one pass over the registry, every few seconds",
+  "for (const e of reg.escrows) {",
+  "  if (e.status !== \"waiting\") continue;",
+  "  if (now() < e.finishAfter + CLOSE_TIME_MARGIN) continue;   // wait for the date",
+  "  const res = await c.submitAndWait(",
+  "    { TransactionType: \"EscrowFinish\", Account: wallet.classicAddress,",
+  "      Owner: e.owner, OfferSequence: e.sequence },            // finish",
+  "    { wallet, autofill: true },                               // fee: 12 drops, the oracle's",
+  "  );",
+  "  if (res.result.meta.TransactionResult === \"tesSUCCESS\") e.status = \"finished\";",
+  "}",
+ ],
+}
+
+
+def mono(size):
+    return ImageFont.truetype(MONO, size)
+
+
+def draw_code(d, bg, code, t, t_end):
+    """The lines appear one after the other, typed; a cursor blinks at the pencil's place."""
+    size, step, x0, y0 = 17, 23, 56, 76
+    f = mono(size)
+    dim = tuple(int(c * 0.35 + w * 0.65) for c, w in zip(bg, WHITE))   # comments, a little softer
+    total = sum(len(l) + 1 for l in code)
+    t0, t1 = 0.6, max(2.6, t_end - 0.4)
+    k = int(clamp((t - t0) / (t1 - t0)) * total)
+    cursor = None
+    y = y0
+    for ln in code:
+        if k <= 0:
+            break
+        shown = ln[:k]
+        at = shown.find("//")
+        if at >= 0:
+            d.text((x0, y), shown[:at], font=f, fill=WHITE)
+            d.text((x0 + d.textlength(shown[:at], font=f), y), shown[at:], font=f, fill=dim)
+        else:
+            d.text((x0, y), shown, font=f, fill=WHITE)
+        cursor = (x0 + d.textlength(shown, font=f) + 2, y)
+        k -= len(ln) + 1
+        y += step
+    if cursor is not None and int(t * 2.5) % 2 == 0:
+        cx, cy = cursor
+        d.rectangle((cx, cy + 1, cx + 9, cy + size + 2), fill=WHITE)
 
 
 # ------------------------------------------------------------ the things of the story (world coordinates)
@@ -321,7 +372,7 @@ def draw_partial(d, strokes, frac, cam, lw):
     return tip if frac < 1 else None
 
 
-def frame(bg, title, caption, items, ev, v, end_x, t_end, t, T):
+def frame(bg, title, caption, items, ev, v, end_x, t_end, t, T, code=None):
     img = Image.new("RGB", (W, H), bg)
     d = ImageDraw.Draw(img)
     ground, fr, wx, mood, _ = state(ev, v, end_x, t_end, t, [ix for ix, _, _ in items])
@@ -355,6 +406,8 @@ def frame(bg, title, caption, items, ev, v, end_x, t_end, t, T):
         tx, ty = tip[0] - cam, tip[1]
         d.ellipse((tx - 6, ty - 6, tx + 6, ty + 6), fill=WHITE)
         d.line((tx + 4, ty - 4, tx + 26, ty - 30), fill=WHITE, width=3)   # the pencil, from off-screen in spirit
+    if code:
+        draw_code(d, bg, code, t, t_end)
     # title (small, top left) and caption (bottom, like a subtitle)
     d.text((40, 32), title.upper(), font=linea.font(22), fill=WHITE)
     f = linea.font(25, False)
@@ -425,7 +478,7 @@ def build(only=None):
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
         for k in range(n):
             t = k / FPS
-            p.stdin.write(frame(bg, title, caption, items, ev, v, end_x, t_end, t, T).tobytes())
+            p.stdin.write(frame(bg, title, caption, items, ev, v, end_x, t_end, t, T, CODE_AT.get(i)).tobytes())
         p.stdin.close()
         if p.wait() != 0:
             raise SystemExit("ffmpeg failed on card %d" % i)
