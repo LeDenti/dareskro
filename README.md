@@ -452,6 +452,31 @@ verified with `verify-receipt.mjs` (`verified: true`, amount 0.41, payout wallet
 giving 1.44 RLUSD back: 20 allocated, 14.30 spent, 1.44 held, **4.26 free** for one
 more payout at 1/100.
 
+### Sunday afternoon, 25/10 — the pitch and the partner stands
+
+The Ripple testnet node (`s.altnet.rippletest.net`) answered `503` from 18:45 UTC; the desk and
+the oracle were switched to `wss://testnet.xrpl-labs.com` (commit below) and the oracle restarted.
+
+**Pitch run, 18:51 UTC (test wallet, "Paid in dollars").** Batch of three from the desk:
+pay escrow #21820140, Check #21820141 (cashed by URSSAF), tax escrow #21820142; the oracle
+released the pay [DD3B6ABC…](https://testnet.xrpl.org/transactions/DD3B6ABCCF06053D6F399C070B329B4B9FFD7277C1847BBC26A6939538DD0BE0) and the tax [BCD9C10F…](https://testnet.xrpl.org/transactions/BCD9C10F1B90329D2FF1265C8041C5C66D614B5042BEC6111E6261E7A22DC909)
+while the pitch was being spoken.
+
+**Ledger stand, 19:36 UTC (Nano S Plus, XRP app 2.8.2).** The device connected, the Batch was
+prepared, and the signature came back `XrpAppCommandError … Rejected by user (status 6985)` —
+twice, Batch and single `EscrowCreate` alike. Said as it is: the XRP app did not sign this
+afternoon, where it had signed `EscrowCreate` and `EscrowCancel` on Saturday (5FF67E32…,
+71E227E5…). Not reproduced in calm conditions yet; logged for LEDGER_FEEDBACK.md.
+
+**Mastercard stand, 19:46 UTC (test wallet, "Paid in dollars").** Pay escrow #21821137, Check
+#21821138 (cashed), tax escrow #21821139; the oracle released the pay [60DB928B…](https://testnet.xrpl.org/transactions/60DB928B2469F8FDD241E295D8C97D9FA453AFF7EE7B84295A3D48D45B9055B5)
+and the tax [489D35E2…](https://testnet.xrpl.org/transactions/489D35E2127CACF3D934EF13D77059A8BFC2CFB7F1E67731B3875794C151B386). The dollar leg needed three attempts, each one
+stopping without signing anything new: the merchant answered `503 payment_pending_or_unavailable`
+on the first, the outcome fetch failed on the second after the voucher was signed, and the third
+resumed that voucher at its own price and settled **0.41 RLUSD at 1/1000**:
+`VoucherRedeemed` [0x992d4024…](https://explorer.testnet.xrplevm.org/tx/0x992d40245248b0995a90a677d2449676fabfcb1d6a561d7816de085d3b8b0f1d). Budget after: allocation still 20 RLUSD,
+the announced top-up did not reach the team's allocation during the day.
+
 ### Live with the Mastercard engineer, 15:38 UTC — the dollar leg at 1/100, and a resume
 
 Run from the terminal in front of the Mastercard engineer, on the pay escrow of the 14:35 run

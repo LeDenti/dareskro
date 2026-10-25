@@ -28,7 +28,7 @@ import {
   type Wallet,
 } from "xrpl";
 
-const TESTNET_URL = "wss://s.altnet.rippletest.net:51233";
+const TESTNET_URL = "wss://testnet.xrpl-labs.com";
 const FAUCET_URL = "https://faucet.altnet.rippletest.net/accounts";
 /** XRPL counts seconds since 2000-01-01, not 1970. */
 const RIPPLE_EPOCH = 946684800;

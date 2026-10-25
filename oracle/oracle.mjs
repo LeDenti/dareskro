@@ -94,7 +94,7 @@ const IDENTITY = path.join(HERE, ".oracle.json");
 const REGISTRY = path.join(HERE, "registry.json");
 /** The secrets of conditional escrows (delivery, presence, affiliate token hashes): 0600, never committed. */
 const SECRETS = path.join(HERE, ".deliveries.json");
-const TESTNET = "wss://s.altnet.rippletest.net:51233";
+const TESTNET = "wss://testnet.xrpl-labs.com";
 const PORT = Number(process.env.ORACLE_PORT || 8787);
 const RIPPLE_EPOCH = 946684800;
 const TICK_MS = 4000;
