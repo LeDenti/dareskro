@@ -86,11 +86,24 @@ if (escrowHash) {
     const xrp = Number(tx.Amount) / 1e6;
     const rate = Number(fiat[3]);
     const proven = pub.total_cents / 100;
-    const diff = Math.abs(xrp * rate - proven);
+    // With contributions, the employee's escrow holds the NET: the gross memo says so, and the
+    // net must be the proven gross minus the employee contributions at the public rate (half up).
+    const gross = /gross=(\d+\.\d\d);net=(\d+\.\d\d);employee_rate=(\d+\.\d+)/.exec(byType['dareskro/gross'] || '');
+    let expected = proven;
+    if (gross) {
+      const g = Math.round(Number(gross[1]) * 100), net = Math.round(Number(gross[2]) * 100), r = Number(gross[3]);
+      const contribution = Math.floor(g * r + 0.5);
+      const grossOk = g === pub.total_cents;
+      const netOk = net === g - contribution;
+      console.log(`escrow ${escrowHash.slice(0, 8)}...: gross memo ${(g / 100).toFixed(2)} ${grossOk ? 'MATCHES' : 'DIFFERS FROM'} the proven total; net ${(net / 100).toFixed(2)} = gross - ${Math.round(r * 100)} % employee contributions: ${netOk ? 'MATCHES' : 'DIFFERS'}`);
+      if (!grossOk || !netOk) failed = true;
+      expected = net / 100;
+    }
+    const diff = Math.abs(xrp * rate - expected);
     const amountOk = diff <= 0.01;
-    const memoOk = Number(fiat[1]) === proven;
+    const memoOk = Number(fiat[1]) === expected;
     binding = { xrp, rate, currency: fiat[2], amountOk, account: tx.Account, destination: tx.Destination };
-    console.log(`escrow ${escrowHash.slice(0, 8)}...: ${xrp} XRP x ${rate} ${fiat[2]}/XRP (rate declared by the payer) = ${(xrp * rate).toFixed(4)} ${fiat[2]} vs proven ${proven.toFixed(2)} -> ${amountOk ? 'MATCH' : 'MISMATCH'} (|diff| ${diff.toFixed(4)}), fiat memo total ${memoOk ? 'MATCHES' : 'DIFFERS'}`);
+    console.log(`escrow ${escrowHash.slice(0, 8)}...: ${xrp} XRP x ${rate} ${fiat[2]}/XRP (rate declared by the payer) = ${(xrp * rate).toFixed(4)} ${fiat[2]} vs ${gross ? 'net' : 'proven'} ${expected.toFixed(2)} -> ${amountOk ? 'MATCH' : 'MISMATCH'} (|diff| ${diff.toFixed(4)}), fiat memo ${memoOk ? 'MATCHES' : 'DIFFERS'}`);
     if (!amountOk || !memoOk) failed = true;
   }
   // Optional memo written by a pay desk that cites the commitment itself: compared as field values.
@@ -117,6 +130,7 @@ const left = [
   `admissible hours, coefficient (100..2000) and seniority`,
   `Sunday shift: ${pub.dimanche}; shutters open: ${pub.volets_ouverts}`,
   `${pub.heures_semaine_avant} h already worked that week`,
+  ...(pub.cdd ? ['fixed-term contract of one day: +10 % end-of-contract, +10 % paid leave'] : []),
   `point value ${(pub.point_value_milli / 1000).toFixed(3)}`,
   `commitment ${pub.commitment.slice(0, 14)}... (badge, inputs, nonce, statement)`,
   `statement ${String(pub.statement_sha256).slice(0, 16)}... (public input${escrowHash ? ' = escrow memo' : ', no memo checked'})`,

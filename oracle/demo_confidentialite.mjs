@@ -1,8 +1,10 @@
 /**
- * The privacy layer end to end, on testnet, without a device: a pay escrow whose
- * memos leak nothing (hash, opaque id, fiat at rate, oracle, zero-knowledge
- * commitment), the statement sealed for the employee and the administration,
- * then the three readers and the proof, then the oracle releasing at the date.
+ * The privacy layer end to end, on testnet, without a device: the pay locked in
+ * TWO escrows signed together — the net to the employee at the pay date, the
+ * contributions (employee + employer) to URSSAF at the due date — whose memos
+ * leak nothing (hash, opaque id, fiat at rate, gross/net, oracle, zero-knowledge
+ * commitment); the statement sealed for the employee and the administration;
+ * then the three readers and the proof; then the oracle releasing both.
  * Usage: node oracle/demo_confidentialite.mjs      (oracle on 127.0.0.1:8787, zk/sortie/ proven; lives here for xrpl.js)
  */
 import { createHash } from "node:crypto";
@@ -49,17 +51,22 @@ const oracle = await (await fetch(`${ORACLE}/identity`)).json();
 log(`oracle ${oracle.address} (${oracle.name})`);
 const k = await (await fetch(`https://api.kraken.com/0/public/Ticker?pair=XRP${statement.currency}`)).json();
 const rate = Number(Object.values(k.result)[0].c[0]);
-const amountXrp = (Number(statement.total) / rate).toFixed(6);
-log(`statement ${statement.sha256.slice(0, 12)}… total ${statement.total} ${statement.currency} = ${amountXrp} XRP at ${rate} (Kraken)`);
+const net = statement.net_to_pay ?? statement.total;
+const contrib = statement.contributions?.total_to_urssaf ?? null;
+const amountXrp = (Number(net) / rate).toFixed(6);
+const contribXrp = contrib ? (Number(contrib) / rate).toFixed(6) : null;
+log(`statement ${statement.sha256.slice(0, 12)}… gross ${statement.total} ${statement.currency}, net ${net} = ${amountXrp} XRP at ${rate} (Kraken)${contrib ? `, contributions ${contrib} = ${contribXrp} XRP to ${statement.contributions.recipient}` : ""}`);
 
 const c = new Client("wss://s.altnet.rippletest.net:51233");
 await c.connect();
-log("funding the employer and a fresh account for the employee (one per pay period: nobody can name the payee)…");
+log("funding the employer, a fresh account for the employee (one per pay period: nobody can name the payee) and a stand-in for URSSAF…");
 const { wallet: employer } = await c.fundWallet();
 const { wallet: employee } = await c.fundWallet();
-for (let i = 0; i < 6; i++) {
+const { wallet: urssaf } = await c.fundWallet();
+const needed = Number(amountXrp) + Number(contribXrp ?? 0) + 15;
+for (let i = 0; i < 10; i++) {
   const bal = await c.getXrpBalance(employer.classicAddress);
-  if (bal >= Number(amountXrp) + 15) break;
+  if (bal >= needed) break;
   await fetch("https://faucet.altnet.rippletest.net/accounts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ destination: employer.classicAddress }) });
   await sleep(5000);
 }
@@ -73,7 +80,9 @@ const tx = await c.autofill({
   Memos: [
     { Memo: { MemoType: hex("dareskro/statement-sha256"), MemoData: hex(statement.sha256), MemoFormat: hex("text/plain") } },
     { Memo: { MemoType: hex("dareskro/statement-id"), MemoData: hex(opaqueId), MemoFormat: hex("text/plain") } },
-    { Memo: { MemoType: hex("dareskro/fiat"), MemoData: hex(`${statement.total} ${statement.currency} @ ${rate} ${statement.currency}/XRP Kraken ${new Date().toISOString().slice(0, 16)}Z`) } },
+    { Memo: { MemoType: hex("dareskro/fiat"), MemoData: hex(`${net} ${statement.currency} @ ${rate} ${statement.currency}/XRP Kraken ${new Date().toISOString().slice(0, 16)}Z`) } },
+    // the escrow holds the net: the gross the proof binds, and the public rate that links them
+    ...(contrib ? [{ Memo: { MemoType: hex("dareskro/gross"), MemoData: hex(`gross=${statement.total};net=${net};employee_rate=${statement.contributions.employee.rate}`) } }] : []),
     { Memo: { MemoType: hex("dareskro/oracle"), MemoData: hex(oracle.address) } },
     { Memo: { MemoType: hex("dareskro/zk-commitment"), MemoData: hex(zk.commitment) } },
   ],
@@ -90,6 +99,34 @@ await fetch(`${ORACLE}/watch`, { method: "POST", headers: { "Content-Type": "app
 }) });
 log("handed to the oracle (payout: crypto — the employee keeps the XRP)");
 
+// --- escrow 2: the contributions, locked at the same time, released at the due date
+let tx2 = null, createHash2 = null;
+if (contrib) {
+  const dueAfter = finishAfter + 30; // demo: 30 s after the pay date; in real life the 15th of the next month
+  tx2 = await c.autofill({
+    TransactionType: "EscrowCreate",
+    Account: employer.classicAddress,
+    Destination: urssaf.classicAddress,
+    Amount: xrpToDrops(contribXrp),
+    FinishAfter: dueAfter,
+    Memos: [
+      { Memo: { MemoType: hex("dareskro/statement-sha256"), MemoData: hex(statement.sha256), MemoFormat: hex("text/plain") } },
+      { Memo: { MemoType: hex("dareskro/urssaf"), MemoData: hex(`contributions=${contrib};employee=${statement.contributions.employee.amount};employer=${statement.contributions.employer.amount};period=${statement.period};due=${statement.contributions.due}`) } },
+      { Memo: { MemoType: hex("dareskro/fiat"), MemoData: hex(`${contrib} ${statement.currency} @ ${rate} ${statement.currency}/XRP Kraken ${new Date().toISOString().slice(0, 16)}Z`) } },
+      { Memo: { MemoType: hex("dareskro/oracle"), MemoData: hex(oracle.address) } },
+    ],
+  });
+  const res2 = await c.submitAndWait(employer.sign(tx2).tx_blob);
+  createHash2 = res2.result.hash;
+  log(`EscrowCreate ${res2.result.meta.TransactionResult} #${tx2.Sequence} — ${contribXrp} XRP to ${statement.contributions.recipient} (stand-in ${urssaf.classicAddress}), due ${statement.contributions.due} — ${explorer(createHash2)}`);
+  if (res2.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1);
+  await fetch(`${ORACLE}/watch`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+    owner: employer.classicAddress, sequence: tx2.Sequence, finishAfter: dueAfter, destination: urssaf.classicAddress, amountXrp: contribXrp,
+    payout: "crypto", amount: contrib, currency: statement.currency, statementSha256: statement.sha256, createHash: createHash2,
+  }) });
+  log("handed to the oracle: the same account releases the contributions at the due date — nobody can forget or divert them");
+}
+
 log("— sealing the statement for the employee and the administration, bound to this escrow");
 const r1 = show(["agent/confidentiel.mjs", "--chiffre", "--escrow", createHashHex]);
 log("— what the public sees");
@@ -99,17 +136,22 @@ const r3 = show(["zk/verify.mjs", "--escrow", createHashHex]);
 log("— what the administration sees");
 const r4 = show(["agent/divulgation.mjs", "--role", "administration", "--escrow", createHashHex]);
 
-log(`— waiting for the oracle to release at the date (${PAY_DELAY_S} s)…`);
-let finishHash;
-for (let i = 0; i < 40 && !finishHash; i++) {
+log(`— waiting for the oracle to release the pay at the date (${PAY_DELAY_S} s)${tx2 ? ", then the contributions 30 s later" : ""}…`);
+let finishHash, finishHash2;
+for (let i = 0; i < 50 && !(finishHash && (!tx2 || finishHash2)); i++) {
   await sleep(5000);
   const reg = await (await fetch(`${ORACLE}/escrows`)).json();
   const e = reg.escrows.find((x) => x.owner === employer.classicAddress && x.sequence === tx.Sequence);
   if (e?.status === "finished") finishHash = e.finishHash;
   else if (e && e.status !== "waiting") { log(`oracle: ${e.status} ${e.lastResult ?? ""}`); break; }
+  if (tx2) {
+    const f = reg.escrows.find((x) => x.owner === employer.classicAddress && x.sequence === tx2.Sequence);
+    if (f?.status === "finished") finishHash2 = f.finishHash;
+  }
 }
-if (finishHash) log(`released by the oracle: ${explorer(finishHash)} — employee balance ${await c.getXrpBalance(employee.classicAddress)} XRP`);
+if (finishHash) log(`pay released by the oracle: ${explorer(finishHash)} — employee balance ${await c.getXrpBalance(employee.classicAddress)} XRP`);
+if (finishHash2) log(`contributions released by the oracle: ${explorer(finishHash2)} — ${statement.contributions.recipient} balance ${await c.getXrpBalance(urssaf.classicAddress)} XRP`);
 await c.disconnect();
-const okAll = r1 === 0 && r2 === 0 && r3 === 0 && r4 === 0 && !!finishHash;
-log(`SUMMARY: escrow ${createHashHex} | seal ${r1 === 0 ? "ok" : "FAIL"} | public ${r2 === 0 ? "sees nothing extra" : "LEAK"} | proof ${r3 === 0 ? "verified" : "FAIL"} | administration ${r4 === 0 ? "MATCH" : "FAIL"} | release ${finishHash ? "ok" : "not seen"}`);
+const okAll = r1 === 0 && r2 === 0 && r3 === 0 && r4 === 0 && !!finishHash && (!tx2 || !!finishHash2);
+log(`SUMMARY: pay escrow ${createHashHex}${createHash2 ? ` | contributions escrow ${createHash2}` : ""} | seal ${r1 === 0 ? "ok" : "FAIL"} | public ${r2 === 0 ? "sees nothing extra" : "LEAK"} | proof ${r3 === 0 ? "verified" : "FAIL"} | administration ${r4 === 0 ? "MATCH" : "FAIL"} | pay release ${finishHash ? "ok" : "not seen"}${tx2 ? ` | contributions release ${finishHash2 ? "ok" : "not seen"}` : ""}`);
 process.exit(okAll ? 0 : 1);

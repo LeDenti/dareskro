@@ -14,6 +14,7 @@
 //   overtime      = +25 % between 35 h and 43 h of the week, +50 % beyond 43 h, on retained hours
 //   Sunday        = hours worked * 1.5 point           (a flat amount per hour, same for every coefficient)
 //   seniority     = retained hours * hourly rate * 3 % per 3 years, capped at 15 % (>= 15 years)
+//   fixed-term    = +10 % of the shift gross (end of contract), then +10 % of that sum (paid leave), each rounded to the cent
 // Hours are carried in sixteenths of an hour so that the 25 % shutters-closed case stays an
 // integer. With N = total * 242 672 000, the engine's rounding is cents = floor((N + 1 213 360) / 2 426 720).
 // Measured against the engine on 1 124 352 input combinations: identical whenever the week
@@ -37,6 +38,7 @@ fn main(
     dimanche: pub bool,
     volets_ouverts: pub bool,
     heures_semaine_avant: pub u32, // whole hours already worked that week
+    cdd: pub bool, // fixed-term contract of one day: +10 % end-of-contract bonus, then +10 % paid-leave allowance
     statement_hi: pub Field, // sha256 of the statement, first 16 bytes: binds the proof to the escrow memo
     statement_lo: pub Field, // last 16 bytes
 ) -> pub Field {
@@ -74,7 +76,12 @@ fn main(
 
     let sunday = if dimanche { SUNDAY_FACTOR * hq * pvm } else { 0 };
     let n = 100 * retenu16 * base + 25 * t1 * base + 50 * t2 * base + sunday + k * retenu16 * base;
-    let cents = (n + ROUND_HALF) / ROUND_DEN;
+    let garde_cents = (n + ROUND_HALF) / ROUND_DEN;
+    // Fixed-term contract (Code du travail L1243-8, L1242-16): each indemnity is 10 % of its
+    // basis, rounded to the cent half up — (x + 5) / 10 on cents is exactly that rounding.
+    let fin_contrat = if cdd { (garde_cents + 5) / 10 } else { 0 };
+    let conges = if cdd { (garde_cents + fin_contrat + 5) / 10 } else { 0 };
+    let cents = garde_cents + fin_contrat + conges;
     assert(cents == total_cents as u64);
 
     // The statement hash is inside the commitment: the proof is for THIS statement, hence for the

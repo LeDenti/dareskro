@@ -7,17 +7,19 @@
     "dimanche",
     "volets_ouverts",
     "heures_semaine_avant",
+    "cdd",
     "statement_hi",
     "statement_lo",
     "commitment"
   ],
   "note": "statement_hi/lo are the two halves of statement_sha256, a public input of the proof and the escrow memo",
-  "total_cents": 46657,
+  "total_cents": 56455,
   "point_value_milli": 5277,
   "dimanche": true,
   "volets_ouverts": true,
   "heures_semaine_avant": 35,
-  "statement_sha256": "7cad8a6d6a2eb2b69c442469c921e282f013d4d551c7beddae0d5b064c69b910",
-  "commitment": "0x26ab993adac520f03a7cd7b4d1d1e02f07481a95604c1c2e4b4e911ff4ec2d76",
-  "generated": "2026-10-24T22:07:57.930Z"
+  "cdd": true,
+  "statement_sha256": "b0c852ded64b174dd4c0522b433ab106e00a8f6816c44c758c9b8cd161d8327d",
+  "commitment": "0x02d19cac5b1e2728ef40af87fa829282955168e3fee494ee5716d0fa14ea797d",
+  "generated": "2026-10-25T09:39:58.885Z"
 }

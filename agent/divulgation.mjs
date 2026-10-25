@@ -63,7 +63,14 @@ function printStatement(b) {
   console.log(`  employee  ${b.employee?.label}  (badge ${b.employee?.badge})`);
   console.log(`  period    ${b.period}, ${b.evidence?.schedule?.date} ${b.evidence?.schedule?.slot}, ${b.evidence?.schedule?.type}`);
   for (const l of b.lines ?? []) console.log(`  ${l.item.padEnd(28)} ${String(l.amount).padStart(8)}`);
-  console.log(`  ${"total".padEnd(28)} ${String(b.total).padStart(8)} ${b.currency}`);
+  console.log(`  ${"gross".padEnd(28)} ${String(b.total).padStart(8)} ${b.currency}${b.contract?.fixed_term ? `  (${b.contract.type})` : ""}`);
+  if (b.contributions) {
+    const c = b.contributions;
+    console.log(`  ${"employee contributions".padEnd(28)} ${("-" + c.employee.amount).padStart(8)} ${b.currency}  (${Number(c.employee.rate) * 100} %)`);
+    console.log(`  ${"NET TO PAY".padEnd(28)} ${String(b.net_to_pay).padStart(8)} ${b.currency}  -> the employee's escrow`);
+    console.log(`  ${"employer contributions".padEnd(28)} ${String(c.employer.amount).padStart(8)} ${b.currency}  (${Number(c.employer.rate) * 100} %)`);
+    console.log(`  ${("to " + c.recipient).padEnd(28)} ${String(c.total_to_urssaf).padStart(8)} ${b.currency}  -> the contributions escrow, due ${c.due}`);
+  }
   console.log(`  status    ${b.status}, computed by ${b.computed_by}`);
 }
 
@@ -122,10 +129,18 @@ async function asRole(role, file, escrow) {
     if (!bound) ok = false;
     const fiat = memoFiat(memos);
     if (fiat) {
-      // "466.57 USD @ 1.29193 ..." must agree with the statement's total and currency.
-      const same = fiat.startsWith(`${bulletin.total} ${bulletin.currency} `);
-      console.log(`  memo dareskro/fiat "${fiat}" vs statement total ${bulletin.total} ${bulletin.currency}: ${same ? "MATCH" : "MISMATCH"}`);
+      // The escrow holds the net when the statement carries contributions (the gross goes to the
+      // proof, the contributions to URSSAF's escrow): "440.35 USD @ 1.28865 ..." must agree with it.
+      const expected = bulletin.net_to_pay ?? bulletin.total;
+      const same = fiat.startsWith(`${expected} ${bulletin.currency} `);
+      console.log(`  memo dareskro/fiat "${fiat}" vs statement ${bulletin.net_to_pay ? "net to pay" : "total"} ${expected} ${bulletin.currency}: ${same ? "MATCH" : "MISMATCH"}`);
       if (!same) ok = false;
+      const gross = memos.find((m) => m.type === "dareskro/gross")?.data;
+      if (gross) {
+        const sameGross = gross.startsWith(`gross=${bulletin.total};net=${expected};`);
+        console.log(`  memo dareskro/gross "${gross}" vs statement gross ${bulletin.total} and net ${expected}: ${sameGross ? "MATCH" : "MISMATCH"}`);
+        if (!sameGross) ok = false;
+      }
     }
   } else if (escrow) console.log(`  escrow ${escrow}: binding not checked (--offline)`);
   if (file.zk?.opening) console.log(`  zk opening sealed under the same key: node zk/ouvrir.mjs --role ${role} recomputes the commitment ${file.zk.commitment.slice(0, 18)}...`);

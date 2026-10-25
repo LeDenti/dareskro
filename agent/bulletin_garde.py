@@ -25,7 +25,7 @@ import hashlib
 import json
 import os
 import sys
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 # Le moteur de calcul officine.garde est ANTERIEUR au hackathon (dossier sources/paie,
@@ -179,10 +179,54 @@ def main():
         rules_source = {"how": "local fallback: point value from the schedule file, "
                                "not purchased"}
 
+    # Les taux des indemnites de CDD et des cotisations : achetes avec les regles,
+    # sinon les taux legaux (10 % et 10 %) et des taux agreges indicatifs, et on le dit.
+    regles = achat["rules"] if achat else {}
+    cdd_regles = regles.get("fixed_term") or {}
+    cot_regles = regles.get("contributions") or {}
+    taux_fin_contrat = Decimal(cdd_regles.get("end_of_contract_bonus", "0.10"))
+    taux_conges = Decimal(cdd_regles.get("paid_leave_allowance", "0.10"))
+    taux_salarial = Decimal(cot_regles.get("employee_rate", "0.22"))
+    taux_patronal = Decimal(cot_regles.get("employer_rate", "0.42"))
+    taux_source = ("purchased with the rules (fixed_term, contributions)"
+                   if cdd_regles and cot_regles else
+                   "legal 10 % + 10 % and indicative aggregated contribution rates, not purchased")
+
     r = garde(Decimal(presence["heures_retenues"]), valeur_point,
               int(plan["coefficient"]), int(plan["anciennete_annees"]),
               dimanche=dimanche, volets_ouverts=volets_ouverts,
               heures_deja_faites=int(plan["heures_semaine_avant"]))
+
+    # --- 3b. le contrat d'un jour : deux indemnites sur le brut de la garde, chacune
+    # arrondie au centime (ROUND_HALF_UP), puis les cotisations sur le brut total.
+    cent = Decimal("0.01")
+    lignes = [{"item": l["poste"], "detail": l["detail"], "amount": l["montant"]}
+              for l in r["lignes"]]
+    brut_garde = Decimal(r["total_euros"])
+    cdd = plan.get("contrat", "").lower().startswith("cdd")
+    if cdd:
+        fin_contrat = (brut_garde * taux_fin_contrat).quantize(cent, ROUND_HALF_UP)
+        conges = ((brut_garde + fin_contrat) * taux_conges).quantize(cent, ROUND_HALF_UP)
+        lignes.append({"item": "indemnite de fin de contrat",
+                       "detail": "%s %% du brut de la garde (CDD, L1243-8)" % (taux_fin_contrat * 100).normalize(),
+                       "amount": str(fin_contrat)})
+        lignes.append({"item": "indemnite compensatrice de conges payes",
+                       "detail": "%s %% du brut, indemnite de fin de contrat incluse (L1242-16)" % (taux_conges * 100).normalize(),
+                       "amount": str(conges)})
+        brut = brut_garde + fin_contrat + conges
+        contrat = {"type": plan["contrat"], "fixed_term": True,
+                   "end_of_contract_bonus_rate": str(taux_fin_contrat),
+                   "paid_leave_rate": str(taux_conges),
+                   "leave_basis": cdd_regles.get("leave_basis", "gross including the end-of-contract bonus")}
+    else:
+        brut = brut_garde
+        contrat = {"type": plan.get("contrat", "CDI"), "fixed_term": False}
+    cot_salariales = (brut * taux_salarial).quantize(cent, ROUND_HALF_UP)
+    cot_patronales = (brut * taux_patronal).quantize(cent, ROUND_HALF_UP)
+    net = brut - cot_salariales
+    # Exigibilite : le 15 du mois suivant la paie (employeurs de moins de 50 salaries).
+    annee, mois = int(plan["date"][:4]), int(plan["date"][5:7])
+    echeance_urssaf = "%04d-%02d-15" % ((annee + 1, 1) if mois == 12 else (annee, mois + 1))
 
     bulletin = {
         # Opaque on purpose: the id goes in an on-chain memo, and a readable id
@@ -204,10 +248,23 @@ def main():
             "hourly_rate_eur": r["taux_horaire"], "shutters": r["volets"],
             "seniority_years": plan["anciennete_annees"],
         },
-        "lines": [{"item": l["poste"], "detail": l["detail"],
-                   "amount": l["montant"]} for l in r["lignes"]],
-        "total": r["total_euros"],
+        "contract": contrat,
+        "lines": lignes,
+        "total": str(brut),
+        "gross": str(brut),
         "currency": DEVISE,
+        # Les cotisations : un second sequestre, vers l'URSSAF, libere a la date d'exigibilite.
+        "contributions": {
+            "recipient": cot_regles.get("recipient", "URSSAF"),
+            "due": echeance_urssaf,
+            "basis": cot_regles.get("basis", "aggregated indicative rates; the DSN computes line by line"),
+            "employee": {"rate": str(taux_salarial), "amount": str(cot_salariales)},
+            "employer": {"rate": str(taux_patronal), "amount": str(cot_patronales)},
+            "total_to_urssaf": str(cot_salariales + cot_patronales),
+            "rates_source": taux_source,
+        },
+        "net_to_pay": str(net),
+        "employer_cost": str(brut + cot_patronales),
         "rest_hours_outside_escrow": r["repos_compensateur_heures"],
         "rest_note": r["note_repos"],
         "sources": [
@@ -216,6 +273,11 @@ def main():
             "art. 7 -> accord du 23/03/2000 revise le 09/04/2008, art. 4 "
             "(garde dimanche : 1,5 point par heure, repos d'egale duree)",
             "valeur du point 5,277 EUR, accord du 19/01/2026, A CONFIRMER",
+            "Code du travail L1243-8 (indemnite de fin de contrat, 10 % du brut) "
+            "et L1242-16 (indemnite compensatrice de conges payes, 10 %, "
+            "indemnite de fin de contrat incluse dans l'assiette)",
+            "cotisations : taux agreges indicatifs (bareme URSSAF 2026), "
+            "la DSN calcule ligne par ligne ; exigibilite le 15 du mois suivant",
         ],
         "rules_source": rules_source,
         "computed_by": "officine.garde — deterministic, replayable to the cent",
@@ -238,7 +300,14 @@ def main():
     for l in bulletin["lines"]:
         print("  %-26s %10s %s" % (l["item"], l["amount"], DEVISE))
     print("  %-26s %10s %s   (+ %s h de repos, hors sequestre)"
-          % ("TOTAL", bulletin["total"], DEVISE, bulletin["rest_hours_outside_escrow"]))
+          % ("BRUT", bulletin["total"], DEVISE, bulletin["rest_hours_outside_escrow"]))
+    c = bulletin["contributions"]
+    print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations salariales", "-" + c["employee"]["amount"], DEVISE, (Decimal(c["employee"]["rate"]) * 100).normalize()))
+    print("  %-26s %10s %s   -> sequestre 1, le salarie, a la date de paie" % ("NET A PAYER", bulletin["net_to_pay"], DEVISE))
+    print("  %-26s %10s %s   (%s %% du brut)" % ("cotisations patronales", c["employer"]["amount"], DEVISE, (Decimal(c["employer"]["rate"]) * 100).normalize()))
+    print("  %-26s %10s %s   -> sequestre 2, %s, exigible le %s" % ("A L'URSSAF", c["total_to_urssaf"], DEVISE, c["recipient"], c["due"]))
+    print("  %-26s %10s %s" % ("COUT EMPLOYEUR", bulletin["employer_cost"], DEVISE))
+    print("taux       %s" % c["rates_source"])
     print("regles     %s" % rules_source["how"])
     print("sha256     %s" % bulletin["sha256"])
     print("statut     %s — a valider par une personne nommee avant signature"

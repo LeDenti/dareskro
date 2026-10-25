@@ -6,6 +6,7 @@ badge: A-0412
 date: 2026-10-25
 plage: 09:00-21:00
 type: garde dimanche, volets ouverts
+contrat: CDD d'un jour (journee de garde)
 heures_semaine_avant: 35
 coefficient: 600
 anciennete_annees: 18

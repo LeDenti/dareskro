@@ -17,7 +17,7 @@ export const FIELD_MODULUS = 218882428718392752222464057452572750885483644004160
 // Public inputs in the circuit's ABI order: public parameters as declared, then the return value.
 // statement_hi/lo are the two 16-byte halves of statement_sha256; the JSON carries the hash once.
 // prove.mjs checks this order against what bb.js reports, so verify.mjs can rebuild the list.
-export const PUBLIC_ORDER = ['total_cents', 'point_value_milli', 'dimanche', 'volets_ouverts', 'heures_semaine_avant', 'statement_hi', 'statement_lo', 'commitment'];
+export const PUBLIC_ORDER = ['total_cents', 'point_value_milli', 'dimanche', 'volets_ouverts', 'heures_semaine_avant', 'cdd', 'statement_hi', 'statement_lo', 'commitment'];
 
 // The engine (officine.garde) and the circuit agree only up to 43 h already worked (see README).
 export const MAX_HOURS_BEFORE = 43;
@@ -71,6 +71,11 @@ export function inputsFromStatement(bulletin) {
   if (!/^\d+$/.test(hsaText)) throw new Error('hours already worked must be whole hours');
   const type = bulletin.evidence.schedule.type;
   const badge = bulletin.employee.badge;
+  // A one-day fixed-term contract adds two 10 % indemnities; the circuit encodes the legal rate.
+  const cdd = bulletin.contract?.fixed_term === true;
+  if (cdd && (bulletin.contract.end_of_contract_bonus_rate !== '0.10' || bulletin.contract.paid_leave_rate !== '0.10')) {
+    throw new Error('the circuit encodes the legal 10 % + 10 % fixed-term indemnities; this statement uses other rates');
+  }
   const badgeId = BigInt('0x' + createHash('sha256').update(badge, 'utf8').digest('hex')) % FIELD_MODULUS;
   return {
     priv: {
@@ -85,9 +90,18 @@ export function inputsFromStatement(bulletin) {
       dimanche: /dimanche/i.test(type),
       volets_ouverts: /volets ouverts/i.test(type),
       heures_semaine_avant: Number(hsaText),
+      cdd,
       statement_sha256: sha,
     },
   };
+}
+
+// The fixed-term indemnities on top of the shift gross, in cents, as the statement rounds them
+// (10 % half up, then 10 % of the sum half up): the public part of the total.
+export function cddTotal(gardeCents) {
+  const fin = Math.floor((gardeCents + 5) / 10);
+  const conges = Math.floor((gardeCents + fin + 5) / 10);
+  return gardeCents + fin + conges;
 }
 
 // What the public can compute from the public inputs alone: every (hours, coefficient,
@@ -95,10 +109,18 @@ export function inputsFromStatement(bulletin) {
 // `coefficient` restricts the search to one value (when a memo already leaks it).
 export function candidates(pub, coefficient = null) {
   const DEN = 2426720n, HALF = 1213360n, SUNDAY = 91002n;
-  const total = BigInt(pub.total_cents), pvm = BigInt(pub.point_value_milli);
-  const lo = total * DEN - HALF, hi = total * DEN + DEN - 1n - HALF; // n with floor((n + HALF) / DEN) == total
+  const pvm = BigInt(pub.point_value_milli);
+  // With a fixed-term contract the public total is cddTotal(shift gross): invert that first.
+  const want = Number(pub.total_cents);
+  const bases = [];
+  if (pub.cdd) {
+    for (let b = Math.max(1, Math.floor(want / 1.21) - 3); b <= Math.floor(want / 1.21) + 3; b += 1) if (cddTotal(b) === want) bases.push(b);
+  } else bases.push(want);
   const debut16 = BigInt(pub.heures_semaine_avant) * 16n;
   const out = [];
+  for (const base of bases) {
+  const total = BigInt(base);
+  const lo = total * DEN - HALF, hi = total * DEN + DEN - 1n - HALF; // n with floor((n + HALF) / DEN) == base
   for (let hq = 1n; hq <= 96n; hq += 1n) {
     const retenu16 = pub.volets_ouverts ? hq * 4n : hq;
     const fin16 = debut16 + retenu16;
@@ -117,6 +139,7 @@ export function candidates(pub, coefficient = null) {
         if (coefficient === null || c === BigInt(coefficient)) out.push({ hours: Number(hq) / 4, coefficient: Number(c), seniority_rate: Number(k) });
       }
     }
+  }
   }
   return out;
 }

@@ -38,7 +38,7 @@ Only this counts for judging, and we say so.
 
 | Piece | Where | Status |
 |---|---|---|
-| Evidence → statement agent (schedule + badge → lines, total, SHA-256) | `agent/bulletin_garde.py` | done, 466.57 USD (`--devise EUR` for euros) |
+| Evidence → statement agent (schedule + badge → lines, total, SHA-256); since Sunday morning the statement is a **one-day fixed-term contract**: end-of-contract bonus and paid-leave allowance (10 % + 10 %), then the contributions, the net to pay and the employer cost, with rates bought from the rules service | `agent/bulletin_garde.py` | done: shift 466.57, gross 564.55, net 440.35, 361.31 to URSSAF (USD; `--devise EUR` for euros) |
 | Pay desk web app: statement, human validation, Ledger connect, `EscrowCreate` signed on device, proofs, third-party release | `app/` | done, run end to end on Speculos (Nano X, XRP app 2.8.1) **and on a real Nano S Plus (XRP app 2.8.2), Saturday 19:40 UTC** |
 | Ledger integration: Device Management Kit + `device-signer-kit-xrp` (pre-release), USB / Bluetooth / Speculos | `app/src/ledger.ts` | done |
 | Escrow builder for the device, memo with statement hash, early-finish / cancel / release proofs | `app/src/xrpl.ts` | done |
@@ -108,6 +108,23 @@ reused as-is: the beneficiary must open a trustline *before* a third party can
 finish a token escrow (`tecNO_LINE` otherwise), and RLUSD could not be escrowed
 when measured on 08/09/2026 because its issuer had not set
 `lsfAllowTrustLineLocking`.
+
+**A one-day contract, and the contributions paid by the ledger too.** A Sunday shift
+by an outside pharmacist is a fixed-term contract of one day, so the statement carries,
+on top of the four shift lines (466.57), the end-of-contract bonus (10 %, Code du travail
+L1243-8: 46.66) and the paid-leave allowance (10 % of the gross including that bonus,
+L1242-16: 51.32): **gross 564.55**. Then the contributions, at aggregated indicative
+rates bought from the rules service with the point value (`fixed_term`, `contributions`
+in the resource; the DSN computes line by line in production): employee 22 % (124.20),
+employer 42 % (237.11). **Net to pay 440.35; 361.31 to URSSAF**, due the 15th of the next
+month; employer cost 801.66. The pay desk then locks **two escrows in one signature
+session**: the net to the employee at the pay date, the contributions to URSSAF at the
+due date (a stand-in account on testnet; in production, euros to URSSAF's account with
+the DSN reference, the way the dollar leg works today). The same oracle releases both.
+Nobody can forget the contributions, nobody can divert them: they were locked the day
+the shift was validated. The zero-knowledge proof binds the gross; the escrow's
+`dareskro/gross` memo states gross, net and the public rate, and the verifier checks
+net = gross − contributions.
 
 **Dollars owed, XRP locked, and the employee chooses how to be paid.** The
 statement is in dollars: that is what the employee is owed (`--devise EUR` for
@@ -317,6 +334,29 @@ capture in `presentation/demo-terminal/capture/confidentialite.log`): a pay escr
 | Anyone verifies the proof against the chain: statement memo = the proof's public hash, zk-commitment memo = the proof's commitment, 361.13 XRP × rate = 466.57 | `proof VERIFIED in 15 ms`, `RESULT: OK`, 11 candidate triples printed |
 | The administration opens it with its key: hash recomputed = memo, statement printed (employee, hours, four lines, 466.57 USD) | `bound to escrow 7ED9282F…: MATCH` |
 | The oracle releases at the date: the employee holds 461.127881 XRP | [C38552EE…](https://testnet.xrpl.org/transactions/C38552EEFB074CF3668B14D4F182BE03AAFA0BD5748D00AA344ADE3D77AB3504) |
+
+Re-run on Sunday 25/10/2026 09:45 UTC with the one-day contract and the contributions
+(`presentation/demo-terminal/capture/confidentialite.log`; the Saturday run is kept as
+`confidentialite_v1.log`): gross 564.55, two escrows locked together, both released by the oracle.
+
+| Step | Proof |
+|---|---|
+| Pay escrow #21810200: the **net** 440.35 USD = 341.565765 XRP to a fresh employee account; memos: statement SHA-256 (b0c852de…), opaque id, fiat at rate, **`dareskro/gross` = gross 564.55, net 440.35, employee rate 0.22**, oracle, zk commitment 0x02d19cac… | [19321151…](https://testnet.xrpl.org/transactions/193211513A5B84F6068CFFF2C1F76B97227652B7F52F9C64D9DDACE5C11D3C6A) |
+| Contributions escrow #21810201: 361.31 USD = 280.256902 XRP to a stand-in account for URSSAF, due 2026-11-15 (here 30 s after the pay); memos: statement hash, **`dareskro/urssaf`** (employee 124.20 + employer 237.11, period 2026-10, due date), fiat at rate, oracle | [954CF856…](https://testnet.xrpl.org/transactions/954CF85662F88169C3C67B33A54AA5799003F574C8A9DEBB69C33C682475C7AB) |
+| The public reads both files and the chain: nothing private; the proof verifies and binds by hash, by commitment, and **by amount through gross − 22 % = net** | `RESULT: OK` twice |
+| The administration opens the statement: hash = memo, fiat memo = net, gross memo = gross and net, six lines, net, URSSAF | `bound to escrow 19321151…: MATCH` |
+| The oracle releases the pay at the date, then the contributions at the due date | [A0FF2CAF…](https://testnet.xrpl.org/transactions/A0FF2CAF3CF2C167701ECBAC153350339311E8252DD3A1CA19B715F085D33E69), [89EAB200…](https://testnet.xrpl.org/transactions/89EAB200EC0F6B9D408F57B2DC66F8D60EC14C94846852A723B8E377C2C87464) |
+
+And the same run **from the pay desk**, Sunday 09:51 UTC, test wallet, one signature session
+for two escrows, the employee paid in dollars: pay escrow #21810279
+[33823638…](https://testnet.xrpl.org/transactions/3382363811F4C840F80780B9B339B97C6519E7ED62CDACB87BCF72EC86C20A21) released by the oracle
+[1F93F19B…](https://testnet.xrpl.org/transactions/1F93F19B101B18664B186C7BAAF09194BDC175EF37F00D5CC7048D34676B15B7) then
+4.40 RLUSD settled through Mastercard AP4M (1/100 of the net 440.35:
+[0x1a5506ad…](https://explorer.testnet.xrplevm.org/tx/0x1a5506adc447a9de190cd561a070ea20ee5c156c421a4ada3668957c58df31dc));
+contributions escrow #21810280 [7780DEBB…](https://testnet.xrpl.org/transactions/7780DEBB83FFAAD0ACDB607BD8FD10767DA7603D54839D9DFE0EA09C964EF17B)
+released to the URSSAF stand-in 30 s later
+[CFD2DE92…](https://testnet.xrpl.org/transactions/CFD2DE92650D885BAED93D5CC3BF7B95AF1421BC5FAD64630ADB42250890A404).
+The statement was sealed for the two readers, bound to the pay escrow, from the desk's Privacy card.
 
 One more thing said plainly: this repository publishes the demo statement itself
 (`agent/sortie/bulletin.json`, served by the desk as `/bulletin.json`), because it is the

@@ -75,6 +75,21 @@ export const RULES = {
   sunday_rest: "equal duration, not payable (accord du 23/03/2000 révisé 09/04/2008, art. 4)",
   closed_shutters_full_time_share: "0.25",
   night_markups: "due with shutters open, never with shutters closed",
+  // A one-day shift by an outside pharmacist is a fixed-term contract: two indemnities on the gross.
+  fixed_term: {
+    end_of_contract_bonus: "0.10",
+    paid_leave_allowance: "0.10",
+    leave_basis: "gross including the end-of-contract bonus",
+    sources: ["Code du travail L1243-8 (indemnite de fin de contrat)", "L1242-16 (indemnite compensatrice de conges payes)"],
+  },
+  // Social contributions, as aggregated indicative rates: the DSN computes them line by line.
+  contributions: {
+    employee_rate: "0.22",
+    employer_rate: "0.42",
+    basis: "aggregated indicative rates, URSSAF 2026 scale (health, pension, unemployment, CSG/CRDS); the DSN computes line by line",
+    recipient: "URSSAF",
+    due: "15th of the month following the pay (employers under 50 staff)",
+  },
   sources: [
     "convention collective pharmacie d'officine IDCC 1996, art. 11",
     "art. 7 → accord du 23/03/2000 révisé le 09/04/2008, art. 4",

@@ -102,10 +102,18 @@ export async function fundFromFaucet(address: string): Promise<void> {
  * about 100 XRP per call and the demo locks 466.57 XRP: one call is not enough
  * (tecUNFUNDED, measured 24/10/2026).
  */
-export async function fundUntil(address: string, minXrp: number, maxRounds = 8): Promise<number | null> {
+export async function fundUntil(address: string, minXrp: number, maxRounds = 10): Promise<number | null> {
   let bal = await getBalance(address);
+  let failures = 0;
   for (let i = 0; i < maxRounds && (bal === null || bal < minXrp); i++) {
-    await fundFromFaucet(address);
+    try {
+      await fundFromFaucet(address);
+      failures = 0;
+    } catch (e) {
+      // the faucet throttles bursts (a browser then sees "Failed to fetch"): pause and try again, give up after three in a row
+      if (++failures >= 3) throw e;
+      await new Promise((r) => setTimeout(r, 8000));
+    }
     await new Promise((r) => setTimeout(r, 5000));
     bal = await getBalance(address);
   }
@@ -164,6 +172,13 @@ export type EscrowDraft = {
   oracle?: string;
   /** The zero-knowledge commitment of the statement's hidden inputs (zk/prove.mjs), so the proof binds to this escrow and not to any escrow of the same amount. */
   zkCommitment?: string;
+  /** When the escrow holds the net: the gross the proof binds and the employee contribution rate that links them (memo dareskro/gross). */
+  gross?: string;
+  employeeRate?: string;
+  /** Free memos (type, data), full mode only: e.g. the contributions leg's dareskro/urssaf memo. */
+  extraMemos?: { type: string; data: string }[];
+  /** Explicit sequence, for a second escrow prepared right after a first one (autofill would reuse the same number). */
+  sequence?: number;
   /**
    * Shorter memos for a real device: the XRP app 2.2.2 on a Nano S Plus answered
    * "Missing critical parameter (6800)" to the four long memos the 2.8.1 emulator
@@ -217,12 +232,18 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
       ...(d.oracle
         ? [{ Memo: { MemoType: toHex("dareskro/oracle"), MemoData: toHex(d.oracle) } }]
         : []),
+      // The escrow holds the net: say what gross the proof binds, and at which public rate.
+      ...(d.gross && d.eur && d.employeeRate
+        ? [{ Memo: { MemoType: toHex("dareskro/gross"), MemoData: toHex(`gross=${d.gross};net=${d.eur};employee_rate=${d.employeeRate}`) } }]
+        : []),
+      ...(d.extraMemos ?? []).map((m) => ({ Memo: { MemoType: toHex(m.type), MemoData: toHex(m.data) } })),
       // The ZK commitment: the compliance proof is bound to this escrow, not to any escrow of the same amount.
       ...(d.zkCommitment
         ? [{ Memo: { MemoType: toHex("dareskro/zk-commitment"), MemoData: toHex(d.zkCommitment) } }]
         : []),
     ],
     SigningPubKey: d.publicKey.toUpperCase(),
+    ...(d.sequence !== undefined ? { Sequence: d.sequence } : {}),
     // autofill() gives about 1 minute. Give 10 minutes to read the device screen.
     LastLedgerSequence: (await c.getLedgerIndex()) + 150,
   }));
@@ -243,6 +264,8 @@ export type ConditionalEscrowDraft = {
   memos: { type: string; data: string }[];
   /** No MemoFormat on a real device: see EscrowDraft.compact. */
   compact?: boolean;
+  /** Explicit sequence, when prepared right behind another escrow of the same account. */
+  sequence?: number;
 };
 
 /**
@@ -267,6 +290,7 @@ export async function prepareConditionalEscrowCreate(d: ConditionalEscrowDraft):
       },
     })),
     SigningPubKey: d.publicKey.toUpperCase(),
+    ...(d.sequence !== undefined ? { Sequence: d.sequence } : {}),
     // autofill() gives about 1 minute. Give 10 minutes to read the device screen.
     LastLedgerSequence: (await c.getLedgerIndex()) + 150,
   }));

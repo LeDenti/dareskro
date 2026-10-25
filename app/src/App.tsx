@@ -55,6 +55,16 @@ type Statement = {
   lines: { item: string; detail: string; amount: string }[];
   total: string;
   currency: string;
+  /** With a one-day fixed-term contract and contributions: the gross the proof binds, the net the employee's escrow holds, the contributions URSSAF's escrow holds. */
+  gross?: string;
+  net_to_pay?: string;
+  employer_cost?: string;
+  contract?: { type: string; fixed_term: boolean };
+  contributions?: {
+    recipient: string; due: string; basis: string;
+    employee: { rate: string; amount: string }; employer: { rate: string; amount: string };
+    total_to_urssaf: string; rates_source: string;
+  };
   rest_hours_outside_escrow: string;
   rest_note: string;
   sources: string[];
@@ -159,7 +169,11 @@ function Desk(props: {
   // the pay is in euros; the escrow is in XRP at the rate of the moment
   const [rate, setRate] = useState<xrpl.Rate>();
   const [rateError, setRateError] = useState<unknown>();
-  const amountXrp = statement && rate ? xrpl.eurToXrp(statement.total, rate.eurPerXrp) : undefined;
+  // the employee's escrow holds the net when the statement carries contributions; the contributions go to URSSAF in a second escrow
+  const netFiat = statement ? (statement.net_to_pay ?? statement.total) : undefined;
+  const amountXrp = statement && rate && netFiat ? xrpl.eurToXrp(netFiat, rate.eurPerXrp) : undefined;
+  const contribFiat = statement?.contributions?.total_to_urssaf;
+  const contribXrp = contribFiat && rate ? xrpl.eurToXrp(contribFiat, rate.eurPerXrp) : undefined;
   const sym = statement?.currency === "EUR" ? "€" : "$";
   // how the employee wants to be paid: the XRP the ledger releases, or dollars (RLUSD) through Mastercard AP4M
   const [payoutMode, setPayoutMode] = useState<"crypto" | "usd">("usd");
@@ -202,6 +216,12 @@ function Desk(props: {
   // ---- 4. lock on the device
   const [tx, setTx] = useState<EscrowCreate>();
   const [prepareError, setPrepareError] = useState<unknown>();
+  // the second leg: the contributions, locked at the same time, released at the due date, to a stand-in account for URSSAF
+  const [urssaf, setUrssaf] = useState("");
+  const [tx2, setTx2] = useState<EscrowCreate>();
+  const [signedTx2Hex, setSignedTx2Hex] = useState<string>();
+  const [escrow2, setEscrow2] = useState<{ owner: string; sequence: number; hash: string; result: string; finishAfter: Date }>();
+  const [watched2, setWatched2] = useState<oracle.WatchedEscrow>();
   const signAction = useDeviceAction<SignTransactionDAOutput, SignTransactionDAError, SignTransactionDAIntermediateValue>();
   const [signedTxHex, setSignedTxHex] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -254,10 +274,13 @@ function Desk(props: {
     if (!escrow || !oracleId) return;
     let stop = false;
     const poll = async () => {
-      const mine = (await oracle.escrows()).find(
-        (e) => e.owner === escrow.owner && e.sequence === escrow.sequence,
-      );
+      const all = await oracle.escrows();
+      const mine = all.find((e) => e.owner === escrow.owner && e.sequence === escrow.sequence);
       if (!stop && mine) setWatched(mine);
+      if (escrow2) {
+        const second = all.find((e) => e.owner === escrow2.owner && e.sequence === escrow2.sequence);
+        if (!stop && second) setWatched2(second);
+      }
     };
     poll();
     const t = setInterval(poll, 3000);
@@ -265,7 +288,7 @@ function Desk(props: {
       stop = true;
       clearInterval(t);
     };
-  }, [escrow, oracleId]);
+  }, [escrow, escrow2, oracleId]);
 
   useEffect(() => {
     if (watched?.status === "finished" && employeeBalance === undefined) {
@@ -314,6 +337,10 @@ function Desk(props: {
 
   const resetLock = () => {
     setTx(undefined);
+    setTx2(undefined);
+    setSignedTx2Hex(undefined);
+    setEscrow2(undefined);
+    setWatched2(undefined);
     setPrepareError(undefined);
     signAction.reset();
     setSignedTxHex(undefined);
@@ -340,8 +367,13 @@ function Desk(props: {
       dmkRef.current = undefined;
       if (transport === "software") {
         const w = await xrpl.newFundedWallet();
-        await xrpl.fundUntil(w.classicAddress, neededXrp);
+        // the wallet exists from here on: a throttled faucet must not undo the connection
         setSession({ deviceName: "Software test wallet (xrpl.js) — rehearsal only", wallet: w });
+        try {
+          await xrpl.fundUntil(w.classicAddress, neededXrp);
+        } catch (e) {
+          setFaucetError(e);
+        }
         return;
       }
       const dmk = ledger.createDmk({ url: props.speculosUrl, model: speculosModel });
@@ -392,7 +424,8 @@ function Desk(props: {
   };
 
   /** Escrow amount in XRP plus the reserve and fees: what the employer must hold. A contract locks 20 XRP by default. */
-  const neededXrp = contract ? 30 : Math.ceil(Number(amountXrp ?? 0)) + 5;
+  // enough for the net escrow, the contributions escrow when there is one, the reserve and fees
+  const neededXrp = Math.ceil(Number(amountXrp ?? statement?.total ?? 0) + Number(contribXrp ?? 0)) + 15;
 
   const fund = async () => {
     if (!employer) return;
@@ -429,25 +462,55 @@ function Desk(props: {
       // the rate of the moment of signing, not of the page load
       const fresh = await xrpl.xrpEurRate(statement.currency);
       setRate(fresh);
-      const xrp = xrpl.eurToXrp(statement.total, fresh.eurPerXrp);
+      const net = statement.net_to_pay ?? statement.total;
+      const xrp = xrpl.eurToXrp(net, fresh.eurPerXrp);
       const finishAfter = new Date(Date.now() + Number(payDelaySec) * 1000);
-      setTx(
-        await xrpl.prepareEscrowCreate({
-          account: employer.address,
-          publicKey: employer.publicKey,
-          destination: employee,
-          amountXrp: xrp,
-          eur: statement.total,
-          rate: fresh,
-          finishAfter,
-          statementSha256: statement.sha256,
-          statementId: statement.statement_id,
-          oracle: oracleId?.address,
-          // the proof's commitment rides in a memo: the compliance proof binds to this escrow, not to any escrow of the same amount
-          zkCommitment: zkPub?.commitment,
-          compact: transport === "usb" || transport === "ble",
-        }),
-      );
+      const compact = transport === "usb" || transport === "ble";
+      const first = await xrpl.prepareEscrowCreate({
+        account: employer.address,
+        publicKey: employer.publicKey,
+        destination: employee,
+        amountXrp: xrp,
+        eur: net,
+        rate: fresh,
+        finishAfter,
+        statementSha256: statement.sha256,
+        statementId: statement.statement_id,
+        oracle: oracleId?.address,
+        // the proof's commitment rides in a memo: the compliance proof binds to this escrow, not to any escrow of the same amount
+        zkCommitment: zkPub?.commitment,
+        // the escrow holds the net: the gross the proof binds, and the public rate that links them
+        gross: statement.contributions ? statement.total : undefined,
+        employeeRate: statement.contributions?.employee.rate,
+        compact,
+      });
+      setTx(first);
+      // The contributions: a second escrow, same signature session, released at the due date (here 30 s after the pay).
+      if (statement.contributions) {
+        let dest = urssaf;
+        if (!dest) {
+          dest = (await xrpl.newFundedWallet()).classicAddress; // a stand-in account for URSSAF on testnet
+          setUrssaf(dest);
+        }
+        const c = statement.contributions;
+        setTx2(
+          await xrpl.prepareEscrowCreate({
+            account: employer.address,
+            publicKey: employer.publicKey,
+            destination: dest,
+            amountXrp: xrpl.eurToXrp(c.total_to_urssaf, fresh.eurPerXrp),
+            eur: c.total_to_urssaf,
+            rate: fresh,
+            finishAfter: new Date(finishAfter.getTime() + 30_000),
+            statementSha256: statement.sha256,
+            statementId: statement.statement_id,
+            oracle: oracleId?.address,
+            extraMemos: [{ type: "dareskro/urssaf", data: `contributions=${c.total_to_urssaf};employee=${c.employee.amount};employer=${c.employer.amount};period=${statement.period};due=${c.due}` }],
+            sequence: first.Sequence! + 1,
+            compact,
+          }),
+        );
+      }
     } catch (e) {
       setPrepareError(e);
     }
@@ -456,8 +519,10 @@ function Desk(props: {
   const sign = async () => {
     if (!session || !tx) return;
     setSignedTxHex(undefined);
+    setSignedTx2Hex(undefined);
     if (session.wallet) {
       setSignedTxHex(session.wallet.sign(tx).tx_blob);
+      if (tx2) setSignedTx2Hex(session.wallet.sign(tx2).tx_blob);
       return;
     }
     if (!session.signer) return;
@@ -465,7 +530,15 @@ function Desk(props: {
     const signature = await signAction.run(() =>
       ledger.signOnDevice(signer, ledger.DERIVATION_PATH, xrpl.encodeUnsigned(tx)),
     );
-    if (signature) setSignedTxHex(xrpl.encodeSigned(tx, signature));
+    if (!signature) return;
+    setSignedTxHex(xrpl.encodeSigned(tx, signature));
+    // the contributions leg: a second approval on the same device, the amount and URSSAF's address on its screen
+    if (tx2) {
+      const signature2 = await signAction.run(() =>
+        ledger.signOnDevice(signer, ledger.DERIVATION_PATH, xrpl.encodeUnsigned(tx2)),
+      );
+      if (signature2) setSignedTx2Hex(xrpl.encodeSigned(tx2, signature2));
+    }
   };
 
   /** The contract cases sign through the same session and the same device action as sign() above; only the transaction differs. */
@@ -504,6 +577,18 @@ function Desk(props: {
       setSealInfo(undefined);
       setViewOut(undefined);
       if (out.result === "tesSUCCESS") privacy.seal(out.hash).then(setSealInfo);
+      // The contributions leg, right behind: same employer, next sequence, URSSAF's stand-in as destination.
+      if (out.result === "tesSUCCESS" && tx2 && signedTx2Hex && statement?.contributions) {
+        const out2 = await xrpl.submit(signedTx2Hex);
+        setEscrow2({ owner: employer.address, sequence: tx2.Sequence!, hash: out2.hash, result: out2.result, finishAfter: xrpl.fromRippleTime(tx2.FinishAfter!) });
+        if (out2.result === "tesSUCCESS" && oracleId) {
+          oracle.watch({
+            owner: employer.address, sequence: tx2.Sequence!, finishAfter: tx2.FinishAfter!, destination: tx2.Destination,
+            amountXrp: xrpl.dropsToXrpString(tx2.Amount as string), payout: "crypto", amount: statement.contributions.total_to_urssaf,
+            currency: statement.currency, statementSha256: statement.sha256, createHash: out2.hash,
+          }).catch(setOracleError);
+        }
+      }
       // Hand the escrow to the oracle. If this fails, nothing is lost: anyone can finish it.
       if (out.result === "tesSUCCESS" && oracleId && statement) {
         try {
@@ -514,7 +599,7 @@ function Desk(props: {
             destination: employee,
             amountXrp: amountXrp ?? statement.total,
             payout: payoutMode,
-            amount: statement.total,
+            amount: netFiat ?? statement.total,
             currency: statement.currency,
             statementSha256: statement.sha256,
             createHash: out.hash,
@@ -649,12 +734,38 @@ function Desk(props: {
                   </tr>
                 ))}
                 <tr className="total">
-                  <td>TOTAL TO LOCK</td>
-                  <td className="muted">+ {statement.rest_hours_outside_escrow} h of rest, outside the escrow: {statement.rest_note}</td>
+                  <td>{statement.contributions ? "GROSS" : "TOTAL TO LOCK"}</td>
+                  <td className="muted">
+                    {statement.contract?.fixed_term ? `${statement.contract.type} · ` : ""}+ {statement.rest_hours_outside_escrow} h of rest, outside the escrow: {statement.rest_note}
+                  </td>
                   <td className="num">{statement.total} {sym}</td>
                 </tr>
+                {statement.contributions && (
+                  <>
+                    <tr>
+                      <td>employee contributions</td>
+                      <td className="muted">{Number(statement.contributions.employee.rate) * 100} % of the gross · {statement.contributions.basis} · {statement.contributions.rates_source}</td>
+                      <td className="num">− {statement.contributions.employee.amount} {sym}</td>
+                    </tr>
+                    <tr className="total">
+                      <td>NET TO LOCK — escrow 1, the employee</td>
+                      <td className="muted">released at the pay date</td>
+                      <td className="num">{statement.net_to_pay} {sym}</td>
+                    </tr>
+                    <tr>
+                      <td>employer contributions</td>
+                      <td className="muted">{Number(statement.contributions.employer.rate) * 100} % of the gross · employer cost {statement.employer_cost} {sym}</td>
+                      <td className="num">{statement.contributions.employer.amount} {sym}</td>
+                    </tr>
+                    <tr className="total">
+                      <td>TO {statement.contributions.recipient} — escrow 2</td>
+                      <td className="muted">employee + employer contributions, released at the due date {statement.contributions.due}</td>
+                      <td className="num">{statement.contributions.total_to_urssaf} {sym}{contribXrp ? ` = ${contribXrp} XRP` : ""}</td>
+                    </tr>
+                  </>
+                )}
                 <tr>
-                  <td>in XRP, at the rate of the moment</td>
+                  <td>{statement.contributions ? "net in XRP, at the rate of the moment" : "in XRP, at the rate of the moment"}</td>
                   <td className="muted">
                     {rate
                       ? `${rate.eurPerXrp} ${rate.currency}/XRP · ${rate.source} · ${rate.at.slice(11, 19)} UTC — refreshed again when you prepare the escrow`
@@ -789,7 +900,7 @@ function Desk(props: {
                 {faucetBusy ? "Funding (about 100 XRP per faucet call)…" : `Get test XRP (needs ${neededXrp})`}
               </button>
               {balance !== undefined && balance !== null && balance < neededXrp && (
-                <span className="ko"> · too low to lock {contract ? "the contract" : `${amountXrp} XRP`}</span>
+                <span className="ko"> · too low: {contract ? "the contract needs 30 XRP" : `${neededXrp} XRP needed for the escrows, the reserve and the fees`}</span>
               )}
             </dd>
           </dl>
@@ -832,6 +943,14 @@ function Desk(props: {
           In production the pay date is the 5th of the month. Here, a short delay, so the release can be shown live.
           {employeeWallet && " The test employee is a fresh faucet account: nobody holds its key but this page."}
         </p>
+        {statement?.contributions && (
+          <p className="hint">
+            <b>Two escrows, one signature session.</b> The net {statement.net_to_pay} {sym} goes to the employee at the pay date; the contributions{" "}
+            {statement.contributions.total_to_urssaf} {sym} (employee {statement.contributions.employee.amount} + employer {statement.contributions.employer.amount}) go to{" "}
+            {statement.contributions.recipient} in a second escrow, due {statement.contributions.due} (here 30 s after the pay), released by the same oracle.
+            {urssaf ? <> Stand-in account for {statement.contributions.recipient} on testnet: <code>{urssaf}</code>.</> : " A stand-in account for URSSAF is created at Prepare."}
+          </p>
+        )}
         <div className="row">
           <label className="check">
             <input type="radio" name="payout" checked={payoutMode === "crypto"} onChange={() => setPayoutMode("crypto")} />
@@ -878,7 +997,7 @@ function Desk(props: {
         {tx && (
           <details>
             <summary>
-              Unsigned EscrowCreate · {xrpl.dropsToXrpString(tx.Amount as string)} XRP = {statement?.total} {sym} at {rate?.eurPerXrp} {rate?.currency}/XRP · payable{" "}
+              Unsigned EscrowCreate{statement?.contributions ? " for the net pay" : ""} · {xrpl.dropsToXrpString(tx.Amount as string)} XRP = {netFiat} {sym} at {rate?.eurPerXrp} {rate?.currency}/XRP · payable{" "}
               {xrpl.fromRippleTime(tx.FinishAfter!).toLocaleTimeString()}
             </summary>
             <pre>{JSON.stringify(tx, null, 2)}</pre>
@@ -892,12 +1011,30 @@ function Desk(props: {
           </details>
         )}
         <ErrorBox error={submitError} />
+        {tx2 && (
+          <details>
+            <summary>
+              Unsigned EscrowCreate for the contributions · {xrpl.dropsToXrpString(tx2.Amount as string)} XRP = {statement?.contributions?.total_to_urssaf} {sym} to {statement?.contributions?.recipient} · due{" "}
+              {xrpl.fromRippleTime(tx2.FinishAfter!).toLocaleTimeString()}{signedTx2Hex ? " · signed" : " · to sign (second approval on the device)"}
+            </summary>
+            <pre>{JSON.stringify(tx2, null, 2)}</pre>
+          </details>
+        )}
         {escrow && (
           <p className={escrow.result === "tesSUCCESS" ? "ok" : "ko"}>
-            {escrow.result} · escrow #{escrow.sequence} ·{" "}
+            {escrow.result} · pay escrow #{escrow.sequence} ·{" "}
             <a href={xrpl.explorerTxUrl(escrow.hash)} target="_blank">
               see it on the explorer
             </a>
+          </p>
+        )}
+        {escrow2 && (
+          <p className={escrow2.result === "tesSUCCESS" ? "ok" : "ko"}>
+            {escrow2.result} · contributions escrow #{escrow2.sequence} to {statement?.contributions?.recipient} ·{" "}
+            <a href={xrpl.explorerTxUrl(escrow2.hash)} target="_blank">
+              see it on the explorer
+            </a>
+            {watched2 && <> · oracle: {watched2.status}{watched2.finishHash && <> · <a href={xrpl.explorerTxUrl(watched2.finishHash)} target="_blank">released to {statement?.contributions?.recipient}</a></>}</>}
           </p>
         )}
       </Card>
