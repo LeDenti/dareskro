@@ -107,6 +107,50 @@ first try**, WebHID picker in Chrome, no blind-signing setting needed; escrow
 between a fresh device and a working integration is an app update that nothing
 in the kit announces.
 
+## The 6985 of the Ledger stand — elucidated on Speculos (26/10/2026)
+
+Sunday 19:36 UTC at the Ledger stand, the same Nano S Plus (XRP app 2.8.2) that had
+signed on Saturday answered `XrpAppCommandError … Rejected by user (status 6985)` to the
+Batch and then to a single `EscrowCreate`. Replayed on Monday on Speculos (Nano X, app
+2.8.1; the 2.8.1 → 2.8.2 diff is one line, `NFTokenAcceptOffer` moved to blind signing)
+with the bytes the signer kit sends (`tools/repro-6985/`).
+
+**The Batch: the app refuses by itself, nobody pressed anything.** In app-xrp, status
+`6985` is sent from one place, `reject_transaction()`. `parse_tx_internal()` raises
+`BLIND_SIGN_REQUIRED` for any transaction type outside `is_supported_transaction_type()`,
+whose list stops at the AMM types: `Batch` (XLS-56, type 71, live on mainnet) is not in
+it. `review_transaction()` then reads `N_storage.allow_blind_sign`, **off by default**;
+when off, `ui_error_blind_signing()` shows "Blind signing must be enabled in settings"
+and calls `reject_transaction()` at once. Measured: `6985` in 20 ms, zero review page,
+and the device stays on the alert until a button press. The kit maps `6985` to
+"Condition of use not satisfied (Rejected by user)": the message blames a user who was
+never asked. (On Saturday the Batch had only ever been signed by the software wallet.)
+
+**The single `EscrowCreate`: the bytes are not the cause.** Saturday's three-memo form,
+Sunday's four-memo form (with the `dareskro/zk-commitment` memo), and the three
+orderings after a refused Batch (alert not acknowledged, acknowledged before, acknowledged
+by a human while the review was already up) all sign, `9000`. The one remaining road to
+`6985` on a supported type is the **"Reject transaction" page that follows "Sign
+transaction?"** and on which the flow stays if one keeps pressing right; a double press
+there gives `6985`, "Transaction rejected" — measured. Fifteen to eighteen pages (eight
+of them memos), the device in someone else's hands, an unexplained alert a minute
+before: one press too many is the most likely cause. Not provable after the fact.
+
+**Two asks.**
+- When the app decides the refusal itself (blind signing required and disabled), the
+  kit's error should say so — the app knows it is on that path, and the kit already reads
+  `getAppConfig`. "Rejected by user" sent a team hunting a human error for a day.
+- `Batch` in the clear-signable types: XLS-56 is active on mainnet and is the natural
+  shape for "one approval, several transactions" — the very thing a hardware wallet is
+  for. Until then, apps need "one approval per transaction" as a fallback, and the README
+  could say which XRPL types clear-sign, which blind-sign (`NFTokenAcceptOffer` since
+  2.8.2), and which are refused outright.
+
+**To reproduce on the device.** Chrome, Ledger Live closed, `cd app && npm run dev`,
+USB. Batch box ticked → sign: `6985` at once, alert on the screen. Box unticked → three
+reviews, approve on "Sign transaction?" and do not go one page further. Optional: enable
+Blind signing in the app's settings, tick Batch again → blind review, signature.
+
 ## Suggestions
 
 - An "XRPL transaction preview" metadata format (the Clear Signing idea beyond EVM):
