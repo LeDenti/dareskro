@@ -1,0 +1,14 @@
+{
+  "name": "dareskro-depot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Rental security deposit on the XRP Ledger: a 2-of-3 account (landlord, tenant, arbiter) holding a euro token. Nobody holds the funds alone; the law's deadlines and penalty are computed by code.",
+  "scripts": {
+    "demo": "node demo_depot_garantie.mjs",
+    "rules": "node bail.mjs"
+  },
+  "dependencies": {
+    "xrpl": "^5.3.0"
+  }
+}

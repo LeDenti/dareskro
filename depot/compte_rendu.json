@@ -1,0 +1,179 @@
+{
+  "network": "wss://testnet.xrpl-labs.com",
+  "date": "2026-10-27T15:42:01.436Z",
+  "steps": [
+    {
+      "step": "émetteur : DefaultRipple",
+      "result": "tesSUCCESS",
+      "hash": "97C5C0DADCFBD05682D4BB5FE54FCD34B4A114FBCF5A694FCEF29DD0C1D6F3C9"
+    },
+    {
+      "step": "bailleur : trustline vers l'euro (inscription)",
+      "result": "tesSUCCESS",
+      "hash": "C9C5E1C28BDD494FF32B4152853190D6DD11F26E6D4E7AACF5398E2B0D675DCC"
+    },
+    {
+      "step": "locataire : trustline vers l'euro (inscription)",
+      "result": "tesSUCCESS",
+      "hash": "48B3313C4488745040CF3069EBDB9A916A70ECB173D6FCBD96B6AD1D22DBF37A"
+    },
+    {
+      "step": "locataire : 3 000 € reçus (virement SEPA simulé)",
+      "result": "tesSUCCESS",
+      "hash": "ACA6FF1EC700A8B22C3CDDA29C0996ED7E87B5F201F047FE916B66285E91A58A"
+    },
+    {
+      "step": "A ouverture du compte de dépôt (réserve 3 XRP, payée par le locataire)",
+      "result": "tesSUCCESS",
+      "hash": "7336EAFB98E5AFA35D27B27C4B0B1E13A301DCE01C708DAB01D6F53A823CD9E0"
+    },
+    {
+      "step": "A trustline du compte vers l'euro",
+      "result": "tesSUCCESS",
+      "hash": "16AEDBE170ECAA3D373A73D95BD99325CA154C829432B5B5DD4A4498C0278995"
+    },
+    {
+      "step": "A SignerListSet 2-sur-3 (mémo : empreinte de l'état des lieux d'entrée)",
+      "result": "tesSUCCESS",
+      "hash": "EB00C4001232EE54F26C7CC746405B929B0FB657C6E86FE9AE82F0419BF5FCF8"
+    },
+    {
+      "step": "A clé maîtresse désactivée : seules 2 signatures sur 3 commandent le compte",
+      "result": "tesSUCCESS",
+      "hash": "C999AE9D77AF8FCC6172EB2CCBFCAF59598A20DC2FE6996788A3842C56B0CA46"
+    },
+    {
+      "step": "A dépôt 1200,00 € versé par le locataire",
+      "result": "tesSUCCESS",
+      "hash": "9852B1C79E56F1F001C7AD946D17187B4B9791520E18F83E3720B229252F778A"
+    },
+    {
+      "step": "A l'arbitre seul tente de tout prendre",
+      "result": "tefBAD_QUORUM",
+      "signers": [
+        "rhfJ4XHLdCxPGMXmdcHgzwjnvgMkkaDvoQ"
+      ]
+    },
+    {
+      "step": "A le bailleur seul tente de tout garder",
+      "result": "tefBAD_QUORUM",
+      "signers": [
+        "r9o118wgRvdm3rMAz2hkmqgbQuah8xLWMC"
+      ]
+    },
+    {
+      "step": "A ancienne clé maîtresse",
+      "result": "tefMASTER_DISABLED"
+    },
+    {
+      "step": "A décompte",
+      "depotCents": 120000,
+      "echeanceIso": "2026-11-27",
+      "delaiMois": 1,
+      "restitutionIso": "2026-10-27",
+      "retenuCents": 0,
+      "auLocataireCents": 120000,
+      "auBailleurCents": 0,
+      "moisCommences": 0,
+      "majorationCents": 0
+    },
+    {
+      "step": "A restitution intégrale 1200,00 € — signée bailleur + locataire",
+      "result": "tesSUCCESS",
+      "hash": "FB4FCE0C04858FDF21F37DA10B9637BA4690A7487B05F08D9C2315111335C7FD",
+      "signers": [
+        "r9o118wgRvdm3rMAz2hkmqgbQuah8xLWMC",
+        "rN4aedSv6BD4fnPaz5hHyfFFt9K3KhPPka"
+      ]
+    },
+    {
+      "step": "B ouverture du compte de dépôt (réserve 3 XRP, payée par le locataire)",
+      "result": "tesSUCCESS",
+      "hash": "7411C01325273BF393BFF88734D571B5E0B6657EFD6255343CE5A2EEAC7DCF1A"
+    },
+    {
+      "step": "B trustline du compte vers l'euro",
+      "result": "tesSUCCESS",
+      "hash": "1B10B0A0F6A43ECBFDBA4C59827B4306FD0CF8E98C4282A5D280AD62F788C191"
+    },
+    {
+      "step": "B SignerListSet 2-sur-3 (mémo : empreinte de l'état des lieux d'entrée)",
+      "result": "tesSUCCESS",
+      "hash": "34CD270028FC031E5A658017FA3364AF305D5FB3944ABB63985FF024CFF267FB"
+    },
+    {
+      "step": "B clé maîtresse désactivée : seules 2 signatures sur 3 commandent le compte",
+      "result": "tesSUCCESS",
+      "hash": "D4FB4B74C86E016DCB0B7EEEDF315DB14F1F62B90BDC8F4F0F932A2E7A6DE768"
+    },
+    {
+      "step": "B dépôt 1200,00 € versé par le locataire",
+      "result": "tesSUCCESS",
+      "hash": "474811CF0CBB8F231FB462495C53BFA6D9FCD12E0A78DAF43D68AF9F130A2E1C"
+    },
+    {
+      "step": "B l'arbitre seul tente de tout prendre",
+      "result": "tefBAD_QUORUM",
+      "signers": [
+        "rhfJ4XHLdCxPGMXmdcHgzwjnvgMkkaDvoQ"
+      ]
+    },
+    {
+      "step": "B le bailleur seul tente de tout garder",
+      "result": "tefBAD_QUORUM",
+      "signers": [
+        "r9o118wgRvdm3rMAz2hkmqgbQuah8xLWMC"
+      ]
+    },
+    {
+      "step": "B ancienne clé maîtresse",
+      "result": "tefMASTER_DISABLED"
+    },
+    {
+      "step": "B décompte",
+      "depotCents": 120000,
+      "echeanceIso": "2026-12-27",
+      "delaiMois": 2,
+      "restitutionIso": "2026-10-27",
+      "retenuCents": 18000,
+      "auLocataireCents": 102000,
+      "auBailleurCents": 18000,
+      "moisCommences": 0,
+      "majorationCents": 0
+    },
+    {
+      "step": "B retenue 180,00 € au bailleur — signée bailleur + arbitre, pièce en mémo",
+      "result": "tesSUCCESS",
+      "hash": "6358E670312D920C6AA77DBB6E6314D684D3C3B7DB05904C087CA870F73D8024",
+      "signers": [
+        "r9o118wgRvdm3rMAz2hkmqgbQuah8xLWMC",
+        "rhfJ4XHLdCxPGMXmdcHgzwjnvgMkkaDvoQ"
+      ]
+    },
+    {
+      "step": "B solde 1020,00 € au locataire — signé locataire + arbitre",
+      "result": "tesSUCCESS",
+      "hash": "58F9259D61556B9D9CAA2663331D3ADDD5651ED7CB1364354E749E28F70DAAB9",
+      "signers": [
+        "rN4aedSv6BD4fnPaz5hHyfFFt9K3KhPPka",
+        "rhfJ4XHLdCxPGMXmdcHgzwjnvgMkkaDvoQ"
+      ]
+    },
+    {
+      "step": "B retard simulé",
+      "restitutionIso": "2027-01-10",
+      "moisCommences": 1,
+      "majorationCents": 12000
+    }
+  ],
+  "accounts": {
+    "issuer": "r94jQiVraJUEV7CkbMkoF9o1BnHLRY2Bmv",
+    "bailleur": "r9o118wgRvdm3rMAz2hkmqgbQuah8xLWMC",
+    "locataire": "rN4aedSv6BD4fnPaz5hHyfFFt9K3KhPPka",
+    "arbitre": "rhfJ4XHLdCxPGMXmdcHgzwjnvgMkkaDvoQ"
+  },
+  "deposits": {
+    "A": "rM89zX71Abtk92wd7ZHUwyGDmEku9xZR5K",
+    "B": "rndU6pH9JrFm14XbDiDcxVsRk4h76T9931"
+  }
+}

@@ -17,6 +17,8 @@ Avant de monter : une passe lancée sur le pupitre 2 min avant (Paid in crypto),
 **2:20 – 2:45 · Quatre payeurs, tout mesuré**
 "Same oracle, four payers on one desk: employee at the date, freelancer on proof of delivery, influencer when the post is still live, affiliate when the merchant's system confirms the order. All of it ran this weekend on testnet; every hash is in the README; the code is public."
 
+*Variante après le 27/10 (si le temps le permet, 10 s) :* "And a fifth, not an escrow: the rental deposit, an account with three keys and a quorum of two — landlord, tenant, us. Alone, each of us is refused by the ledger; together, any split. The euro cannot be escrowed on XRPL today, so this is how euros are held by nobody."
+
 **2:45 – 3:00 · La chute**
 "The AI reads. The code computes. A human signs. The ledger pays. Not before."
 
@@ -26,3 +28,4 @@ Questions probables (réponses complètes dans dareskro_pitch_final_EN.pdf) :
 - Who is the oracle? → rUuvu1X…, born Saturday 15:51 UTC with a memo saying what it is; it holds nothing, it only submits the finish.
 - Over the budget? → Two over-cap attempts refused, nothing signed; the payout reads the budget first and scales down (0.41 RLUSD at 1/1000 this morning).
 - What's next? → The legal layer (payslip, DSN, bank transfer), the oracle on mainnet, RLUSD escrow the day its issuer enables trustline locking.
+- Le dépôt de garantie ? → Un compte 2-sur-3 par bail, pas un escrow : EURØP et RLUSD ne sont pas séquestrables (drapeau absent, mesuré le 27/10) et un dépôt se rend en partie. Arbitre seul : tefBAD_QUORUM. Reste l'avocat (loi Hoguet), le rail SEPA, la clause de bail.

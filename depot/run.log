@@ -1,0 +1,50 @@
+15:42:02 testnet wss://testnet.xrpl-labs.com
+15:42:02 0. l'émetteur de l'euro de test (tient lieu d'EURØP), le bailleur, le locataire, l'arbitre : quatre comptes du robinet…
+15:42:31 émetteur r94jQiVraJUEV7CkbMkoF9o1BnHLRY2Bmv
+bailleur r9o118wgRvdm3rMAz2hkmqgbQuah8xLWMC
+locataire rN4aedSv6BD4fnPaz5hHyfFFt9K3KhPPka
+arbitre  rhfJ4XHLdCxPGMXmdcHgzwjnvgMkkaDvoQ
+15:42:34 émetteur : DefaultRipple: tesSUCCESS  https://testnet.xrpl.org/transactions/97C5C0DADCFBD05682D4BB5FE54FCD34B4A114FBCF5A694FCEF29DD0C1D6F3C9
+15:42:41 bailleur : trustline vers l'euro (inscription): tesSUCCESS  https://testnet.xrpl.org/transactions/C9C5E1C28BDD494FF32B4152853190D6DD11F26E6D4E7AACF5398E2B0D675DCC
+15:42:48 locataire : trustline vers l'euro (inscription): tesSUCCESS  https://testnet.xrpl.org/transactions/48B3313C4488745040CF3069EBDB9A916A70ECB173D6FCBD96B6AD1D22DBF37A
+15:42:55 locataire : 3 000 € reçus (virement SEPA simulé): tesSUCCESS  https://testnet.xrpl.org/transactions/ACA6FF1EC700A8B22C3CDDA29C0996ED7E87B5F201F047FE916B66285E91A58A
+15:42:55 
+═══ bail A — loyer 1200,00 € HC, vide ═══
+15:42:55 dépôt maximal légal (art. 22) : 1200,00 €
+15:43:02 A ouverture du compte de dépôt (réserve 3 XRP, payée par le locataire): tesSUCCESS  https://testnet.xrpl.org/transactions/7336EAFB98E5AFA35D27B27C4B0B1E13A301DCE01C708DAB01D6F53A823CD9E0
+15:43:02 compte de dépôt : rM89zX71Abtk92wd7ZHUwyGDmEku9xZR5K  https://testnet.xrpl.org/accounts/rM89zX71Abtk92wd7ZHUwyGDmEku9xZR5K
+15:43:09 A trustline du compte vers l'euro: tesSUCCESS  https://testnet.xrpl.org/transactions/16AEDBE170ECAA3D373A73D95BD99325CA154C829432B5B5DD4A4498C0278995
+15:43:16 A SignerListSet 2-sur-3 (mémo : empreinte de l'état des lieux d'entrée): tesSUCCESS  https://testnet.xrpl.org/transactions/EB00C4001232EE54F26C7CC746405B929B0FB657C6E86FE9AE82F0419BF5FCF8
+15:43:23 A clé maîtresse désactivée : seules 2 signatures sur 3 commandent le compte: tesSUCCESS  https://testnet.xrpl.org/transactions/C999AE9D77AF8FCC6172EB2CCBFCAF59598A20DC2FE6996788A3842C56B0CA46
+15:43:27 A dépôt 1200,00 € versé par le locataire: tesSUCCESS  https://testnet.xrpl.org/transactions/9852B1C79E56F1F001C7AD946D17187B4B9791520E18F83E3720B229252F778A
+15:43:27 solde du compte de dépôt : 1200 EUR
+15:43:28 A l'arbitre seul tente de tout prendre: tefBAD_QUORUM  (Signatures provided do not meet the quorum.)
+15:43:28 A le bailleur seul tente de tout garder: tefBAD_QUORUM  (Signatures provided do not meet the quorum.)
+15:43:28 A l'ancienne clé du compte tente de payer : tefMASTER_DISABLED
+15:43:28 remise des clés le 2026-10-27, état des lieux conforme → restitution due au plus tard le 2026-11-27 (1 mois)
+15:43:28 décompte : au locataire 1200,00 €, au bailleur 0,00 €, sans retard
+15:43:34 A restitution intégrale 1200,00 € — signée bailleur + locataire: tesSUCCESS  https://testnet.xrpl.org/transactions/FB4FCE0C04858FDF21F37DA10B9637BA4690A7487B05F08D9C2315111335C7FD
+15:43:34 soldes : compte de dépôt 0 EUR, locataire 3000, bailleur 0
+15:43:34 la réserve (3 XRP moins les frais) reste sur le compte de dépôt ; AccountDelete 2-sur-3 la rend au locataire une fois le compte vieux de 256 ledgers
+15:43:34 
+═══ bail B — loyer 1200,00 € HC, vide ═══
+15:43:34 dépôt maximal légal (art. 22) : 1200,00 €
+15:43:38 B ouverture du compte de dépôt (réserve 3 XRP, payée par le locataire): tesSUCCESS  https://testnet.xrpl.org/transactions/7411C01325273BF393BFF88734D571B5E0B6657EFD6255343CE5A2EEAC7DCF1A
+15:43:38 compte de dépôt : rndU6pH9JrFm14XbDiDcxVsRk4h76T9931  https://testnet.xrpl.org/accounts/rndU6pH9JrFm14XbDiDcxVsRk4h76T9931
+15:43:45 B trustline du compte vers l'euro: tesSUCCESS  https://testnet.xrpl.org/transactions/1B10B0A0F6A43ECBFDBA4C59827B4306FD0CF8E98C4282A5D280AD62F788C191
+15:43:53 B SignerListSet 2-sur-3 (mémo : empreinte de l'état des lieux d'entrée): tesSUCCESS  https://testnet.xrpl.org/transactions/34CD270028FC031E5A658017FA3364AF305D5FB3944ABB63985FF024CFF267FB
+15:43:59 B clé maîtresse désactivée : seules 2 signatures sur 3 commandent le compte: tesSUCCESS  https://testnet.xrpl.org/transactions/D4FB4B74C86E016DCB0B7EEEDF315DB14F1F62B90BDC8F4F0F932A2E7A6DE768
+15:44:06 B dépôt 1200,00 € versé par le locataire: tesSUCCESS  https://testnet.xrpl.org/transactions/474811CF0CBB8F231FB462495C53BFA6D9FCD12E0A78DAF43D68AF9F130A2E1C
+15:44:06 solde du compte de dépôt : 1200 EUR
+15:44:06 B l'arbitre seul tente de tout prendre: tefBAD_QUORUM  (Signatures provided do not meet the quorum.)
+15:44:06 B le bailleur seul tente de tout garder: tefBAD_QUORUM  (Signatures provided do not meet the quorum.)
+15:44:07 B l'ancienne clé du compte tente de payer : tefMASTER_DISABLED
+15:44:07 remise des clés le 2026-10-27, état des lieux NON conforme → restitution due au plus tard le 2026-12-27 (2 mois)
+15:44:07 décompte : au locataire 1020,00 €, au bailleur 180,00 €, sans retard
+15:44:12 B retenue 180,00 € au bailleur — signée bailleur + arbitre, pièce en mémo: tesSUCCESS  https://testnet.xrpl.org/transactions/6358E670312D920C6AA77DBB6E6314D684D3C3B7DB05904C087CA870F73D8024
+15:44:16 B solde 1020,00 € au locataire — signé locataire + arbitre: tesSUCCESS  https://testnet.xrpl.org/transactions/58F9259D61556B9D9CAA2663331D3ADDD5651ED7CB1364354E749E28F70DAAB9
+15:44:16 soldes : compte de dépôt 0 EUR, locataire 2820, bailleur 180
+15:44:16 la réserve (3 XRP moins les frais) reste sur le compte de dépôt ; AccountDelete 2-sur-3 la rend au locataire une fois le compte vieux de 256 ledgers
+15:44:16 si la restitution n'avait eu lieu que le 2027-01-10 : 1 mois commencé·s, majoration 120,00 € due au locataire, de plein droit
+15:44:16 
+compte rendu public : /Users/jul/dareskro/depot/compte_rendu.json

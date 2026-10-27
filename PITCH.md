@@ -83,6 +83,18 @@ Done live on Saturday at 17:44 UTC: Channel 0xe2c30cf9… (cap 2 RLUSD), Voucher
 
 "XRPL Commons asked us for the complete payroll application. Here is the plan: the same oracle, four payers on one desk — employee, freelancer, influencer, affiliate — each with its own release rule. Built and measured last night on testnet: the influencer's fee released because the post was still live at the end of the period (D906F9CC…) and refunded when the post had been deleted (E1BA776B…); the affiliate's commission locked before the sale, refused on a wrong token, released when the merchant's system confirmed the order with its hash in the memo (A9A9370A…), refunded without a sale. Same oracle account, same device path, one desk with a case selector and a registry of every escrow. Then two things. Privacy: a salary must be invisible to the public and visible to the administration — the statement is encrypted for the employee and the administration, only hashes go on-chain, and a zero-knowledge proof lets anyone check the pay is lawful under the collective agreement without the payer disclosing anything — measured last night on escrow 7ED9282F… and again this morning on the Batch's pay escrows (1FE4BFC0…, 99DBC2B3…): the public reads nothing private, the proof verifies in about 15 ms, the administration opens the statement with its key; the amount itself will disappear with XLS-96 confidential transfers once the amendment passes. And the legal layer for France: the official payslip, the DSN declaration, the bank transfer as the dollar leg is today, and the anchoring of every statement. dareskro becomes the proof layer for salaried pay and the payment rail for everyone else."
 
+## 4d. Fifth payer — the rental security deposit (added 27 October, after the hackathon)
+
+"Here is the one that is not an escrow. In France, a tenant hands one month of rent to the landlord, and one lease in two ends in a fight over it. The law is precise — one month to give it back if the inventory matches, two if not, ten percent of the rent per month late, of right — and nobody enforces it.
+
+We measured the euro on XRPL first: EURØP, Schuman's MiCA euro, is on the ledger, but its issuer has not enabled trust-line locking — bit 0x40000000, absent, same as RLUSD. So no escrow in euros today. And a deposit comes back in parts anyway; an escrow is all or nothing.
+
+So each lease gets an account with three keys — landlord, tenant, us — and a quorum of two. The tenant opens it with the reserve and pays the deposit in; the entry inventory's hash is in the signer list itself. Then nobody can move the money alone, and the ledger says so: the arbiter alone, tefBAD_QUORUM; the landlord alone, tefBAD_QUORUM; the key that created the account, tefMASTER_DISABLED — all three measured on 27 October. If the inventory matches, landlord and tenant sign together and we are not even needed. If there is a hole in the wall and a 180 € quote, we sign 180 € to the landlord with him, and 1,020 € back to the tenant with her — the quote's hash in the memo, the deadline in the memo, the penalty computed by code, fourteen self-checks on the law before any ledger call.
+
+The limit, said plainly: the ledger has no clock on a multisig account. The deadline is computed and written, not enforced; who was late is public forever. And before the first real euro: a lawyer's opinion on whether a key holder who cannot act alone is a 'holder of funds' under French real-estate law, a licensed partner for the SEPA-to-EURØP leg, and a three-party clause in the lease."
+
+Measured 27/10/2026, 15:42–15:44 UTC, testnet: deposit accounts rM89zX71… (full return, FB4FCE0C…) and rndU6pH9… (180 € to the landlord 6358E670…, 1,020 € to the tenant 58F9259D…). Code: `depot/`, log: `depot/run.log`.
+
 ## 5. Close (10 s)
 
 Dareskro: the AI reads, the code calculates, a human signs, the ledger pays.
@@ -107,3 +119,7 @@ Built this weekend on the XRP Ledger. The code is public: github.com/LeDenti/dar
 **What if the oracle dies?** Anyone can finish after the date — the employee included — and the money goes where it was written. That is the test of a good oracle: it is useful and it is not needed.
 
 **How do you verify a delivery?** By a fact anyone can re-check: a URL and a hash agreed up front, written in the escrow's memo. The oracle polls the address and reveals the secret when the published file matches. Code, files, sites, APIs: that covers most freelance work. For a logo or a text, you need a judgement — a client-acceptance portal with a written silence rule, or a panel of named arbiters. That's the site we'd build next; it plugs into the same account.
+
+**Why a multisig account for the deposit and not your escrow?** Two reasons. The euro tokens on XRPL cannot be escrowed today — their issuers have not set the locking flag, we measured EURØP and RLUSD on 27 October. And a deposit is returned in parts; an escrow is all or nothing. Three keys, quorum two: nobody holds the money, any split is possible, and it works with the euro as it is.
+
+**Then you hold the deposit?** No. We hold one key of three. Alone we get tefBAD_QUORUM — measured. If the two parties agree they settle without us; if we disappear they still have two keys. Useful and not needed, same test as the oracle.
