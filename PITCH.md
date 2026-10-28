@@ -95,6 +95,18 @@ The limit, said plainly: the ledger has no clock on a multisig account. The dead
 
 Measured 27/10/2026, 15:42–15:44 UTC, testnet: deposit accounts rM89zX71… (full return, FB4FCE0C…) and rndU6pH9… (180 € to the landlord 6358E670…, 1,020 € to the tenant 58F9259D…). Code: `depot/`, log: `depot/run.log`.
 
+## 4e. Sixth payer — wedding photos sold to the guests (added 28 October)
+
+"An agency shot two thousand photos of eighty-eight guests. A guest picks his, and for each one wants the file, or a print from a lab. One price, split by code: the agency, the photographer who took that photo, the lab with its postage. The guest signs once — one Batch, one escrow per payee — and from that second nobody holds his money: not the agency, not us.
+
+Two ways to be paid in that one signature. The files are paid by key reveal, and there is no oracle at all: the files are boxed under a key, the escrows' condition is the hash of that key, and the only way for the agency to collect is to put the key on the ledger. Money and key change hands in the same transaction; the photographers then finish their own escrows with the key they read there. A stranger without the key: tecCRYPTOCONDITION_ERROR. The guest trying to take his money back: the same. Measured.
+
+The prints are paid by the oracle we already have, reading a public fact: at the agreed date, the carrier's tracking page says shipped, the lab is paid; order B's page never did, and the guest got the lab's share back at the deadline. Both on testnet on 28 October: order A, 46.90 euros, four escrows, every payee paid; order B, 7.40 euros, the lab refunded.
+
+What it is not: the lock is in XRP at the day's rate — no euro or dollar token can be escrowed on XRPL today, we measured their issuers — and a guest paying by card needs a licensed partner buying the XRP for him. The ledger side is real; the on-ramp is a partner."
+
+Measured 28/10/2026, 05:21–05:23 UTC, testnet: Batch A 462535C4… (4 escrows), Batch B 4A9856BE… (3 escrows); stranger 87899D26… and guest B8AE0C03… refused; agency reveals the key DAC76016…, Léa 0A78BBB8…, Marc 39FB42A8…; lab paid by the oracle 11880267…, order B refunded A11F3D25…. Code: `photos/`, log: `photos/run.log`.
+
 ## 5. Close (10 s)
 
 Dareskro: the AI reads, the code calculates, a human signs, the ledger pays.
@@ -123,3 +135,5 @@ Built this weekend on the XRP Ledger. The code is public: github.com/LeDenti/dar
 **Why a multisig account for the deposit and not your escrow?** Two reasons. The euro tokens on XRPL cannot be escrowed today — their issuers have not set the locking flag, we measured EURØP and RLUSD on 27 October. And a deposit is returned in parts; an escrow is all or nothing. Three keys, quorum two: nobody holds the money, any split is possible, and it works with the euro as it is.
 
 **Then you hold the deposit?** No. We hold one key of three. Alone we get tefBAD_QUORUM — measured. If the two parties agree they settle without us; if we disappear they still have two keys. Useful and not needed, same test as the oracle.
+
+**How do you sell a file without anyone holding it?** Box it under a key, make the key's hash the escrow's condition. The seller collects only by revealing the key on the ledger, and the buyer reads it there. No oracle, no platform, no download link to trust: the swap is one transaction. Measured 28 October: wrong finisher refused, right key paid, box opened, hashes matched.

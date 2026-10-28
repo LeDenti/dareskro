@@ -1,0 +1,53 @@
+05:20:16 testnet wss://testnet.xrpl-labs.com, oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+05:20:16 rate 1.19278 EUR/XRP (Kraken)
+05:20:16 0. guest, agency, Léa, Marc, the lab: five accounts from the faucet…
+05:20:58 invite rDo24Z2tpyX8rDFgNBf64AomfjKPaBmZNF
+agence rapH4sM6zAeh9XzqgHiNvzBfvPBS8fWM85
+lea rnzPtCzhyAaMUxwevtqkErfuidWWPRBTop
+marc rfjMrFMoTmqN9zrF7sgoN1w2V3ov3aEEpd
+labo rsAUZRWSXt88ZHbPJkE2zxqBC58WfYGtim
+inconnu r4kWHtV56Aqo4LXPqQzpTYcS1WntF1X4rn
+05:20:59 order A: 5 line(s), 46,90 € (incl. postage 4,90 €) → agence 16,50 €, Léa 8,00 €, Marc 8,50 €, labo 13,90 €
+05:20:59   box 985 bytes at http://127.0.0.1:8791/commandes/A/photos.enc, sha256 355754445140…; key condition A0258020848970…; lab condition A0258020D2B2F8… (deliveryId 617307a08357)
+05:20:59 order B: 1 line(s), 7,40 € (incl. postage 4,90 €) → agence 0,65 €, Marc 0,65 €, labo 6,10 €
+05:20:59   box 268 bytes at http://127.0.0.1:8791/commandes/B/photos.enc, sha256 eeb788dea196…; key condition A0258020452EFC…; lab condition A0258020E33264… (deliveryId 10fbdf663df0)
+05:20:59 the guest has downloaded both boxes (locked); the key comes with the payment
+05:21:05 order A: Batch tesSUCCESS — ONE signature, 4 escrows (46,90 € = 39.319908 XRP), all or nothing — https://testnet.xrpl.org/transactions/462535C49C8C10B2A7FD796B3AE2CF207FF0B62CE8922BDD4B600CF04328991D
+05:21:06   #21881019 agence agence: 13.833230 XRP (16,50 €) — https://testnet.xrpl.org/transactions/2D756AC91DBDA3ED5219A7AF082BDBBBCA9D6D7E85890C663A153DDB0AFE8551
+05:21:06   #21881020 photographe Léa: 6.707021 XRP (8,00 €) — https://testnet.xrpl.org/transactions/BB4FA043990FED16599BA4ACD8EA5C010D4F46EC9839D2593EAE29D843AD1FE7
+05:21:06   #21881021 photographe Marc: 7.126209 XRP (8,50 €) — https://testnet.xrpl.org/transactions/735051C5B282374D2A3FF0C961E68BF8DEFB68921D22DB64DD3B893020AB4CD1
+05:21:06   #21881022 labo labo: 11.653448 XRP (13,90 €) — https://testnet.xrpl.org/transactions/9BE108C0EDE8ABE54BF5124B433C559BA85DC3EBE49B99B422008B516FFB8F28
+05:21:06   the lab's escrow is handed to the oracle: paid at the date (in 75 s) if http://127.0.0.1:8791/suivi/A says EXPEDIE, refund 60 s later otherwise
+05:21:12 order B: Batch tesSUCCESS — ONE signature, 3 escrows (7,40 € = 6.203993 XRP), all or nothing — https://testnet.xrpl.org/transactions/4A9856BE351A730CE09ED149BE086A7CB449C451C9663DE53B458D227CFF4E34
+05:21:13   #21881024 agence agence: 0.544945 XRP (0,65 €) — https://testnet.xrpl.org/transactions/03946B4BC2B3936E1BDE059D242EF7058CAF5F4C8732BC98510C714146532902
+05:21:13   #21881025 photographe Marc: 0.544945 XRP (0,65 €) — https://testnet.xrpl.org/transactions/936C02F0BB6FC3C5F214D09149D054E2DB897E003DA076457BD49C3CA67C7A88
+05:21:13   #21881026 labo labo: 5.114103 XRP (6,10 €) — https://testnet.xrpl.org/transactions/6146D6FB259BFA72E4196C84CA4C3A780FC5F2E1948698019A131427329B3B1C
+05:21:13   the lab's escrow is handed to the oracle: paid at the date (in 75 s) if http://127.0.0.1:8791/suivi/B says EXPEDIE, refund 60 s later otherwise
+05:21:18 a stranger tries to finish the agency's escrow without the key: tecCRYPTOCONDITION_ERROR  https://testnet.xrpl.org/transactions/87899D26ECBA99D96617D77F66292188D7A9F1273BB26DF4F28051084905B284
+05:21:21 the guest tries to take his money back before the key is revealed: tecCRYPTOCONDITION_ERROR  https://testnet.xrpl.org/transactions/B8AE0C0398E7E100535D3AA04A0D044AEF77E547D7FB6D2696848631BB351916
+05:21:29 order A: the agency finishes its escrow, revealing the key: tesSUCCESS  https://testnet.xrpl.org/transactions/DAC760169B3C27758278CF3834AB6CFF4EC52AFCCF9F0ACC6FD3EBAF8DE4B354
+05:21:29 the key is public now: Fulfillment A022802056EC… → K 56ec1d33328b… (32 bytes)
+05:21:35 order A: Léa finishes her/his escrow with the key read on the ledger: tesSUCCESS  https://testnet.xrpl.org/transactions/0A78BBB87D4E58298E6EC23A95E0FDE30B282D2129D1AE333A161BD51ADF3A4D
+05:21:40 order A: Marc finishes her/his escrow with the key read on the ledger: tesSUCCESS  https://testnet.xrpl.org/transactions/39FB42A87606B74C21395AEF106B65672E1B30A3D593CBAF7DB00CAAC3492756
+05:21:40   agence: 100 → 113.83277 XRP
+05:21:40   Léa: 100 → 106.706561 XRP
+05:21:40   Marc: 100 → 107.125749 XRP
+05:21:40 the guest opens order A's box with the ledger's key: 4 files, hashes all match the order (IMG_0412, IMG_0587, IMG_1203, IMG_1377)
+05:21:40 a wrong key does not open it (AES-GCM authentication): refused
+05:21:40 the lab opens the same box with the same public key, prints 2 photo(s) (IMG_1203, IMG_1377) and hands the parcel to the carrier
+05:21:40 http://127.0.0.1:8791/suivi/A now says EXPEDIE, 34 s before the date; http://127.0.0.1:8791/suivi/B stays EN ATTENTE
+05:21:46 order B: the agency reveals its key and collects its share: tesSUCCESS  https://testnet.xrpl.org/transactions/D6708EC7DBC31E2AD1EABF87F6DFECB45624020E1FEDA9DFD29A0E32CCC7A634
+05:21:54 order B: Marc collects his share: tesSUCCESS  https://testnet.xrpl.org/transactions/5038889BE761267DC8879371187A97B1DE43253C4DF96971812D6500BDDFA4DE
+05:21:54 waiting for the date (20 s): the oracle reads the two tracking pages…
+05:21:54 order A lab: oracle sees — status waiting, page shows shipped
+05:22:30 order A lab: oracle sees — status finished, page shows shipped — live with "EXPEDIE" (52 chars)
+05:22:30 order A lab: finished — live with "EXPEDIE" (52 chars) — https://testnet.xrpl.org/transactions/11880267FC4B0C6B8ACE1127ECDBE573E890BA362CEC1650E4F25585171B5950
+05:22:30 order B lab: oracle sees — status waiting, page does NOT show shipped
+05:22:39 order B lab: oracle sees — status waiting, page does NOT show shipped — live but without "EXPEDIE"
+05:23:36 order B lab: oracle sees — status expired-refunded, page does NOT show shipped — live but without "EXPEDIE"
+05:23:36 order B lab: expired-refunded — never shipped, the guest gets the lab's share back — https://testnet.xrpl.org/transactions/A11F3D2508B32233AB7D794C23F513F06605C6A48276F12ED0ADEA79AAE77DC4
+05:23:36 the lab: 100 → 111.653448 XRP (order A's 13,90 €); the guest: 100 → 59.590058 XRP (paid A and B, refunded B's lab share)
+05:23:36 the web served the boxes 2 time(s) and the tracking pages 12 time(s)
+05:23:36 
+all steps as expected
+compte rendu public : /Users/jul/dareskro/photos/compte_rendu.json

@@ -1013,6 +1013,68 @@
       "lastTry": "2026-10-25T19:48:44.689Z",
       "finishedAt": "2026-10-25T19:48:44.689Z",
       "finishHash": "489D35E2127CACF3D934EF13D77059A8BFC2CFB7F1E67731B3875794C151B386"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "617307a08357",
+      "owner": "rDo24Z2tpyX8rDFgNBf64AomfjKPaBmZNF",
+      "sequence": 21881022,
+      "destination": "rsAUZRWSXt88ZHbPJkE2zxqBC58WfYGtim",
+      "amountXrp": "11.653448",
+      "checkAfter": 846480134,
+      "cancelAfter": 846480194,
+      "finishAfter": 846480134,
+      "proof": {
+        "url": "http://127.0.0.1:8791/suivi/A",
+        "mustContain": "EXPEDIE"
+      },
+      "createHash": "9BE108C0EDE8ABE54BF5124B433C559BA85DC3EBE49B99B422008B516FFB8F28",
+      "status": "finished",
+      "registered": "2026-10-28T05:21:06.990Z",
+      "lastSeen": {
+        "at": "2026-10-28T05:22:22.593Z",
+        "live": true,
+        "why": "live with \"EXPEDIE\" (52 chars)"
+      },
+      "lastCheck": "2026-10-28T05:22:22.593Z",
+      "checks": 1,
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "11880267FC4B0C6B8ACE1127ECDBE573E890BA362CEC1650E4F25585171B5950",
+      "lastTry": "2026-10-28T05:22:28.488Z",
+      "lastWhy": "live with \"EXPEDIE\" (52 chars)",
+      "finishedAt": "2026-10-28T05:22:28.488Z",
+      "finishHash": "11880267FC4B0C6B8ACE1127ECDBE573E890BA362CEC1650E4F25585171B5950"
+    },
+    {
+      "kind": "presence",
+      "deliveryId": "10fbdf663df0",
+      "owner": "rDo24Z2tpyX8rDFgNBf64AomfjKPaBmZNF",
+      "sequence": 21881026,
+      "destination": "rsAUZRWSXt88ZHbPJkE2zxqBC58WfYGtim",
+      "amountXrp": "5.114103",
+      "checkAfter": 846480141,
+      "cancelAfter": 846480201,
+      "finishAfter": 846480141,
+      "proof": {
+        "url": "http://127.0.0.1:8791/suivi/B",
+        "mustContain": "EXPEDIE"
+      },
+      "createHash": "6146D6FB259BFA72E4196C84CA4C3A780FC5F2E1948698019A131427329B3B1C",
+      "status": "expired-refunded",
+      "registered": "2026-10-28T05:21:13.623Z",
+      "lastSeen": {
+        "at": "2026-10-28T05:23:16.520Z",
+        "live": false,
+        "why": "live but without \"EXPEDIE\""
+      },
+      "lastCheck": "2026-10-28T05:23:16.520Z",
+      "checks": 3,
+      "lastWhy": "live but without \"EXPEDIE\"",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "A11F3D2508B32233AB7D794C23F513F06605C6A48276F12ED0ADEA79AAE77DC4",
+      "lastTry": "2026-10-28T05:23:33.337Z",
+      "refundHash": "A11F3D2508B32233AB7D794C23F513F06605C6A48276F12ED0ADEA79AAE77DC4"
     }
   ]
 }

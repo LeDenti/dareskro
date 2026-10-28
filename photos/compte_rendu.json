@@ -1,0 +1,154 @@
+{
+  "network": "wss://testnet.xrpl-labs.com",
+  "date": "2026-10-28T05:20:16.137Z",
+  "orders": {
+    "A": {
+      "total": 4690,
+      "parts": {
+        "agence": 1650,
+        "labo": 1390,
+        "photographes": {
+          "Léa": 800,
+          "Marc": 850
+        }
+      },
+      "orderSha256": "050e0b5cfad5dde4b660b9bf5c4e2d2ed892c9d85418d68c708a3a439fb3deec",
+      "boxSha256": "35575444514078c4f2ac4e376dc562afd2a808ad5028e65cc74bc4c098bf9cc2",
+      "keyCondition": "A0258020848970B3B0B217FACB908A30C115475C39B87E7889B6F0BF7694CF6D76FC256F810120",
+      "labDeliveryId": "617307a08357",
+      "escrows": [
+        {
+          "role": "agence",
+          "nom": "agence",
+          "cents": 1650,
+          "seq": 21881019,
+          "hash": "2D756AC91DBDA3ED5219A7AF082BDBBBCA9D6D7E85890C663A153DDB0AFE8551"
+        },
+        {
+          "role": "photographe",
+          "nom": "Léa",
+          "cents": 800,
+          "seq": 21881020,
+          "hash": "BB4FA043990FED16599BA4ACD8EA5C010D4F46EC9839D2593EAE29D843AD1FE7"
+        },
+        {
+          "role": "photographe",
+          "nom": "Marc",
+          "cents": 850,
+          "seq": 21881021,
+          "hash": "735051C5B282374D2A3FF0C961E68BF8DEFB68921D22DB64DD3B893020AB4CD1"
+        },
+        {
+          "role": "labo",
+          "nom": "labo",
+          "cents": 1390,
+          "seq": 21881022,
+          "hash": "9BE108C0EDE8ABE54BF5124B433C559BA85DC3EBE49B99B422008B516FFB8F28"
+        }
+      ]
+    },
+    "B": {
+      "total": 740,
+      "parts": {
+        "agence": 65,
+        "labo": 610,
+        "photographes": {
+          "Marc": 65
+        }
+      },
+      "orderSha256": "4dd4336f917a582f619582badb5d8ff047044947e197daf7a5b02243db19cb28",
+      "boxSha256": "eeb788dea19653181bf4995408036c81d18d968092b4be8a965f5788366c2cdf",
+      "keyCondition": "A0258020452EFCA9446579E7F7A63996D6085CC7D12AAC149CC90522F2FCFF14221D2D3A810120",
+      "labDeliveryId": "10fbdf663df0",
+      "escrows": [
+        {
+          "role": "agence",
+          "nom": "agence",
+          "cents": 65,
+          "seq": 21881024,
+          "hash": "03946B4BC2B3936E1BDE059D242EF7058CAF5F4C8732BC98510C714146532902"
+        },
+        {
+          "role": "photographe",
+          "nom": "Marc",
+          "cents": 65,
+          "seq": 21881025,
+          "hash": "936C02F0BB6FC3C5F214D09149D054E2DB897E003DA076457BD49C3CA67C7A88"
+        },
+        {
+          "role": "labo",
+          "nom": "labo",
+          "cents": 610,
+          "seq": 21881026,
+          "hash": "6146D6FB259BFA72E4196C84CA4C3A780FC5F2E1948698019A131427329B3B1C"
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "step": "order A Batch",
+      "result": "tesSUCCESS",
+      "hash": "462535C49C8C10B2A7FD796B3AE2CF207FF0B62CE8922BDD4B600CF04328991D"
+    },
+    {
+      "step": "order B Batch",
+      "result": "tesSUCCESS",
+      "hash": "4A9856BE351A730CE09ED149BE086A7CB449C451C9663DE53B458D227CFF4E34"
+    },
+    {
+      "step": "a stranger tries to finish the agency's escrow without the key",
+      "result": "tecCRYPTOCONDITION_ERROR",
+      "hash": "87899D26ECBA99D96617D77F66292188D7A9F1273BB26DF4F28051084905B284"
+    },
+    {
+      "step": "the guest tries to take his money back before the key is revealed",
+      "result": "tecCRYPTOCONDITION_ERROR",
+      "hash": "B8AE0C0398E7E100535D3AA04A0D044AEF77E547D7FB6D2696848631BB351916"
+    },
+    {
+      "step": "order A: the agency finishes its escrow, revealing the key",
+      "result": "tesSUCCESS",
+      "hash": "DAC760169B3C27758278CF3834AB6CFF4EC52AFCCF9F0ACC6FD3EBAF8DE4B354"
+    },
+    {
+      "step": "order A: Léa finishes her/his escrow with the key read on the ledger",
+      "result": "tesSUCCESS",
+      "hash": "0A78BBB87D4E58298E6EC23A95E0FDE30B282D2129D1AE333A161BD51ADF3A4D"
+    },
+    {
+      "step": "order A: Marc finishes her/his escrow with the key read on the ledger",
+      "result": "tesSUCCESS",
+      "hash": "39FB42A87606B74C21395AEF106B65672E1B30A3D593CBAF7DB00CAAC3492756"
+    },
+    {
+      "step": "order B: the agency reveals its key and collects its share",
+      "result": "tesSUCCESS",
+      "hash": "D6708EC7DBC31E2AD1EABF87F6DFECB45624020E1FEDA9DFD29A0E32CCC7A634"
+    },
+    {
+      "step": "order B: Marc collects his share",
+      "result": "tesSUCCESS",
+      "hash": "5038889BE761267DC8879371187A97B1DE43253C4DF96971812D6500BDDFA4DE"
+    }
+  ],
+  "accounts": {
+    "invite": "rDo24Z2tpyX8rDFgNBf64AomfjKPaBmZNF",
+    "agence": "rapH4sM6zAeh9XzqgHiNvzBfvPBS8fWM85",
+    "lea": "rnzPtCzhyAaMUxwevtqkErfuidWWPRBTop",
+    "marc": "rfjMrFMoTmqN9zrF7sgoN1w2V3ov3aEEpd",
+    "labo": "rsAUZRWSXt88ZHbPJkE2zxqBC58WfYGtim",
+    "inconnu": "r4kWHtV56Aqo4LXPqQzpTYcS1WntF1X4rn"
+  },
+  "oracle": {
+    "A": {
+      "status": "finished",
+      "finishHash": "11880267FC4B0C6B8ACE1127ECDBE573E890BA362CEC1650E4F25585171B5950"
+    },
+    "B": {
+      "status": "expired-refunded",
+      "refundHash": "A11F3D2508B32233AB7D794C23F513F06605C6A48276F12ED0ADEA79AAE77DC4"
+    }
+  },
+  "problems": []
+}

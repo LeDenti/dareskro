@@ -1,0 +1,14 @@
+{
+  "name": "dareskro-photos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Wedding photos sold to the guests: one signature locks the price, split by code between agency, photographers and lab; files paid by key reveal (no oracle), prints paid on proof of shipping (the oracle). Nobody holds the funds.",
+  "scripts": {
+    "demo": "node demo_photos_mariage.mjs",
+    "rules": "node tarif.mjs"
+  },
+  "dependencies": {
+    "xrpl": "^5.3.0"
+  }
+}
