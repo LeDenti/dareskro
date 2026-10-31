@@ -1,0 +1,20 @@
+[
+  {
+    "network": "testnet",
+    "node": "wss://testnet.xrpl-labs.com",
+    "account": "rBYUzLoGJcfr9xGM329hfVgGjUsGkiRjQW",
+    "tx": "8427D2E4C94EDCA694486B6E980C397328C051787C9E1B2E08BE2A7D0427A2DB",
+    "result": "tesSUCCESS",
+    "validated": true,
+    "ledger_index": 21958530,
+    "close_time_iso": "2026-10-31T08:36:31Z",
+    "statement": "paie/sortie/bulletin_eur.json",
+    "statement_sha256": "268a8a7830cd037fa013ce497266debebf50e4c421248bf8fec6c0a56db5b94b",
+    "statement_id": "stmt-ffff3dd0e216",
+    "pdf": "paie/sortie/bulletin_officiel.pdf",
+    "pdf_sha256": "ec75f4ce516c5793514dbff371f1fab4fcba76d6a27a94826dd441808f2cbceb",
+    "fee_drops": "12",
+    "explorer": "https://testnet.xrpl.org/transactions/8427D2E4C94EDCA694486B6E980C397328C051787C9E1B2E08BE2A7D0427A2DB",
+    "at": "2026-10-31T08:36:32.506Z"
+  }
+]

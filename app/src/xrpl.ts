@@ -28,7 +28,8 @@ import {
   type Wallet,
 } from "xrpl";
 
-const TESTNET_URL = "wss://testnet.xrpl-labs.com";
+// configurable node: VITE_XRPL_URL in app/.env.local (the Ripple testnet node answered 503 on 25/10/2026)
+const TESTNET_URL = (import.meta.env.VITE_XRPL_URL as string | undefined) || "wss://testnet.xrpl-labs.com";
 const FAUCET_URL = "https://faucet.altnet.rippletest.net/accounts";
 /** XRPL counts seconds since 2000-01-01, not 1970. */
 const RIPPLE_EPOCH = 946684800;
@@ -178,6 +179,8 @@ export type EscrowDraft = {
   /** When the escrow holds the net: the gross the proof binds and the employee contribution rate that links them (memo dareskro/gross). */
   gross?: string;
   employeeRate?: string;
+  /** The net before tax, for the gross memo, when the escrow (and the fiat memo) hold the net paid. */
+  net?: string;
   /** Income tax withheld at source: the employee's personalised rate and what is finally paid (memo dareskro/gross). */
   taxRate?: string;
   paid?: string;
@@ -240,7 +243,7 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
         : []),
       // The escrow holds the net: say what gross the proof binds, and at which public rate.
       ...(d.gross && d.eur && d.employeeRate
-        ? [{ Memo: { MemoType: toHex("dareskro/gross"), MemoData: toHex(`gross=${d.gross};net=${d.eur};employee_rate=${d.employeeRate}${d.taxRate && d.paid ? `;tax_rate=${d.taxRate};paid=${d.paid}` : ""}`) } }]
+        ? [{ Memo: { MemoType: toHex("dareskro/gross"), MemoData: toHex(`gross=${d.gross};net=${d.net ?? d.eur};employee_rate=${d.employeeRate}${d.taxRate && d.paid ? `;tax_rate=${d.taxRate};paid=${d.paid}` : ""}`) } }]
         : []),
       ...(d.extraMemos ?? []).map((m) => ({ Memo: { MemoType: toHex(m.type), MemoData: toHex(m.data) } })),
       // The ZK commitment: the compliance proof is bound to this escrow, not to any escrow of the same amount.

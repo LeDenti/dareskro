@@ -38,6 +38,7 @@ import { ContractDesk, type ContractKind } from "./ContractDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
 import * as privacy from "./privacy";
+import { PaieReelle } from "./PaieReelle";
 import { SpeculosScreen } from "./SpeculosScreen";
 import { useDeviceAction } from "./useDeviceAction";
 import * as xrpl from "./xrpl";
@@ -196,6 +197,12 @@ function Desk(props: {
     refreshRate();
   }, []);
 
+  // the statement's currency is known only once it is loaded (EUR for the real shift): fetch the rate again in that currency
+  useEffect(() => {
+    if (statement) refreshRate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statement?.currency]);
+
   // ---- 2. the employer's Ledger
   const [speculosModel, setSpeculosModel] = useState(DeviceModelId.STAX);
   const dmkRef = useRef<DeviceManagementKit | undefined>(undefined);
@@ -231,7 +238,13 @@ function Desk(props: {
   const [legs, setLegs] = useState<Leg[]>([]);
   // one signature for everything (Batch, XLS-56, all or nothing) — or one approval per transaction, the mode a device
   // whose XRP app does not know Batch yet needs; the choice is the employer's, the result on the ledger is the same
-  const [batchMode, setBatchMode] = useState(true);
+  // real mode: with a Ledger device as the signer the default is one approval per transaction — the XRP app 2.8.2 refuses a
+  // Batch outright (6985, LEDGER_FEEDBACK.md); the Batch stays a switch, and the default for the test wallet and the emulator
+  const deviceSigner = transport === "usb" || transport === "ble";
+  const [batchMode, setBatchMode] = useState(!deviceSigner);
+  useEffect(() => {
+    setBatchMode(!deviceSigner);
+  }, [deviceSigner]);
   const [batchTx, setBatchTx] = useState<Transaction>();
   const [signedBatchHex, setSignedBatchHex] = useState<string>();
   const [cashBusy, setCashBusy] = useState(false);
@@ -320,9 +333,14 @@ function Desk(props: {
     return () => clearInterval(t);
   }, []);
 
+  // which statement file the desk serves: bulletin.json (the New York demo, USD) or bulletin_eur.json (the same shift in
+  // euros, paie/en_euros.py — the one the official payslip, the SEPA order and the anchoring hash); ?bulletin=… picks it
+  const [statementFile, setStatementFile] = useState(() => new URLSearchParams(window.location.search).get("bulletin") ?? "bulletin.json");
+
   useEffect(() => {
     loadStatement();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statementFile]);
 
   useEffect(() => () => dmkRef.current?.close(), []);
 
@@ -339,8 +357,8 @@ function Desk(props: {
     setStatementError(undefined);
     setValidation(undefined);
     try {
-      const res = await fetch(`/bulletin.json?t=${Date.now()}`);
-      if (!res.ok) throw new Error(`bulletin.json: ${res.status}`);
+      const res = await fetch(`/${statementFile}?t=${Date.now()}`);
+      if (!res.ok) throw new Error(`${statementFile}: ${res.status}`);
       setStatement(await res.json());
     } catch (e) {
       setStatementError(e);
@@ -441,8 +459,8 @@ function Desk(props: {
   };
 
   /** Escrow amount in XRP plus the reserve and fees: what the employer must hold. A contract locks 20 XRP by default. */
-  // enough for the net escrow, the contributions escrow when there is one, the reserve and fees
-  const neededXrp = Math.ceil(Number(amountXrp ?? statement?.total ?? 0) + Number(contribXrp ?? 0)) + 15;
+  // enough for the net escrow, the contributions leg, the tax escrow when there is one, the reserve and fees
+  const neededXrp = Math.ceil(Number(amountXrp ?? statement?.total ?? 0) + Number(contribXrp ?? 0) + Number(taxXrp ?? 0)) + 15;
 
   const fund = async () => {
     if (!employer) return;
@@ -479,8 +497,12 @@ function Desk(props: {
       // the rate of the moment of signing, not of the page load
       const fresh = await xrpl.xrpEurRate(statement.currency);
       setRate(fresh);
+      // the employee's escrow holds the NET PAID (net before tax minus the tax withheld), as the script
+      // oracle/demo_confidentialite.mjs does and the README states; the desk had kept the net before tax
+      // since 25/10 — caught by the first real-mode rehearsal of 31/10/2026 (440.36 € locked for 407.33 € due)
       const net = statement.net_to_pay ?? statement.total;
-      const xrp = xrpl.eurToXrp(net, fresh.eurPerXrp);
+      const paid = statement.net_paid ?? net;
+      const xrp = xrpl.eurToXrp(paid, fresh.eurPerXrp);
       const finishAfter = new Date(Date.now() + Number(payDelaySec) * 1000);
       const compact = transport === "usb" || transport === "ble";
       const first = await xrpl.prepareEscrowCreate({
@@ -488,7 +510,8 @@ function Desk(props: {
         publicKey: employer.publicKey,
         destination: employee,
         amountXrp: xrp,
-        eur: net,
+        eur: paid,
+        net,
         rate: fresh,
         finishAfter,
         statementSha256: statement.sha256,
@@ -500,7 +523,7 @@ function Desk(props: {
         gross: statement.contributions ? statement.total : undefined,
         employeeRate: statement.contributions?.employee.rate,
         taxRate: statement.withholding?.rate,
-        paid: statement.withholding ? net : undefined,
+        paid: statement.withholding ? paid : undefined,
         compact,
       });
       setTx(first);
@@ -828,7 +851,14 @@ function Desk(props: {
           Only the SHA-256 of this statement goes on the ledger, never the statement.
         </p>
         <div className="row">
-          <button onClick={loadStatement}>Reload bulletin.json</button>
+          <label>
+            Statement file
+            <select value={statementFile} onChange={(e) => setStatementFile(e.target.value)} disabled={!!validation}>
+              <option value="bulletin.json">bulletin.json — the New York demo (USD)</option>
+              <option value="bulletin_eur.json">bulletin_eur.json — the same shift in euros (official payslip, SEPA order, anchoring)</option>
+            </select>
+          </label>
+          <button onClick={() => loadStatement()}>Reload {statementFile}</button>
         </div>
         <ErrorBox error={statementError} />
         {statement && (
@@ -1141,6 +1171,25 @@ function Desk(props: {
           )}
         </div>
         <ErrorBox error={prepareError} />
+        {tx && statement && employer && (
+          <PaieReelle
+            statement={statement}
+            payTx={tx}
+            legs={legs}
+            batch={!!batchTx}
+            rate={rate}
+            employer={employer}
+            balance={balance}
+            neededXrp={neededXrp}
+            employee={employee}
+            employeeIsTest={!!employeeWallet}
+            deviceSigner={deviceSigner}
+            deviceName={session?.deviceName}
+            oracleAddress={oracleId?.address}
+            payoutMode={payoutMode}
+            signed={!!(signedTxHex || signedBatchHex)}
+          />
+        )}
         {tx && (
           <details>
             <summary>

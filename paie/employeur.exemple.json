@@ -1,0 +1,34 @@
+{
+  "_note": "EXAMPLE DATA, fictional employer and employee. Copy this file to paie/employeur.json (gitignored) and fill in the real values. Nothing here is a secret, but the real file holds personal data (addresses, social security number, IBANs): it never goes in the repository. The IBANs below are the published example IBANs of the French IBAN registry, they belong to nobody.",
+  "exemple": true,
+  "employeur": {
+    "raison_sociale": "PHARMACIE DE L'EXEMPLE (SELARL)",
+    "adresse": ["12 rue de l'Exemple", "13001 Marseille"],
+    "siret": "123 456 789 00012",
+    "code_ape": "4773Z",
+    "urssaf": "URSSAF Provence-Alpes-Côte d'Azur",
+    "convention_collective": "Pharmacie d'officine (IDCC 1996)",
+    "iban": "FR7630006000011234567890189",
+    "bic": "AGRIFRPP",
+    "signataire": "Le pharmacien titulaire"
+  },
+  "salarie": {
+    "nom": "EXEMPLE",
+    "prenom": "Camille",
+    "adresse": ["3 impasse du Remplaçant", "13006 Marseille"],
+    "numero_securite_sociale": null,
+    "emploi": "Pharmacien remplaçant",
+    "classification": "Pharmacien adjoint, cadre, coefficient 600",
+    "contrat": "CDD d'un jour (journée de garde)",
+    "motif_cdd": "remplacement du pharmacien titulaire pendant la garde du dimanche",
+    "date_entree": "2026-10-25",
+    "date_sortie": "2026-10-25",
+    "iban": "FR1420041010050500013M02606",
+    "bic": "PSSTFRPPXXX"
+  },
+  "paiement": {
+    "date_paiement": "2026-11-05",
+    "mode": "virement SEPA (ordre pain.001 produit par paie/ordre_sepa.py)"
+  },
+  "taux_reels_saisis": false
+}

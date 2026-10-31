@@ -665,6 +665,54 @@ No device? Clone Ledger's workshop, `git clone https://github.com/LedgerHQ/devic
 run `ledger-workshop/xrpl-hackathon/speculos/run-speculos.sh stax` (needs Docker; colima on a Mac)
 and choose the Speculos transport. The terminal demo (`app/scripts/demo-terminal.mjs`) drives the same emulator with `nanox`.
 
+## La paie de garde, en vrai — the Sunday shift, paid for real (31/10/2026)
+
+After New York the employee case was taken one step towards a real replacement pharmacist paid by a real
+pharmacy, in `paie/` ([its README](paie/README.md) has every hash). What changed, measured on testnet:
+
+- **The statement is in euros.** The engine always computed in euros (point value 5.277 €); the demo
+  labelled it USD for the dollar leg. `paie/en_euros.py` writes the same statement with `currency = EUR`
+  and nothing else (sha256 `268a8a78…`; `bulletin_garde.py --devise EUR` gives the same amounts to the
+  cent, only `computed_at` differs). The desk serves both files (`?bulletin=bulletin_eur.json`).
+- **An official payslip comes out of the same JSON** as the escrow memo: `paie/bulletin_officiel.py`
+  lays the statement out with the French mandatory mentions, prints the statement's SHA-256 on it,
+  re-checks every line (base × rate, gross = sum, net, tax, paid, cost) and refuses otherwise, and is
+  deterministic (two runs, one PDF hash `ec75f4ce…`). The sheet says in red what it is not yet: the
+  contribution rates are aggregated and indicative until real rates are entered, and no DSN exists —
+  the DSN is a certified payroll software's job. The list of what is missing for it to be opposable is
+  in `paie/README.md`.
+- **The desk has a real mode.** With a Ledger device as the signer the default is **one approval per
+  transaction** (the XRP app refuses a Batch, `6985`); a "what leaves, to whom, when" table built from
+  the very transactions to be signed sits between Prepare and Sign, with the button-by-button
+  instructions for the Nano; the balance check now counts the tax escrow; the node is configurable
+  (`VITE_XRPL_URL`). The test wallet stays for rehearsals.
+- **The first rehearsal of that mode caught a bug**: since 25/10 the desk locked the **net before tax
+  (440.36)** in the employee's escrow while displaying the net paid (407.33) — the employee would have
+  received the income tax that the DGFiP escrow pays too. Measured
+  ([B315748F…](https://testnet.xrpl.org/transactions/B315748FA3962DAA249414886BD1338BE5D0A3EB4229D43A116E9F92D8455811), 395.25 XRP = 440.36 €), fixed, measured again: pay escrow #21958572
+  [AAB51E89…](https://testnet.xrpl.org/transactions/AAB51E8989DC87DCE71E75637EB67A5E4A5C3F7949D65953896312606938FDAA)
+  **365.167733 XRP = 407.33 €**, Check #21958573
+  [950EFC44…](https://testnet.xrpl.org/transactions/950EFC44923EC38B7B697CEA7C9DFF0F50C9A3497CC7DDA3FD6F275C625142D3)
+  cashed by URSSAF [23259B6B…](https://testnet.xrpl.org/transactions/23259B6BE3C2EA8D8E6D81A0BFDFFB7C4FF68281409AC35B32F29E587A1D305E),
+  tax escrow #21958574 [C4C8D970…](https://testnet.xrpl.org/transactions/C4C8D970D3BA821E5AD4CB14E16DA85C16D78840AB63B8CD77E577E96F664D08);
+  the oracle released the pay at 08:49:48 UTC [C5919A57…](https://testnet.xrpl.org/transactions/C5919A571E31A8C0292974C7FB0E5996D1D450789458C17444011D5DA5493E44)
+  and the tax 30 s later [ED906AD3…](https://testnet.xrpl.org/transactions/ED906AD30A2CCE565F476717B6A5121FF98E7828C7BB812493FDE07CBD5DF6D2).
+  The script runs of 25/10 were right (they used the net paid); the desk runs of that day locked the
+  net before tax.
+- **The last mile is a bank transfer, written and not sent.** `paie/ordre_sepa.py` produces the ISO
+  20022 `pain.001` order (one SEPA credit transfer, purpose `SALA`, 407.33 €, remittance carrying the
+  statement id and hash) from the euro statement, deterministic, `"executed": false`. URSSAF and DGFiP
+  do not cash XRP and are not paid by transfer either: the DSN triggers their direct debit; the Check and
+  the tax escrow stay the ledger's proof that the money was set aside. RLUSD → euros would need an
+  exchange or a payment institution: named, not built.
+- **The fingerprint is anchored, never the document.** `paie/ancrer.mjs` writes the statement's and the
+  PDF's SHA-256 in the memos of a fee-only `AccountSet`: testnet
+  [8427D2E4…](https://testnet.xrpl.org/transactions/8427D2E4C94EDCA694486B6E980C397328C051787C9E1B2E08BE2A7D0427A2DB)
+  (ledger 21958530, `verifier`: MATCH, MATCH). Mainnet is prepared — offline key in a 0600 file written
+  by the owner, reserve checked, `--mainnet-je-confirme` written in full — and **not executed**.
+- **The run on the Nano S Plus in three approvals is not done yet**: the procedure, press by press, is
+  in `paie/README.md`; its table is empty until the device is in hand.
+
 ## Honest limits, said before the jury asks
 
 - In France an employee's pay must go through a payslip and a bank transfer
