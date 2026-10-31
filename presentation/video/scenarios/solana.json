@@ -1,0 +1,76 @@
+{
+  "name": "solana",
+  "_note": "device, read and caption come from solana/client/compte_rendu.json (the devnet run of 31/10/2026); node make.mjs fill --scenario solana rewrites them",
+  "device": [
+    "SOL 0.05",
+    "after 2026-10-31",
+    "to 7zonozdo…"
+  ],
+  "read": "Zero virgola zero cinque SOL… trentuno ottobre… sette zeta o… ah ah.",
+  "caption": [
+    "finish() called by a passer-by 7 s after the date — not the oracle, not the employer, nobody clicked",
+    "explorer.solana.com/tx/5cbxdS3dyJ5yQ2nHcfsdvdcmA5ibJYhLiwbXd8onCWfV…?cluster=devnet"
+  ],
+  "card": [
+    "evidence  ·  code  ·  validation",
+    "Solana devnet  ·  a program with no owner  ·  agentic payroll escrow",
+    "Encode Solana Hackathon  ·  Aurora Intents track  ·  November 2026"
+  ],
+  "subs": [
+    [
+      0.5,
+      9.8,
+      "A pharmacist on Sunday duty: hours the collective agreement pays extra."
+    ],
+    [
+      10.5,
+      19.5,
+      "Who proves the hours? A schedule, a badge log, an agreement thick as a phone book."
+    ],
+    [
+      20.0,
+      27.5,
+      "Every month someone chases a payment already earned. The worker carries the risk."
+    ],
+    [
+      28.5,
+      36.0,
+      "The AI agent reads the evidence. The code computes the amount, line by line, replayable: 466.57."
+    ],
+    [
+      36.5,
+      47.5,
+      "A human validates the statement. Nothing moves before that signature."
+    ],
+    [
+      48.8,
+      57.0,
+      "Who holds the money until payday? Not a safe, not us: a padlock on the line itself."
+    ],
+    [
+      57.5,
+      63.0,
+      "On Solana the padlock is a program with no owner: a derived address nobody has the key to."
+    ],
+    [
+      63.5,
+      71.5,
+      "The employer tries to take it back: refused, NotCancellable. Nobody can, not even him."
+    ],
+    [
+      72.5,
+      84.0,
+      "Before pressing, he reads the amount, the date and the payee. Those three are written in the escrow for good."
+    ],
+    [
+      84.5,
+      90.0,
+      "Locked on devnet, 31 October 2026. Finish before the date? Refused: TooEarly, recorded on chain."
+    ],
+    [
+      90.5,
+      97.5,
+      "The clock is the cluster's. When the date comes, anyone may finish; the money can only go where it was written."
+    ]
+  ]
+}

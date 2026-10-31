@@ -2,7 +2,7 @@
 /**
  * dareskro — the La Linea film as one reproducible brick.
  *
- *   node make.mjs all    --scenario xrpl|near          stills, frames, audio, mux, sheet
+ *   node make.mjs all    --scenario xrpl|near|solana   stills, frames, audio, mux, sheet
  *   node make.mjs stills --scenario near [t t t…]      a few frames to check the drawing  → build/<name>/stills/
  *   node make.mjs frames --scenario near [--start s]   every frame, 30 fps                → build/<name>/frames/
  *   node make.mjs audio  --scenario near               voices (macOS `say`), effects, pencil scratch → build/<name>/mix.wav
@@ -135,6 +135,7 @@ function sheet() {
 
 /** The NEAR scenario reads the real run: amount, date, payee, the finish transaction. */
 function fill() {
+  if (name === 'solana') return fillSolana();
   const cr = resolve(HERE, '..', '..', 'near', 'compte_rendu.json');
   if (!existsSync(cr)) throw new Error(`no run yet: ${cr}`);
   const r = JSON.parse(readFileSync(cr, 'utf8'));
@@ -149,6 +150,21 @@ function fill() {
   scenario.read = `${amount[0].toUpperCase()}${amount.slice(1)}… ${giorni[d.getUTCDate()]} ${mesi[d.getUTCMonth()]}… ${p.destination.split('.')[0].replace(/-/g, ' ')}… ah ah.`;
   writeFileSync(scenarioPath, JSON.stringify(scenario, null, 2) + '\n');
   console.log(`filled ${scenarioPath}`);
+}
+
+/** The Solana scenario reads the devnet run of client/demo_devnet.mjs. */
+function fillSolana() {
+  const cr = resolve(HERE, '..', '..', 'solana', 'client', 'compte_rendu.json');
+  if (!existsSync(cr)) throw new Error(`no run yet: ${cr}`);
+  const r = JSON.parse(readFileSync(cr, 'utf8'));
+  const st = Object.fromEntries(r.steps.map((s) => [s.step, s]));
+  const c = st['1 create payroll'], f = st['5 finish by passer-by AFTER the date'];
+  const sol = c.lamports / 1e9, date = c.finishAfter.slice(0, 10), emp = r.parties.employee;
+  const sig = f.tx.split('/tx/')[1].split('?')[0];
+  scenario.device = [`SOL ${sol}`, `after ${date}`, `to ${emp.slice(0, 8)}…`];
+  scenario.caption = [`finish() called by a passer-by after the date — not the oracle, not the employer, nobody clicked`, `explorer.solana.com/tx/${sig.slice(0, 44)}…?cluster=devnet`];
+  writeFileSync(scenarioPath, JSON.stringify(scenario, null, 2) + '\n');
+  console.log(`filled ${scenarioPath} (read is kept by hand)`);
 }
 
 const t0 = Date.now();

@@ -11,7 +11,7 @@ const FILM=Object.assign({
   read:'Quattrocento sessantasei… trentuno ottobre… erre tre kappa… ah ah.',
   caption:['EscrowFinish submitted by the oracle 12 s after the date, nobody clicked','testnet.xrpl.org/transactions/2F94E2BE970311999B3A759B4760CAC3EC4C9B0B2E9C1DCE54839655A48D79B2'],
   card:['evidence  ·  code  ·  signature','XRP Ledger testnet  ·  Ledger Nano X  ·  agentic payroll escrow','AI & Fintech XRP Ledger Hackathon  ·  New York, October 2026']
-}, window.FILM||{});
+}, {subs:[]}, window.FILM||{});
 const INK='#ffffff', LW=18, LINE_Y=700, S=1.75;
 const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2, easeOut=t=>1-Math.pow(1-t,3), easeIn=t=>t*t*t;
@@ -181,7 +181,7 @@ for(let i=0;i<3;i++){ const t0=82.4+i*0.35;
 const LED=[3370,LINE_Y-600];
 (function(){ const parts=[{pts:rrect(-210,-75,420,150,32),t0:72.5,t1:74.0},{pts:rect(-185,-50,230,100),t0:74.0,t1:74.8},{pts:circle(150,0,28,20),t0:74.8,t1:75.2},{pts:line(80,-40,80,40),t0:75.2,t1:75.4}];
   addProp({ox:LED[0],oy:LED[1],parts,hide:t=>t>=90,
-    text:t=>{const lines=[]; if(t>=76) lines.push(FILM.device[0]); if(t>=77.2) lines.push(FILM.device[1]); if(t>=78.4) lines.push(FILM.device[2]); return lines.length?{lines,x:-70,y:-18,size:26}:null;},
+    text:t=>{const lines=[]; if(t>=76) lines.push(FILM.device[0]); if(t>=77.2) lines.push(FILM.device[1]); if(t>=78.4) lines.push(FILM.device[2]); return lines.length?{lines,x:-70,y:-24,size:23}:null;},
     flash:t=>between(t,82.3,82.7)}); })();
 
 // ---------- sounds (exported for the audio script) ----------
@@ -319,6 +319,11 @@ function render(t){
   if(between(t,98,107.5)){ const a=seg(t,98,98.6)*(1-seg(t,107,107.5)); g.save(); g.globalAlpha=a; g.fillStyle=INK; g.font='34px Helvetica'; g.textAlign='center';
     g.fillText(FILM.caption[0], W/2, H-110);
     g.fillText(FILM.caption[1], W/2, H-62); g.restore(); }
+  // explanatory subtitles from the scenario (a band at the bottom; off while the verification caption is shown)
+  if(FILM.subs&&FILM.subs.length&&!between(t,98,107.5)){ for(const [a,b,txt] of FILM.subs){ if(t<a||t>b) continue; const al=seg(t,a,a+0.35)*(1-seg(t,b-0.35,b));
+      g.save(); g.globalAlpha=al*fadeOut; g.fillStyle='rgba(0,0,0,0.38)'; g.fillRect(0,H-170,W,100); g.fillStyle=INK; g.font='38px Helvetica'; g.textAlign='center';
+      const words=txt.split(' '), lines=[]; let cur=''; for(const w of words){ const tr=cur?cur+' '+w:w; if(g.measureText(tr).width>W-240&&cur){lines.push(cur);cur=w;} else cur=tr; } lines.push(cur);
+      lines.forEach((l,i)=>g.fillText(l,W/2,H-170+(lines.length===1?62:46+i*44))); g.restore(); break; } }
   const pp=pencilPos(t,tips); if(pp) drawPencil(pp[0],pp[1]);
   g.restore();
   // end card

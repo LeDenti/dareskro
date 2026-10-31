@@ -6,7 +6,8 @@
   "description": "The La Linea film of dareskro, one scenario file per chain",
   "scripts": {
     "xrpl": "node make.mjs all --scenario xrpl",
-    "near": "node make.mjs all --scenario near"
+    "near": "node make.mjs all --scenario near",
+    "solana": "node make.mjs all --scenario solana"
   },
   "dependencies": {
     "playwright": "^1.58.0"
