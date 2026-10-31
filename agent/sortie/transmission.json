@@ -1,20 +1,20 @@
 {
   "phase": "sealed",
-  "sealed_at": "2026-10-31T09:34:47.918Z",
+  "sealed_at": "2026-10-31T09:37:49.072Z",
   "node": "wss://testnet.xrpl-labs.com",
   "statement": {
     "file": "agent/sortie/bulletin.json",
     "sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
     "period": "2026-10",
     "employer": "SIRET 12345678900012",
-    "pay_escrow": "1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D"
+    "pay_escrow": "99DBC2B3F8DCB1F50BAC12F12B34B0DD5E85A264FC9FAB8095D5A27A32BD2972"
   },
   "sealed": {
-    "file": "agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json",
+    "file": "agent/depots/1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653.json",
     "bytes": 9557,
-    "sha256": "9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27",
-    "cid": "bafkreie2ttzklujar3o6biyccawy3z7cbni5omlbvxrqesmpxllg5lk5e4",
-    "uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json",
+    "sha256": "1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653",
+    "cid": "bafkreia6ywlmyrzte56bbruuahfljx24ccy3ljnr2p74rynb4vygvjewkm",
+    "uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653.json",
     "uri_live_at_sealing": false,
     "version": "dareskro/confidential-statement.v2",
     "readers": {

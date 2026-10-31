@@ -40,7 +40,8 @@ const DEPOTS = join(ROOT, "agent", "depots");
 const RECORD = join(SORTIE, "transmission.json");
 const BRANCH = (() => { try { return execSync("git rev-parse --abbrev-ref HEAD", { cwd: ROOT, encoding: "utf8" }).trim(); } catch { return "main"; } })();
 const URI_BASE = process.env.SEALED_URI_BASE || `https://raw.githubusercontent.com/LeDenti/dareskro/${BRANCH}/agent/depots`;
-const PAY_ESCROW = process.env.PAY_ESCROW ?? "1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D";
+// The 14:35 UTC run of 25/10 (README): pay escrow for this very statement, net paid 407.33 in its memos.
+const PAY_ESCROW = process.env.PAY_ESCROW ?? "99DBC2B3F8DCB1F50BAC12F12B34B0DD5E85A264FC9FAB8095D5A27A32BD2972";
 const EMPLOYER_ID = "SIRET 12345678900012"; // the fictional employer of paie/employeur.exemple.json; a legal person, public in Sirene
 const explorer = (h) => `https://testnet.xrpl.org/transactions/${h}`;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);

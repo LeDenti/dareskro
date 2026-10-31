@@ -1,0 +1,102 @@
+{
+  "phase": "acknowledged",
+  "sealed_at": "2026-10-31T09:34:47.918Z",
+  "node": "wss://testnet.xrpl-labs.com",
+  "statement": {
+    "file": "agent/sortie/bulletin.json",
+    "sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+    "period": "2026-10",
+    "employer": "SIRET 12345678900012",
+    "pay_escrow": "1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D"
+  },
+  "sealed": {
+    "file": "agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json",
+    "bytes": 9557,
+    "sha256": "9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27",
+    "cid": "bafkreie2ttzklujar3o6biyccawy3z7cbni5omlbvxrqesmpxllg5lk5e4",
+    "uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json",
+    "uri_live_at_sealing": false,
+    "version": "dareskro/confidential-statement.v2",
+    "readers": {
+      "employee": "5b8f038cfd6e63e0",
+      "administration": "b7559188b97af8cd",
+      "retraite": "cb8205351cb0d611"
+    },
+    "zk_opening_readers": [
+      "employee",
+      "administration"
+    ],
+    "uri_live_at_transmission": true
+  },
+  "directory": "agent/lecteurs.json",
+  "transmitted_at": "2026-10-31T09:36:40.131Z",
+  "accounts": {
+    "employer": "r9qWKQMehC9kV5PgmZnip7oD4KfvLkY7F1",
+    "pension_fund": "rwxybaKRZnMMnnTSp6kPvvy5LcctVMzmMp"
+  },
+  "reserves": {
+    "base_drops": 1000000,
+    "per_object_drops": 200000
+  },
+  "transmission": {
+    "hash": "AF17F5EFF8A9BA3CC6746F9C73CDDFA36912029EF9DFA2A7709A81C9AA5B6AF3",
+    "ledger": 21959557,
+    "at": "2026-10-31T09:36:42Z",
+    "fee_drops": "12",
+    "amount_drops": "1",
+    "memos": {
+      "dareskro/payslip-sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+      "dareskro/sealed-sha256": "9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27",
+      "dareskro/sealed-uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json",
+      "dareskro/sealed-cid": "bafkreie2ttzklujar3o6biyccawy3z7cbni5omlbvxrqesmpxllg5lk5e4",
+      "dareskro/period": "2026-10",
+      "dareskro/employer": "SIRET 12345678900012"
+    },
+    "invoice_id": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf"
+  },
+  "nft_variant": {
+    "mint": {
+      "hash": "AD3E431C069AF29DBB064AC0ED9F53198B93C42D621D4BCB06A5FA69C2200BBC",
+      "fee_drops": "12",
+      "token_id": "0001000060ED71FD923BD2B796801E0F5524C35BFB753F8F466C101E014F1383",
+      "offer_id": "9305848F929AFEB7DCBCE221E3BDBBAE59EFF6F075688B2C53FEB4025D43FB84",
+      "flags": "tfBurnable (1): not transferable, the issuer may burn it",
+      "uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json"
+    },
+    "accept": {
+      "hash": "DB111FAFD709C246968506250C314DAB87350DCFF05C06791AEAF0D1CFC70FFA",
+      "fee_drops": "12",
+      "owner_count_before": 0,
+      "owner_count_after": 1,
+      "reserve_locked_drops": "200000"
+    },
+    "burn": {
+      "hash": "472CA6DAF41C9B960253B1C688A72AAAA3A6E22350810D97FCD6817F63258C07",
+      "fee_drops": "12",
+      "fund_still_holds": false
+    }
+  },
+  "opening": {
+    "fund_opens_exit": 1,
+    "fund_zk_opening_exit": 1,
+    "public_exit": 0,
+    "stranger_key_exit": 1,
+    "received_sha256": "9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27",
+    "fetched_from_uri": true
+  },
+  "acknowledgement": {
+    "hash": "9D11F9DF1AB8A8E3FD40B7E157813ECED75AF252C36A6ED316E3CB82F3715862",
+    "ledger": 21959564,
+    "at": "2026-10-31T09:37:11Z",
+    "fee_drops": "12",
+    "memos": {
+      "dareskro/ack": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+      "dareskro/ack-sealed": "9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27",
+      "dareskro/ack-of": "AF17F5EFF8A9BA3CC6746F9C73CDDFA36912029EF9DFA2A7709A81C9AA5B6AF3"
+    }
+  },
+  "timeline": {
+    "transmitted": "2026-10-31T09:36:42Z",
+    "acknowledged": "2026-10-31T09:37:11Z"
+  }
+}
