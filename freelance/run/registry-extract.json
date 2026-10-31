@@ -13,11 +13,17 @@
         "sha256": "c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59"
       },
       "createHash": "F7D62742D54FE5FA8480A118683956D765FBE3998AFA47BE94A3282163B8C1A4",
-      "status": "waiting",
+      "status": "finished",
       "registered": "2026-10-31T08:44:08.646Z",
-      "lastCheck": "2026-10-31T08:56:28.051Z",
-      "checks": 179,
-      "lastWhy": "HTTP 404: nothing published at the URL yet"
+      "lastCheck": "2026-10-31T09:21:23.750Z",
+      "checks": 543,
+      "lastWhy": "match (1918 bytes, 1 redirect)",
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "129CBC678FC477BD9FD6821B79D6F8F2DCC0059CFE07A2A716E443651C060424",
+      "lastTry": "2026-10-31T09:21:28.190Z",
+      "finishedAt": "2026-10-31T09:21:28.190Z",
+      "finishHash": "129CBC678FC477BD9FD6821B79D6F8F2DCC0059CFE07A2A716E443651C060424"
     },
     {
       "kind": "delivery",
