@@ -1,0 +1,14 @@
+{
+  "name": "dareskro-placements",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Product placement campaigns paid by an XRPL escrow the dareskro oracle releases only if the post is still live at the date. First real use: BottomRadar.",
+  "scripts": {
+    "serve": "node server.mjs",
+    "verify": "node verify.mjs"
+  },
+  "dependencies": {
+    "xrpl": "^5.3.0"
+  }
+}

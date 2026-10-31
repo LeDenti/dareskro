@@ -57,3 +57,8 @@ presentation/video/*.mp4
 near/node_modules/
 near/contract/target/
 near/.oracle_near.json
+
+# placement campaigns: dependencies and logs (campaigns.json, measurements/ and oracle/observations/ are public evidence, committed)
+placements/node_modules/
+placements/server.log
+oracle/oracle.log

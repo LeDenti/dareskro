@@ -39,6 +39,9 @@
  * HTTP (for the pay desk and the demos)
  *   GET  /identity             address, network, birth tx
  *   GET  /escrows              what it watches, with states
+ *   GET  /observations/<id>    presence: every look at the page for that deliveryId,
+ *                              timestamped, with method, status, final URL and the
+ *                              SHA-256 of what was read (oracle/observations/<id>.jsonl)
  *   POST /condition            { kind, url?, sha256?, mustContain?, orderRef?, note? }
  *                                → { deliveryId, condition, proof, confirmToken? }
  *                              delivery: url + sha256 (64 hex) · presence: url, mustContain?
@@ -81,28 +84,36 @@
  *   .deliveries.json           secrets of conditional escrows and the hash of affiliate
  *                              tokens (0600, never committed)
  *   registry.json              what it watches (public)
+ *   observations/<id>.jsonl    presence: the evidence, one observation per line (public)
+ *
+ * ENV  ORACLE_PORT (8787) · XRPL_WSS (wss://testnet.xrpl-labs.com; Ripple's
+ *      s.altnet.rippletest.net answered 503 on 25/10/2026)
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client, Wallet } from "xrpl";
+import { observe } from "../placements/presence.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const IDENTITY = path.join(HERE, ".oracle.json");
 const REGISTRY = path.join(HERE, "registry.json");
 /** The secrets of conditional escrows (delivery, presence, affiliate token hashes): 0600, never committed. */
 const SECRETS = path.join(HERE, ".deliveries.json");
-const TESTNET = "wss://testnet.xrpl-labs.com";
+const TESTNET = process.env.XRPL_WSS || "wss://testnet.xrpl-labs.com";
+/** Presence evidence: one JSON line per look, per deliveryId. Public, like the registry. */
+const OBSERVATIONS = path.join(HERE, "observations");
 const PORT = Number(process.env.ORACLE_PORT || 8787);
 const RIPPLE_EPOCH = 946684800;
 const TICK_MS = 4000;
 /** Ledger close times are coarse: wait this many seconds past FinishAfter before the first try. */
 const CLOSE_TIME_MARGIN = 6;
 const MAX_ATTEMPTS = 12;
-/** Before its date a presence escrow is only observed: look at the page this often at most, not every tick. */
+/** Before its date a presence escrow is only observed: look at the page this often at most, not every tick (an entry may say otherwise: probeEveryS). */
 const PROBE_MS = 20000;
+const probeMsOf = (e) => (Number.isInteger(e.probeEveryS) && e.probeEveryS >= 10 ? e.probeEveryS * 1000 : PROBE_MS);
 
 const toHex = (s) => Buffer.from(s, "utf8").toString("hex").toUpperCase();
 const explorerTx = (h) => `https://testnet.xrpl.org/transactions/${h}`;
@@ -208,24 +219,44 @@ async function checkProof(proof) {
     : { ok: false, why: `published sha256 ${sha.slice(0, 10)}… ≠ agreed ${expected.slice(0, 10)}…` };
 }
 
-/** Read the agreed page: live means HTTP 200 and, when agreed, the text in the body. */
-async function checkPresence(proof) {
-  let res;
-  try {
-    res = await fetch(proof.url, { signal: AbortSignal.timeout(10000), cache: "no-store" });
-  } catch (err) {
-    return { ok: false, why: `unreachable: ${err.message}` };
+/** Append one observation to the evidence file of a presence escrow (deliveryId), and return it. */
+function recordObservation(e, obs, phase) {
+  const line = { ...obs, phase, escrow: e.owner && e.sequence ? `${e.owner}#${e.sequence}` : undefined, campaignId: e.campaignId };
+  if (e.deliveryId) {
+    try {
+      mkdirSync(OBSERVATIONS, { recursive: true });
+      appendFileSync(path.join(OBSERVATIONS, `${e.deliveryId}.jsonl`), JSON.stringify(line) + "\n");
+    } catch (err) {
+      log(`presence #${e.sequence}: cannot write the observation: ${err.message}`);
+    }
   }
-  if (!res.ok) return { ok: false, why: `HTTP ${res.status}` };
-  const body = await res.text();
-  if (proof.mustContain && !body.includes(proof.mustContain)) {
-    return { ok: false, why: `live but without "${proof.mustContain}"` };
-  }
-  return {
-    ok: true,
-    why: proof.mustContain ? `live with "${proof.mustContain}" (${body.length} chars)` : `live (${body.length} chars)`,
-  };
+  return line;
 }
+
+/** The observations of a deliveryId, oldest first (the whole file, or the last `limit`). */
+function readObservations(deliveryId, limit) {
+  if (!/^[0-9a-f]{6,32}$/.test(deliveryId)) return [];
+  const f = path.join(OBSERVATIONS, `${deliveryId}.jsonl`);
+  if (!existsSync(f)) return [];
+  const lines = readFileSync(f, "utf8").split("\n").filter(Boolean);
+  const keep = limit ? lines.slice(-limit) : lines;
+  return keep.map((l) => {
+    try { return JSON.parse(l); } catch { return { corrupt: l.slice(0, 80) }; }
+  });
+}
+
+/**
+ * Read the agreed page the hardened way (placements/presence.mjs: X, YouTube,
+ * any page; redirects, JS shells, deleted posts). The observation is kept as
+ * evidence; the verdict is { ok, why } like the other kinds.
+ */
+async function checkPresence(e, phase) {
+  const obs = await observe(e.proof.url, e.proof.mustContain ?? "");
+  recordObservation(e, obs, phase);
+  return { ok: obs.ok, why: obs.why, obs };
+}
+
+const seenOf = (t, r) => ({ at: new Date(t).toISOString(), live: r.ok, online: r.obs.live, why: r.why, method: r.obs.method, status: r.obs.status, finalUrl: r.obs.finalUrl, bodySha256: r.obs.bodySha256 ?? null });
 
 /**
  * Before its date a presence escrow is observed, not decided: look at the page
@@ -234,10 +265,11 @@ async function checkPresence(proof) {
  */
 async function probePresence(e) {
   const t = Date.now();
-  if (e.lastSeen && t - Date.parse(e.lastSeen.at) < PROBE_MS) return false;
-  const seen = await checkPresence(e.proof);
+  if (e.lastSeen && t - Date.parse(e.lastSeen.at) < probeMsOf(e)) return false;
+  const seen = await checkPresence(e, "watch");
   const was = e.lastSeen?.live;
-  e.lastSeen = { at: new Date(t).toISOString(), live: seen.ok, why: seen.why };
+  e.lastSeen = seenOf(t, seen);
+  e.looks = (e.looks ?? 0) + 1;
   if (was !== seen.ok) {
     log(`presence #${e.sequence}: post ${seen.ok ? "live" : "not live"} — ${seen.why}; decision at ripple time ${e.checkAfter}`);
   }
@@ -270,16 +302,19 @@ const KINDS = {
     issued: (proof) => `for ${proof.url}${proof.mustContain ? ` containing "${proof.mustContain}"` : ""}`,
     watchFields: ["owner", "sequence", "checkAfter", "cancelAfter", "destination", "deliveryId", "proof"],
     validate: (e) =>
-      Number.isInteger(e.checkAfter) && Number.isInteger(e.cancelAfter)
-        ? null
-        : "checkAfter and cancelAfter must be ripple times (integers)",
+      !Number.isInteger(e.checkAfter) || !Number.isInteger(e.cancelAfter)
+        ? "checkAfter and cancelAfter must be ripple times (integers)"
+        : e.probeEveryS !== undefined && !(Number.isInteger(e.probeEveryS) && e.probeEveryS >= 10)
+          ? "probeEveryS must be an integer ≥ 10 (seconds between two looks before the date)"
+          : null,
     watching: (e) =>
       `${e.amountXrp ?? "?"} XRP to ${e.destination} if ${e.proof.url} is live at ripple time ${e.checkAfter}, refund after ${e.cancelAfter}`,
     probe: probePresence,
     verdict: async (e) => {
-      const seen = await checkPresence(e.proof);
-      e.lastSeen = { at: new Date().toISOString(), live: seen.ok, why: seen.why };
-      return seen;
+      const seen = await checkPresence(e, "decision");
+      e.lastSeen = seenOf(Date.now(), seen);
+      e.looks = (e.looks ?? 0) + 1;
+      return { ok: seen.ok, why: seen.why };
     },
     expired: "deadline passed with the post not live",
   },
@@ -350,9 +385,8 @@ async function tickConditional(e, wallet) {
   const date = Math.max(e.checkAfter ?? 0, e.finishAfter ?? 0);
   if (now() < date + CLOSE_TIME_MARGIN) return kind.probe ? kind.probe(e) : false;
   // After the date a page that is not there is looked at every PROBE_MS too, not every tick
-  if (kind.probe && e.lastSeen && !e.lastSeen.live && Date.now() - Date.parse(e.lastSeen.at) < PROBE_MS) return false;
+  if (kind.probe && e.lastSeen && !e.lastSeen.live && Date.now() - Date.parse(e.lastSeen.at) < probeMsOf(e)) return false;
   const check = await kind.verdict(e);
-  if (kind.probe) e.lastSeen = { at: new Date().toISOString(), live: check.ok, why: check.why };
   if (kind.polls !== false) {
     e.lastCheck = new Date().toISOString();
     e.checks = (e.checks ?? 0) + 1;
@@ -595,6 +629,13 @@ function serve(identity) {
       return json(res, 200, { ...identity, watching: loadRegistry().escrows.filter((e) => e.status === "waiting").length });
     }
     if (req.method === "GET" && req.url === "/escrows") return json(res, 200, loadRegistry());
+    if (req.method === "GET" && req.url.startsWith("/observations/")) {
+      // the evidence behind a presence decision: every look, oldest first (?last=N for the tail)
+      const u = new URL(req.url, "http://x");
+      const id = u.pathname.slice("/observations/".length);
+      const last = Number(u.searchParams.get("last")) || 0;
+      return json(res, 200, { deliveryId: id, observations: readObservations(id, last) });
+    }
     if (req.method === "POST" && req.url === "/payout/retry") {
       // the dollar leg again, for an escrow the ledger already released (budget topped up, merchant back…)
       let body = "";
