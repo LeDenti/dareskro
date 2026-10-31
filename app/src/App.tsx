@@ -35,6 +35,7 @@ import type {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { EscrowCancel, EscrowCreate, SubmittableTransaction, Transaction, Wallet } from "xrpl";
 import { ContractDesk, type ContractKind } from "./ContractDesk";
+import { PlacementDesk } from "./PlacementDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
 import * as privacy from "./privacy";
@@ -101,13 +102,15 @@ const transports: { id: Mode; label: string }[] = [
 ];
 
 /** Who pays whom. The employee case is the payroll escrow; the other three are conditional escrows on the same oracle. */
-type CaseMode = "employee" | ContractKind;
+type CaseMode = "employee" | ContractKind | "placement";
 
 const cases: { id: CaseMode; label: string }[] = [
   { id: "employee", label: "Employee" },
   { id: "freelance", label: "Freelancer" },
   { id: "influencer", label: "Influencer" },
   { id: "affiliate", label: "Affiliate" },
+  // the first real use: BottomRadar pays creators for a publication that stays online (placements/)
+  { id: "placement", label: "Placement · BottomRadar" },
 ];
 
 const speculosModels: { id: DeviceModelId; label: string }[] = [
@@ -442,7 +445,8 @@ function Desk(props: {
 
   /** Escrow amount in XRP plus the reserve and fees: what the employer must hold. A contract locks 20 XRP by default. */
   // enough for the net escrow, the contributions escrow when there is one, the reserve and fees
-  const neededXrp = Math.ceil(Number(amountXrp ?? statement?.total ?? 0) + Number(contribXrp ?? 0)) + 15;
+  // a contract case locks 20-25 XRP: the statement's figures do not apply to it
+  const neededXrp = contract ? 30 : Math.ceil(Number(amountXrp ?? statement?.total ?? 0) + Number(contribXrp ?? 0)) + 15;
 
   const fund = async () => {
     if (!employer) return;
@@ -1048,7 +1052,20 @@ function Desk(props: {
         <ErrorBox error={faucetError} />
       </Card>
 
-      {contract && (
+      {contract && caseMode === "placement" && (
+        <PlacementDesk
+          key={`placement-${employer?.address ?? ""}`}
+          payer={employer}
+          compact={transport === "usb" || transport === "ble"}
+          oracleId={oracleId}
+          signHex={signHex}
+          signStatus={<ActionStatus state={signAction.state} error={signAction.error} />}
+          resetSign={signAction.reset}
+          onPayerChanged={() => employer && refreshBalance(employer.address)}
+        />
+      )}
+
+      {contract && caseMode !== "placement" && (
         <ContractDesk
           // a new desk per case and per payer address: a prepared escrow never outlives the address it was built for
           key={`${caseMode}-${employer?.address ?? ""}`}

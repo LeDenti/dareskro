@@ -1,0 +1,378 @@
+{
+  "campaigns": [
+    {
+      "id": "cc6b6b874a",
+      "created": "2026-10-31T08:31:59.761Z",
+      "status": "locked",
+      "publicUrl": true,
+      "contract": {
+        "version": "dareskro/placement/1",
+        "id": "cc6b6b874a",
+        "advertiser": {
+          "name": "BottomRadar",
+          "address": "rJLPhUDTZbaQ7QR9iauHuYmzX2YbDRbtjV"
+        },
+        "creator": {
+          "name": null,
+          "handle": null,
+          "address": "rKTdkbnZJMF18SEWMQ26t95qxaTg6qJJ4o"
+        },
+        "publication": {
+          "url": "https://github.com/LeDenti/dareskro",
+          "urlSha256": "e5459cb55f8acaed6b5c2181c1895213ab7e0396fa0d24ecfbbc70d3b87053ca",
+          "platform": "web",
+          "mustContain": "dareskro"
+        },
+        "amountXrp": "5",
+        "periodEnd": "2026-10-31T08:33:14.761Z",
+        "deadline": "2026-10-31T08:34:44.761Z",
+        "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+        "created": "2026-10-31T08:31:59.761Z",
+        "note": "measurement smoke"
+      },
+      "contractSha256": "01071b56d733ef5be4c77b3699e6c5817f05bb43e2db6d3916ed7c5d45198511",
+      "finishAfter": 846750794,
+      "cancelAfter": 846750884,
+      "deliveryId": "75e5cf733290",
+      "condition": "A0258020A1BA9AA694E36B228FB6855111E40DF1BC1F8890DF146EAF3B59BC2D07D2D34B810120",
+      "proof": {
+        "url": "https://github.com/LeDenti/dareskro",
+        "mustContain": "dareskro"
+      },
+      "probeEveryS": 15,
+      "memos": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "01071b56d733ef5be4c77b3699e6c5817f05bb43e2db6d3916ed7c5d45198511"
+        },
+        {
+          "type": "dareskro/proof",
+          "data": "url:https://github.com/LeDenti/dareskro;must:dareskro"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "memosCompact": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "01071b56d733ef5be4c77b3699e6c5817f05bb43e2db6d3916ed7c5d45198511"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "preChecks": [
+        {
+          "at": "2026-10-31T08:31:59.776Z",
+          "url": "https://github.com/LeDenti/dareskro",
+          "mustContain": "dareskro",
+          "platform": "web",
+          "method": "get",
+          "status": 200,
+          "finalUrl": "https://github.com/LeDenti/dareskro",
+          "redirected": false,
+          "contentType": "text/html; charset=utf-8",
+          "doors": [
+            {
+              "method": "get",
+              "status": 200,
+              "ms": 806
+            }
+          ],
+          "bodySha256": "df08c3a87a3e75a2449201f044bb444e67932e403066690b862a2dacacb96444",
+          "bytes": 479031,
+          "live": true,
+          "textFound": true,
+          "ok": true,
+          "why": "live with \"dareskro\" (54959 chars)",
+          "excerpt": "github - ledenti/dareskro: agentic payroll escrow on the xrp ledger: the ai reads, the code computes, a h…",
+          "matchedForm": "dareskro",
+          "ms": 823
+        }
+      ],
+      "escrow": {
+        "owner": "rJLPhUDTZbaQ7QR9iauHuYmzX2YbDRbtjV",
+        "sequence": 21958451,
+        "createHash": "7B9075C7FDC81D3F0C8C625C1575EB79177746F25D51F93C099D40C4374C8CB4",
+        "lockedAt": "2026-10-31T08:32:06.140Z"
+      }
+    },
+    {
+      "id": "bdc64bb8ad",
+      "created": "2026-10-31T08:34:48.695Z",
+      "status": "locked",
+      "publicUrl": true,
+      "contract": {
+        "version": "dareskro/placement/1",
+        "id": "bdc64bb8ad",
+        "advertiser": {
+          "name": "BottomRadar",
+          "address": "rKShd29jCdfjcjxGqy2rFqhJ21fxMaXEjj"
+        },
+        "creator": {
+          "name": null,
+          "handle": "@demo-deleted",
+          "address": "r9rkJtZyB2sHfBUjcGgupsvk8KyNEzkn4M"
+        },
+        "publication": {
+          "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+          "urlSha256": "e300c8039da52ffe773a33e1ecb35ac150bd61b527231887ed332d0110ae3f06",
+          "platform": "web",
+          "mustContain": "bottomradar.com"
+        },
+        "amountXrp": "25",
+        "periodEnd": "2026-10-31T08:49:48.695Z",
+        "deadline": "2026-10-31T08:59:48.695Z",
+        "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+        "created": "2026-10-31T08:34:48.695Z",
+        "note": "measurement deleted"
+      },
+      "contractSha256": "3e27e70510367bfd662df04384cf75fe1edd5ea5c707807ca40035e49716834d",
+      "finishAfter": 846751788,
+      "cancelAfter": 846752388,
+      "deliveryId": "de57a47a1c8a",
+      "condition": "A0258020BF471F59CBA34BAD08699E8EAD16E33748438AF79A22368EB17B2EC55970BA3B810120",
+      "proof": {
+        "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+        "mustContain": "bottomradar.com"
+      },
+      "probeEveryS": 60,
+      "memos": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "3e27e70510367bfd662df04384cf75fe1edd5ea5c707807ca40035e49716834d"
+        },
+        {
+          "type": "dareskro/proof",
+          "data": "url:https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html;must:bottomradar.com"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "memosCompact": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "3e27e70510367bfd662df04384cf75fe1edd5ea5c707807ca40035e49716834d"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "escrow": {
+        "owner": "rKShd29jCdfjcjxGqy2rFqhJ21fxMaXEjj",
+        "sequence": 21958499,
+        "createHash": "0E66240D26B30149A81AE8636C09BE0BEB7AEAC60E067DC0DD1AE390BE5132E5",
+        "lockedAt": "2026-10-31T08:34:56.623Z"
+      }
+    },
+    {
+      "id": "7f2042e960",
+      "created": "2026-10-31T08:34:48.792Z",
+      "status": "locked",
+      "publicUrl": true,
+      "contract": {
+        "version": "dareskro/placement/1",
+        "id": "7f2042e960",
+        "advertiser": {
+          "name": "BottomRadar",
+          "address": "rnd6zw3Cy5whfGjUvARChHodgc7Qo8rRFC"
+        },
+        "creator": {
+          "name": null,
+          "handle": "@demo-stays",
+          "address": "raPHUYzUxiZBmhb28UqKG6av5edrPfscE3"
+        },
+        "publication": {
+          "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+          "urlSha256": "4d5b789a50c5d73bed8a7369e558690b058eeb7f9444578eba714938aaf2409f",
+          "platform": "web",
+          "mustContain": "bottomradar.com"
+        },
+        "amountXrp": "25",
+        "periodEnd": "2026-10-31T08:49:48.792Z",
+        "deadline": "2026-10-31T08:59:48.792Z",
+        "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+        "created": "2026-10-31T08:34:48.792Z",
+        "note": "measurement stays"
+      },
+      "contractSha256": "6a461b1cf322fb6bd40273a1171a33b6b9c9c6cefd6e64e30b8b6baac79d98f2",
+      "finishAfter": 846751788,
+      "cancelAfter": 846752388,
+      "deliveryId": "97cc03d14287",
+      "condition": "A02580205DFF248F7645890C5B97635963B575848F21E2764CC08906D650A746306A3D68810120",
+      "proof": {
+        "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+        "mustContain": "bottomradar.com"
+      },
+      "probeEveryS": 60,
+      "memos": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "6a461b1cf322fb6bd40273a1171a33b6b9c9c6cefd6e64e30b8b6baac79d98f2"
+        },
+        {
+          "type": "dareskro/proof",
+          "data": "url:https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html;must:bottomradar.com"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "memosCompact": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "6a461b1cf322fb6bd40273a1171a33b6b9c9c6cefd6e64e30b8b6baac79d98f2"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "preChecks": [
+        {
+          "at": "2026-10-31T08:34:48.796Z",
+          "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+          "mustContain": "bottomradar.com",
+          "platform": "web",
+          "method": "get",
+          "status": 200,
+          "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+          "redirected": false,
+          "contentType": "text/plain; charset=utf-8",
+          "doors": [
+            {
+              "method": "get",
+              "status": 200,
+              "ms": 201
+            }
+          ],
+          "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68",
+          "bytes": 825,
+          "live": true,
+          "textFound": true,
+          "ok": true,
+          "why": "live with \"bottomradar.com\" (625 chars)",
+          "excerpt": "…exte convenu : bottomradar repère les cryptos en zone de survente — https://www.bottomradar.com #partenariat ce fichier reste en ligne pendant toute la mesure. <!doctype html>…",
+          "matchedForm": "bottomradar.com",
+          "ms": 201
+        }
+      ],
+      "escrow": {
+        "owner": "rnd6zw3Cy5whfGjUvARChHodgc7Qo8rRFC",
+        "sequence": 21958499,
+        "createHash": "2C22F6DCA9E778EAA62F636F277F4B5160E632EB747B51E9FB10A9D5FF14FE0A",
+        "lockedAt": "2026-10-31T08:34:56.656Z"
+      }
+    },
+    {
+      "id": "e9ca65ff35",
+      "created": "2026-10-31T08:42:02.668Z",
+      "status": "locked",
+      "publicUrl": false,
+      "contract": {
+        "version": "dareskro/placement/1",
+        "id": "e9ca65ff35",
+        "advertiser": {
+          "name": "BottomRadar",
+          "address": "r8Cy6UC2AAEvpF7ksEq5tDzxEyf9nE395"
+        },
+        "creator": {
+          "name": null,
+          "handle": "@desk-rehearsal",
+          "address": "rKTdkbnZJMF18SEWMQ26t95qxaTg6qJJ4o"
+        },
+        "publication": {
+          "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+          "urlSha256": "4d5b789a50c5d73bed8a7369e558690b058eeb7f9444578eba714938aaf2409f",
+          "platform": "web",
+          "mustContain": "bottomradar.com"
+        },
+        "amountXrp": "25",
+        "periodEnd": "2026-10-31T08:44:00.000Z",
+        "deadline": "2026-10-31T08:46:00.000Z",
+        "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+        "created": "2026-10-31T08:42:02.668Z",
+        "note": "pay desk · placement"
+      },
+      "contractSha256": "9d400f0961f48f6b9e3125585d7368d07ed674bb482b7cefcd3b4ec584e50d23",
+      "finishAfter": 846751440,
+      "cancelAfter": 846751560,
+      "deliveryId": "ec053ce1dbc3",
+      "condition": "A02580203592950BC6D84FFDA658A68A376A5D8F0D1D1F90B8F18CE4818465559EF3BF21810120",
+      "proof": {
+        "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+        "mustContain": "bottomradar.com"
+      },
+      "probeEveryS": 20,
+      "memos": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "9d400f0961f48f6b9e3125585d7368d07ed674bb482b7cefcd3b4ec584e50d23"
+        },
+        {
+          "type": "dareskro/proof",
+          "data": "url-sha256:4d5b789a50c5d73bed8a7369e558690b058eeb7f9444578eba714938aaf2409f;must:bottomradar.com"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "memosCompact": [
+        {
+          "type": "dareskro/case",
+          "data": "placement"
+        },
+        {
+          "type": "dareskro/placement-sha256",
+          "data": "9d400f0961f48f6b9e3125585d7368d07ed674bb482b7cefcd3b4ec584e50d23"
+        },
+        {
+          "type": "dareskro/oracle",
+          "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+        }
+      ],
+      "escrow": {
+        "owner": "r8Cy6UC2AAEvpF7ksEq5tDzxEyf9nE395",
+        "sequence": 21958593,
+        "createHash": "6EEC6A72938857E9B18826D029A0F9D5CB059F3C1E5F506AA9755C8EFF06E287",
+        "lockedAt": "2026-10-31T08:42:37.140Z"
+      }
+    }
+  ]
+}

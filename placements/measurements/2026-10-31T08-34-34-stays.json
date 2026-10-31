@@ -1,0 +1,270 @@
+{
+  "label": "stays",
+  "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+  "mustContain": "bottomradar.com",
+  "periodS": 900,
+  "graceS": 600,
+  "startedAt": "2026-10-31T08:34:34.668Z",
+  "node": "wss://testnet.xrpl-labs.com",
+  "advertiser": "rnd6zw3Cy5whfGjUvARChHodgc7Qo8rRFC",
+  "creator": "raPHUYzUxiZBmhb28UqKG6av5edrPfscE3",
+  "campaignId": "7f2042e960",
+  "contractSha256": "6a461b1cf322fb6bd40273a1171a33b6b9c9c6cefd6e64e30b8b6baac79d98f2",
+  "deliveryId": "97cc03d14287",
+  "condition": "A02580205DFF248F7645890C5B97635963B575848F21E2764CC08906D650A746306A3D68810120",
+  "creatorPage": "http://127.0.0.1:8789/c/7f2042e960",
+  "preCheck": {
+    "at": "2026-10-31T08:34:48.796Z",
+    "ok": true,
+    "why": "live with \"bottomradar.com\" (625 chars)",
+    "method": "get",
+    "status": 200,
+    "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+  },
+  "lock": {
+    "hash": "2C22F6DCA9E778EAA62F636F277F4B5160E632EB747B51E9FB10A9D5FF14FE0A",
+    "result": "tesSUCCESS",
+    "sequence": 21958499,
+    "finishAfter": "2026-10-31T08:49:48.000Z",
+    "cancelAfter": "2026-10-31T08:59:48.000Z",
+    "memos": [
+      {
+        "type": "dareskro/case",
+        "data": "placement"
+      },
+      {
+        "type": "dareskro/placement-sha256",
+        "data": "6a461b1cf322fb6bd40273a1171a33b6b9c9c6cefd6e64e30b8b6baac79d98f2"
+      },
+      {
+        "type": "dareskro/proof",
+        "data": "url:https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html;must:bottomradar.com"
+      },
+      {
+        "type": "dareskro/oracle",
+        "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+      }
+    ]
+  },
+  "endedAt": "2026-10-31T08:50:07.867Z",
+  "status": "released",
+  "oracle": {
+    "status": "finished",
+    "finishHash": "46F60DEA4B147DD1560D584DE74888D6C07B7BC9F6767B3E1EB67695165FE2E1",
+    "refundHash": null,
+    "lastResult": "tesSUCCESS",
+    "lastWhy": "live with \"bottomradar.com\" (625 chars)",
+    "looks": 16,
+    "lastSeen": {
+      "at": "2026-10-31T08:49:57.077Z",
+      "live": true,
+      "online": true,
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    }
+  },
+  "observations": [
+    {
+      "at": "2026-10-31T08:34:59.232Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:35:59.406Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:36:59.601Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:37:59.785Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:38:59.989Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:40:00.352Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:41:00.905Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:42:01.196Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:43:01.776Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:44:07.428Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:45:09.839Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:46:10.397Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:47:10.713Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:48:11.039Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:49:11.362Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    },
+    {
+      "at": "2026-10-31T08:49:56.961Z",
+      "phase": "decision",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-stays.html",
+      "why": "live with \"bottomradar.com\" (625 chars)",
+      "bodySha256": "2b8956c508a24a0db84d5364effc61235af24c7429acfda05f67f108c82cbe68"
+    }
+  ],
+  "balances": {
+    "creator": [
+      100,
+      125
+    ],
+    "advertiserAfter": 74.999988
+  }
+}

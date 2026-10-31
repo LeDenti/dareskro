@@ -1,0 +1,378 @@
+{
+  "label": "deleted",
+  "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+  "mustContain": "bottomradar.com",
+  "periodS": 900,
+  "graceS": 600,
+  "startedAt": "2026-10-31T08:34:34.668Z",
+  "node": "wss://testnet.xrpl-labs.com",
+  "advertiser": "rKShd29jCdfjcjxGqy2rFqhJ21fxMaXEjj",
+  "creator": "r9rkJtZyB2sHfBUjcGgupsvk8KyNEzkn4M",
+  "campaignId": "bdc64bb8ad",
+  "contractSha256": "3e27e70510367bfd662df04384cf75fe1edd5ea5c707807ca40035e49716834d",
+  "deliveryId": "de57a47a1c8a",
+  "condition": "A0258020BF471F59CBA34BAD08699E8EAD16E33748438AF79A22368EB17B2EC55970BA3B810120",
+  "creatorPage": "http://127.0.0.1:8789/c/bdc64bb8ad",
+  "preCheck": {
+    "at": "2026-10-31T08:34:48.710Z",
+    "ok": true,
+    "why": "live with \"bottomradar.com\" (498 chars)",
+    "method": "get",
+    "status": 200,
+    "bodySha256": "e6eaf84e0e9aa4b7682d9e0a0825b4b73841d8fd8861e13ab694968bfc431065"
+  },
+  "lock": {
+    "hash": "0E66240D26B30149A81AE8636C09BE0BEB7AEAC60E067DC0DD1AE390BE5132E5",
+    "result": "tesSUCCESS",
+    "sequence": 21958499,
+    "finishAfter": "2026-10-31T08:49:48.000Z",
+    "cancelAfter": "2026-10-31T08:59:48.000Z",
+    "memos": [
+      {
+        "type": "dareskro/case",
+        "data": "placement"
+      },
+      {
+        "type": "dareskro/placement-sha256",
+        "data": "3e27e70510367bfd662df04384cf75fe1edd5ea5c707807ca40035e49716834d"
+      },
+      {
+        "type": "dareskro/proof",
+        "data": "url:https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html;must:bottomradar.com"
+      },
+      {
+        "type": "dareskro/oracle",
+        "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+      }
+    ]
+  },
+  "endedAt": "2026-10-31T09:00:03.592Z",
+  "status": "refunded",
+  "oracle": {
+    "status": "expired-refunded",
+    "finishHash": null,
+    "refundHash": "52F498E1E17AE666E4322444564257870AD72D76813F6C15FF5A2464A1A1EEC8",
+    "lastResult": "tesSUCCESS",
+    "lastWhy": "HTTP 404",
+    "looks": 25,
+    "lastSeen": {
+      "at": "2026-10-31T08:59:16.186Z",
+      "live": false,
+      "online": false,
+      "why": "HTTP 404",
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    }
+  },
+  "observations": [
+    {
+      "at": "2026-10-31T08:34:59.124Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "live with \"bottomradar.com\" (498 chars)",
+      "bodySha256": "e6eaf84e0e9aa4b7682d9e0a0825b4b73841d8fd8861e13ab694968bfc431065"
+    },
+    {
+      "at": "2026-10-31T08:35:59.291Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "live with \"bottomradar.com\" (498 chars)",
+      "bodySha256": "e6eaf84e0e9aa4b7682d9e0a0825b4b73841d8fd8861e13ab694968bfc431065"
+    },
+    {
+      "at": "2026-10-31T08:36:59.464Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "live with \"bottomradar.com\" (498 chars)",
+      "bodySha256": "e6eaf84e0e9aa4b7682d9e0a0825b4b73841d8fd8861e13ab694968bfc431065"
+    },
+    {
+      "at": "2026-10-31T08:37:59.670Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "live with \"bottomradar.com\" (498 chars)",
+      "bodySha256": "e6eaf84e0e9aa4b7682d9e0a0825b4b73841d8fd8861e13ab694968bfc431065"
+    },
+    {
+      "at": "2026-10-31T08:38:59.839Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "live with \"bottomradar.com\" (498 chars)",
+      "bodySha256": "e6eaf84e0e9aa4b7682d9e0a0825b4b73841d8fd8861e13ab694968bfc431065"
+    },
+    {
+      "at": "2026-10-31T08:40:00.032Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:41:00.663Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:42:00.956Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:43:01.470Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:44:07.147Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:45:09.594Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:46:10.086Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:47:10.447Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:48:10.772Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:49:11.100Z",
+      "phase": "watch",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:50:11.655Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:51:13.476Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:52:13.748Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:53:14.026Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:54:14.305Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:55:14.660Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:56:14.961Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:57:15.241Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:58:15.608Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    },
+    {
+      "at": "2026-10-31T08:59:15.879Z",
+      "phase": "decision",
+      "ok": false,
+      "live": false,
+      "textFound": null,
+      "method": "get",
+      "status": 404,
+      "finalUrl": "https://raw.githubusercontent.com/LeDenti/dareskro/main/placements/demo/post-deleted.html",
+      "why": "HTTP 404",
+      "bodySha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+    }
+  ],
+  "balances": {
+    "creator": [
+      100,
+      100
+    ],
+    "advertiserAfter": 99.999988
+  }
+}

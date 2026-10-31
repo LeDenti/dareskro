@@ -1,0 +1,150 @@
+{
+  "label": "smoke",
+  "url": "https://github.com/LeDenti/dareskro",
+  "mustContain": "dareskro",
+  "periodS": 75,
+  "graceS": 90,
+  "startedAt": "2026-10-31T08:31:45.506Z",
+  "node": "wss://testnet.xrpl-labs.com",
+  "advertiser": "rJLPhUDTZbaQ7QR9iauHuYmzX2YbDRbtjV",
+  "creator": "rKTdkbnZJMF18SEWMQ26t95qxaTg6qJJ4o",
+  "campaignId": "cc6b6b874a",
+  "contractSha256": "01071b56d733ef5be4c77b3699e6c5817f05bb43e2db6d3916ed7c5d45198511",
+  "deliveryId": "75e5cf733290",
+  "condition": "A0258020A1BA9AA694E36B228FB6855111E40DF1BC1F8890DF146EAF3B59BC2D07D2D34B810120",
+  "creatorPage": "http://127.0.0.1:8789/c/cc6b6b874a",
+  "preCheck": {
+    "at": "2026-10-31T08:31:59.776Z",
+    "ok": true,
+    "why": "live with \"dareskro\" (54959 chars)",
+    "method": "get",
+    "status": 200,
+    "bodySha256": "df08c3a87a3e75a2449201f044bb444e67932e403066690b862a2dacacb96444"
+  },
+  "lock": {
+    "hash": "7B9075C7FDC81D3F0C8C625C1575EB79177746F25D51F93C099D40C4374C8CB4",
+    "result": "tesSUCCESS",
+    "sequence": 21958451,
+    "finishAfter": "2026-10-31T08:33:14.000Z",
+    "cancelAfter": "2026-10-31T08:34:44.000Z",
+    "memos": [
+      {
+        "type": "dareskro/case",
+        "data": "placement"
+      },
+      {
+        "type": "dareskro/placement-sha256",
+        "data": "01071b56d733ef5be4c77b3699e6c5817f05bb43e2db6d3916ed7c5d45198511"
+      },
+      {
+        "type": "dareskro/proof",
+        "data": "url:https://github.com/LeDenti/dareskro;must:dareskro"
+      },
+      {
+        "type": "dareskro/oracle",
+        "data": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW"
+      }
+    ]
+  },
+  "endedAt": "2026-10-31T08:33:31.296Z",
+  "status": "released",
+  "oracle": {
+    "status": "finished",
+    "finishHash": "34C9232B1B2B2CF5884582D102B798F14975E22C0A1A7E1CC6D961ECB0AEAA47",
+    "refundHash": null,
+    "lastResult": "tesSUCCESS",
+    "lastWhy": "live with \"dareskro\" (54959 chars)",
+    "looks": 6,
+    "lastSeen": {
+      "at": "2026-10-31T08:33:21.529Z",
+      "live": true,
+      "online": true,
+      "why": "live with \"dareskro\" (54959 chars)",
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "bodySha256": "9c6faee964f0587a310a60e96f2ac8e48ce24c713340b731a3248eb91169e918"
+    }
+  },
+  "observations": [
+    {
+      "at": "2026-10-31T08:32:07.513Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "why": "live with \"dareskro\" (54959 chars)",
+      "bodySha256": "3e0ef1687f050cee7d748e049d3491e5df87ae7bdd280270dd2f295eda1f7a4c"
+    },
+    {
+      "at": "2026-10-31T08:32:23.798Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "why": "live with \"dareskro\" (54959 chars)",
+      "bodySha256": "e66b7b0434c1c456b278334b90b3c8bd64e29b40bbaef91716ab7dab74980ca0"
+    },
+    {
+      "at": "2026-10-31T08:32:40.096Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "why": "live with \"dareskro\" (54959 chars)",
+      "bodySha256": "1cb415c798ef16884119818cc796d3c2dcb7ba3dc0ad0bcf24b89563da75fa7c"
+    },
+    {
+      "at": "2026-10-31T08:32:56.388Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "why": "live with \"dareskro\" (54959 chars)",
+      "bodySha256": "13d87d9199029cbb37c920ec0390cc435d56e1d389a7e5c531336359074207c1"
+    },
+    {
+      "at": "2026-10-31T08:33:12.871Z",
+      "phase": "watch",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "why": "live with \"dareskro\" (54959 chars)",
+      "bodySha256": "bc9bb01abd3150788ae9e480ba7c0783b9b1287011b389f74dca59444e0ad8ed"
+    },
+    {
+      "at": "2026-10-31T08:33:21.208Z",
+      "phase": "decision",
+      "ok": true,
+      "live": true,
+      "textFound": true,
+      "method": "get",
+      "status": 200,
+      "finalUrl": "https://github.com/LeDenti/dareskro",
+      "why": "live with \"dareskro\" (54959 chars)",
+      "bodySha256": "9c6faee964f0587a310a60e96f2ac8e48ce24c713340b731a3248eb91169e918"
+    }
+  ],
+  "balances": {
+    "creator": [
+      100,
+      105
+    ],
+    "advertiserAfter": 94.999988
+  }
+}

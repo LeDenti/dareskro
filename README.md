@@ -342,6 +342,96 @@ registry that merges the entries a pass touched instead of overwriting the file 
 `/affiliate/confirm` and `/watch` write it while a finish is in flight. The payroll
 branch is the one measured on the real device, untouched.
 
+## Product placement for BottomRadar — the first real use
+
+The lesson of the winning submissions (read 31/10): a reusable brick, a real case,
+every step measured with its hashes, an app one can click. The real case is the
+author's own site, [BottomRadar](https://www.bottomradar.com) (crypto oversold
+alerts), which wants to pay creators — X accounts, YouTube channels, newsletters —
+to talk about it. The influencer shape of example 4 becomes a product:
+
+- **`placements/`** — the campaign model (`campaign.mjs`), a hardened presence
+  verifier for real platforms (`presence.mjs`), the campaign service and the
+  creator's page (`server.mjs`, `127.0.0.1:8789`), a one-shot verifier
+  (`verify.mjs`) and the measurement script (`demo_bottomradar.mjs`).
+- **The oracle** reads presence through that verifier and keeps **every look as
+  evidence**: `oracle/observations/<deliveryId>.jsonl`, one JSON line per look
+  (time, method, HTTP status, final URL, SHA-256 of the bytes read, verdict),
+  served by `GET /observations/<id>`. A real campaign is looked at every 5 min
+  (`probeEveryS`), a rehearsal every 20 s. The XRPL node is `XRPL_WSS`
+  (xrpl-labs testnet by default: Ripple's answered 503 on 25/10).
+- **The desk** gets a fifth case, *Placement · BottomRadar*
+  (`app/src/PlacementDesk.tsx`): create the campaign, look at the URL now, lock on
+  the device, follow what the oracle sees, and a link to give the creator.
+- **The creator's page** (`/c/<id>`, French, no login): what to publish, the
+  required text, the amount, the date it is checked, where the money is (the
+  escrow on the explorer), what the oracle saw, the contract JSON and its hash.
+- **BottomRadar's side**: a page *Parlez de BottomRadar et soyez payé*
+  (`/partenaires`, FR/EN) and a footer link, on a local branch of the private
+  BottomRadar repository, **not deployed** until its owner says so (the site is
+  in production with subscribers; its button points at `PLACEMENT_DESK_URL`).
+
+### The contract, and what the ledger carries
+
+A campaign is a contract — advertiser, creator (handle and XRPL address),
+publication URL, its platform, the required text (`bottomradar.com`), the
+amount, the end of the period (`FinishAfter`), the deadline (`CancelAfter`),
+the oracle — canonicalised as JSON and hashed. The escrow is the `presence`
+shape (Condition + FinishAfter + CancelAfter) with these memos:
+
+| Memo | Content |
+|---|---|
+| `dareskro/case` | `placement` |
+| `dareskro/placement-sha256` | SHA-256 of the contract JSON (the creator's page shows the JSON; anyone can recompute it) |
+| `dareskro/proof` | `url:<url>;must:<text>` — or, until the publication exists, `url-sha256:<hash>;must:<text>`, so the creator and the slot are not announced on-chain before the post (`publicUrl: false`). Absent on a real device (three memos, the contract hash binds it) |
+| `dareskro/oracle` | the oracle's address |
+
+Names and handles never go on the ledger.
+
+### What the verifier can and cannot see (measured 31/10/2026, read-only)
+
+| Platform | How it is read, without any key | Deleted / missing | Not verifiable |
+|---|---|---|---|
+| **X** (`…/status/<id>`) | three doors in order: the syndication JSON (`cdn.syndication.twimg.com/tweet-result`), oEmbed (`publish.x.com`), the post page's `<meta og:description>`. Links shortened to `t.co` are matched through their expanded and display URLs, so `bottomradar.com` is found. The post's identity is its id: the handle in the URL is only reported | `404` on all three doors (ids `1`, `1600000000000000000`); a tombstone is reported as such | protected accounts, replies hidden by the author, anything X renders only in the app |
+| **YouTube** | oEmbed (title, channel), then the watch page with the EU consent cookie: `shortDescription` and `playabilityStatus` | oEmbed `400`/`404`, page says `ERROR` (id `zzzzzzzzzzz`); private → `LOGIN_REQUIRED` | pinned comments, publication time, views (Data API key needed): **put the link in the description** |
+| **Any page** | `GET` with redirects followed and recorded; scripts and styles dropped, entities decoded, text searched in the visible text and in the raw HTML (meta tags count) | HTTP ≠ 2xx; a redirect that leaves the agreed site is *not live* (`bottomradar.com/nope-nope` → `www.…` 404 reported as such) | a page that ships an empty shell and draws itself in JavaScript: reported as *not verifiable server-side* (the desk's own Vite page: 19 chars of text), never as "absent" |
+
+`node placements/verify.mjs <url> "<text>"` prints one observation.
+
+### Measured on testnet, 31/10/2026 — a real public URL, a real deletion
+
+The publications are two HTML files in this repository, read through
+`raw.githubusercontent.com` like any creator's page (`placements/demo/`). The
+second one is deleted by a real commit during the period. The advertiser is a
+faucet account standing in for BottomRadar; the oracle is the same
+`rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW` as every other case. Period 15 min instead
+of 30 days, refund 10 min after the date: the escrow shape is the same.
+
+| Step (UTC) | Proof |
+|---|---|
+| 08:34 — campaign `7f2042e960` (post **stays**), 25 XRP, contract `6a461b1c…`: EscrowCreate with Condition, FinishAfter 08:49:48, CancelAfter 08:59:48, URL in clear in the memo | [2C22F6DC…](https://testnet.xrpl.org/transactions/2C22F6DCA9E778EAA62F636F277F4B5160E632EB747B51E9FB10A9D5FF14FE0A) `tesSUCCESS` |
+| 08:34 — campaign `bdc64bb8ad` (post **deleted**), same terms, second publication | [0E66240D…](https://testnet.xrpl.org/transactions/0E66240D26B30149A81AE8636C09BE0BEB7AEAC60E067DC0DD1AE390BE5132E5) `tesSUCCESS` |
+| 08:34:59 — the oracle's first look at both: `live with "bottomradar.com"` (625 and 498 chars), SHA-256 of the bytes kept | `oracle/observations/97cc03d14287.jsonl`, `…/de57a47a1c8a.jsonl` |
+| 08:35:29 — the second publication is **deleted** from the repository | commit [`343a96c`](https://github.com/LeDenti/dareskro/commit/343a96c) |
+| 08:40:00 — the oracle sees the deletion (`HTTP 404`; the CDN caches 300 s) and logs the transition; the escrow stays locked: before the date it only watches | observations file |
+| 08:49:48 — the date. Post stays: the oracle reads it once more, reveals the secret, `EscrowFinish` + `Fulfillment` | `EscrowFinish` `tesSUCCESS` [46F60DEA…](https://testnet.xrpl.org/transactions/46F60DEA4B147DD1560D584DE74888D6C07B7BC9F6767B3E1EB67695165FE2E1) at 08:50:07, creator 100 → 125 XRP, 16 looks kept |
+| Post deleted: at the date `HTTP 404`, nothing released; after `CancelAfter` the oracle submits the refund | `EscrowCancel` `tesSUCCESS` [52F498E1…](https://testnet.xrpl.org/transactions/52F498E1E17AE666E4322444564257870AD72D76813F6C15FF5A2464A1A1EEC8) at 09:00:03, advertiser back to 99.99 XRP, 25 looks kept (live ×5, then 404 ×20) |
+| From the **desk** (test wallet), campaign `e9ca65ff35`, URL **hashed** in the memo, 120 s rehearsal: created on the screen, locked, handed over, released | lock [6EEC6A72…](https://testnet.xrpl.org/transactions/6EEC6A72938857E9B18826D029A0F9D5CB059F3C1E5F506AA9755C8EFF06E287), release [D8E87FF0…](https://testnet.xrpl.org/transactions/D8E87FF03E97EC5EBFBB054D9EEBADDF7A1DF3074209A03C56E80BD8E0A0A437), creator 105 → 130 XRP (screen: `placements/measurements/desk-rehearsal.jpg`) |
+| Dress rehearsal on `github.com/LeDenti/dareskro` containing `dareskro` (campaign `cc6b6b874a`, 5 XRP) | lock [7B9075C7…](https://testnet.xrpl.org/transactions/7B9075C7FDC81D3F0C8C625C1575EB79177746F25D51F93C099D40C4374C8CB4), release [34C9232B…](https://testnet.xrpl.org/transactions/34C9232B1B2B2CF5884582D102B798F14975E22C0A1A7E1CC6D961ECB0AEAA47), creator 100 → 105 XRP |
+
+Every campaign, with its contract and escrow, is in `placements/campaigns.json`;
+the full traces are in `placements/measurements/*.json`.
+
+**What is still a stand-in.** The advertiser signs with a faucet account here;
+BottomRadar's real campaigns will be signed on the owner's Ledger from the desk,
+in XRP on mainnet, only on an explicit decision after this measurement. The
+creator pages are served from the laptop (`127.0.0.1:8789`): a hosted desk is
+the next step, and the BottomRadar button goes live only then.
+
+**Run it.** `cd placements && npm install && node server.mjs` next to the oracle
+and the desk; `node demo_bottomradar.mjs --url <public URL> --must bottomradar.com --period 900 --grace 600`
+for a measurement of your own.
+
 ## Privacy — invisible to the public, visible to the administration
 
 The founder's rule for a salary: nobody in the street may read it, every administration

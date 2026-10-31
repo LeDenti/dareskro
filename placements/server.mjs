@@ -21,6 +21,7 @@
  *                                       finishAfter/cancelAfter (ripple times)
  *   GET  /campaigns/<id>                one campaign + oracle entry + observations + status
  *   POST /campaigns/<id>/observe        look at the URL now (before locking: is the text there?)
+ *   POST /observe                       { url, mustContain } — the same look, before any campaign
  *   POST /campaigns/<id>/locked         { owner, sequence, createHash } → oracle /watch
  *   GET  /c/<id>                        the creator's page (HTML, French): what to publish,
  *                                       when it is paid, the escrow on the explorer, the
@@ -268,6 +269,11 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && parts[0] === "campaigns" && parts.length === 1) {
       const db = load();
       return json(res, 200, { campaigns: await Promise.all(db.campaigns.map((c) => view(c, { withObservations: false }))) });
+    }
+    if (req.method === "POST" && parts[0] === "observe" && parts.length === 1) {
+      const b = await readBody(req);
+      if (typeof b.url !== "string") return json(res, 400, { error: "need url" });
+      return json(res, 200, await observe(b.url, String(b.mustContain ?? "")));
     }
     if (req.method === "POST" && parts[0] === "campaigns" && parts.length === 1) {
       const c = await createCampaign(await readBody(req));
