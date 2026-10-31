@@ -52,6 +52,8 @@ export function PaieReelle(props: {
   oracleAddress?: string;
   payoutMode: "crypto" | "usd";
   signed: boolean;
+  /** The pay escrow is on the ledger: the money has left, the balance line must not read "too low" any more. */
+  locked?: boolean;
 }) {
   const { statement: s, payTx, legs, batch, rate, balance, neededXrp } = props;
   const sym = s.currency === "EUR" ? "€" : s.currency === "USD" ? "$" : s.currency;
@@ -150,8 +152,10 @@ export function PaieReelle(props: {
           <tr className="total">
             <td>Leaving your account{batch ? " (all three or none)" : ""}</td>
             <td className="num">{totalXrp.toFixed(6)} XRP</td>
-            <td colSpan={4} className={enough ? "ok" : "ko"}>
-              {balance === undefined || balance === null
+            <td colSpan={4} className={enough || props.locked ? "ok" : "ko"}>
+              {props.locked
+                ? `locked on the ledger — balance now ${balance ?? "…"} XRP`
+                : balance === undefined || balance === null
                 ? "balance unknown"
                 : enough
                   ? `balance ${balance} XRP: enough for the escrows, the ${legs.some((l) => l.kind === "check") ? "Check, the " : ""}reserve and the fees (about ${fee.toFixed(6)} XRP)`

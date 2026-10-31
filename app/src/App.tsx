@@ -1188,6 +1188,7 @@ function Desk(props: {
             oracleAddress={oracleId?.address}
             payoutMode={payoutMode}
             signed={!!(signedTxHex || signedBatchHex)}
+            locked={!!escrow}
           />
         )}
         {tx && (

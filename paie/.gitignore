@@ -6,3 +6,4 @@ cles/
 node_modules/
 # local outputs built from the real employer file
 sortie/reel/
+sortie/ouvert/

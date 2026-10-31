@@ -12,7 +12,8 @@ measured on 31/10/2026; every hash is on the XRPL testnet.
 | The desk's real mode: one approval per transaction when a Ledger device signs, a "what leaves, to whom, when" screen, the test wallet kept for rehearsals | `app/src/PaieReelle.tsx`, localized changes in `app/src/App.tsx` and `app/src/xrpl.ts` | done, rehearsed twice on testnet — the first rehearsal caught a real bug (below) |
 | The last mile to bank accounts: a SEPA credit transfer order (ISO 20022 pain.001) from the statement, written, **not executed** | `ordre_sepa.py` → `sortie/ordre_virement.pain001.xml` | done |
 | Anchoring the statement's SHA-256 (never the document) on the ledger: testnet measured, mainnet prepared and **not executed** | `ancrer.mjs` → `sortie/ancrages.json` | testnet done; mainnet waits for Julien's decision |
-| The real run on the Nano S Plus, three approvals, hashes and captures | this file, last section | **not run yet**: needs the device in Julien's hands |
+| The real run on the Nano S Plus, three approvals, hashes and captures | section 5 | **done, 31/10 09:29 UTC**: the first attempt expired (`tefMAX_LEDGER`, nothing applied), the second went through |
+| The sealed payslip as an NFT in the employee's wallet, readable by the named administrations only | `sceller.mjs` → `sortie/bulletin_scelle.json`, `sortie/nft.json` | done, measured on testnet (section 6) |
 
 ## The statement in euros
 
@@ -206,38 +207,90 @@ the shape of that decision:
 
 No key is in this repository, in a chat or in a log; `ancrages.json` holds hashes and addresses only.
 
-## 5. The real run on the Nano S Plus — not run yet
+## 5. The real run on the Nano S Plus — three approvals, 31/10/2026
 
-What the device will be asked, in order, with the desk at `http://localhost:5173/?bulletin=bulletin_eur.json`
-(Chrome, Ledger Live closed, XRP app 2.8.2 open, oracle running):
+Chrome, Ledger Live closed, Nano S Plus over USB, XRP app 2.8.2, the desk of this branch at
+`http://localhost:5174/?bulletin=bulletin_eur.json`, the oracle running. Julien held the device and
+pressed the buttons; the page was driven from the Chrome extension, which cannot press a WebHID picker:
+**the "Connect the Ledger" click has to be a human one** (an extension click gets `No selected device`).
+The employer is the Nano's own account `r3F1bhQGMMXeg3fVJqAGutfgt6Qi8Eu1Tp`, the one of 24/10.
 
-1. card 1: the euro statement is loaded (hash `268a8a78…`); type the validator's name, **Validate**;
-2. card 2: **Ledger USB** is selected; **Connect the Ledger**, choose the device in Chrome's picker;
-   **Get the employer's address**; **Get test XRP** until the balance is above what the page asks
-   (about 735 XRP at today's rate: the faucet gives 100 per call and throttles bursts);
-3. card 3: **Create a test employee**, leave 90 s, choose **Paid in crypto**;
-4. card 4: the Batch switch is **unticked by itself** for a device; **1. Prepare**; read the "what
-   leaves, to whom, when" table; **2. Sign on the Ledger (3 approvals)**:
-   - approval 1, `Create Escrow`: right button through `Account`, `Finish After` (the pay date, UTC),
-     `Amount`, `Fee`, `Destination`, the memos (`dareskro/sha256` = `268a8a78…` on two screens,
-     `dareskro/fiat` = `407.33 EUR @ …`, `dareskro/oracle`, `dareskro/zk-commitment`), then **both
-     buttons on `Sign transaction?`** — and stop there;
-   - approval 2, `Create Check`: `Send Max`, `Destination`, `Expiration`, `Invoice ID`, **both buttons
-     on `Sign transaction?`**;
-   - approval 3, `Create Escrow` for DGFiP, same as the first with the `dareskro/dgfip` memo;
-   - one press to the right past `Sign transaction?` is `Reject transaction`; a double press there is
-     `6985` (measured 26/10 on Speculos): if it happens, **1. Prepare** again, nothing was sent;
-5. **3. Submit to XRPL**: three submissions in a row, three hashes on the page; **URSSAF cashes its
-   check**; the oracle releases the pay after 90 s and the tax 30 s later.
+**First attempt, 09:06–09:17 UTC: three signatures, then `tefMAX_LEDGER`, nothing applied.** The
+three reviews, read screen by screen while the operator explained them, took longer than the 150
+ledgers (about eight minutes on testnet) the desk gave every transaction as `LastLedgerSequence`. The
+first submission answered `The latest ledger sequence 21959312 is greater than the transaction's
+LastLedgerSequence (21959183)`, the desk stopped there, the two other legs were never sent: not a drop
+moved. Fixed in `xrpl.ts` (`LEDGER_WINDOW = 600`, about half an hour), pay delay set to 900 s.
 
-The table below is filled only from a run with the device in hand; until then it is empty on purpose.
+**Second attempt, 09:26–09:29 UTC: three approvals on the device, three `tesSUCCESS`.**
 
 | Leg | Signed on the Nano S Plus | Result |
 |---|---|---|
-| pay escrow (net paid 407.33 €) | — | — |
-| Check for URSSAF (361.32 €) | — | — |
-| tax escrow for DGFiP (33.03 €) | — | — |
-| CheckCash, EscrowFinish ×2 | — | — |
+| pay escrow #21793985: **364.994310 XRP = 407.33 €** at 1.11599 EUR/XRP → the test employee `rMxTMQCJ…`; device memos `dareskro/sha256` = `268a8a78…`, `dareskro/fiat` = `407.33 EUR @ 1.11599`, `dareskro/oracle`, `dareskro/zk-commitment` | approval 1 | [D732477B…](https://testnet.xrpl.org/transactions/D732477B740BB5B8FE2166E088EAD390551F70F158C29C1D6E4DE0B3EC41EBA2) `tesSUCCESS`, ledger 21959432, 09:29:22 UTC |
+| Check #21793986 for URSSAF (`rGJ7b1BF…`): 323.766342 XRP = 361.32 €, `InvoiceID` = `268A8A78…` | approval 2 | [7722EF6F…](https://testnet.xrpl.org/transactions/7722EF6F899A7451046095963101067C5C3C994211A7EF53DE0C3BBB0C15B227) `tesSUCCESS`, ledger 21959434 |
+| tax escrow #21793987 for DGFiP (`rnQAPB1J…`): 29.597039 XRP = 33.03 €, FinishAfter = pay date + 30 s | approval 3 | [2B51B60A…](https://testnet.xrpl.org/transactions/2B51B60AC4D4CC5F599EFE466385058EB196D43428E35BF86B4E480EE35BAC65) `tesSUCCESS`, ledger 21959435 |
+| URSSAF cashes its Check (`CheckCash`, the stand-in's own key) | — | [076D6ED3…](https://testnet.xrpl.org/transactions/076D6ED31AB2513F1AA0D5A9DC2FAEEFEE64241E372987084778B55A6BF7EDF8) `tesSUCCESS` |
+| the oracle releases the pay at the date (09:38:24 UTC) | — | [956F34F6…](https://testnet.xrpl.org/transactions/956F34F69FB9832098C193F2238DA38CEAACC8E6E515FE726BB9869A40518D42) `tesSUCCESS`, 09:38:35 UTC, 11 s after the date; the employee holds 364.994310 XRP |
+| the oracle releases the income tax to DGFiP 30 s later | — | [8BDE169A…](https://testnet.xrpl.org/transactions/8BDE169A906BF52F39C9C46C3A45D7B2D3FD97AFE5F1D0FFB4A03A057F804D9A) `tesSUCCESS`, 09:39:10 UTC |
+
+![what leaves, to whom, when — the Nano run](sortie/captures/nano_ce_qui_part.jpg)
+![three tesSUCCESS from the device](sortie/captures/nano_trois_tesSUCCESS.jpg)
+
+Memos read back with `node paie/lire_tx.mjs`. On the device the compact form is used (no `MemoFormat`,
+four memos on the pay escrow, none on the Check): the three transactions carry the same statement hash
+as the official PDF and the SEPA order. Two things learned: a transaction prepared for a device needs a
+validity window sized for a human reading three reviews, not for one click; and the "what leaves" table
+read "too low" after the lock (the balance had, rightly, dropped) — fixed, it now says "locked on the
+ledger, balance now N XRP".
+
+## 6. The sealed payslip as an NFT — `sceller.mjs`
+
+Asked on 31/10: can a copy of the payslip go on the chain, for the pension fund, invisible to all and
+visible to the competent administrations? Yes, with two corrections to the wording, both measured:
+
+- **the copy goes to the employee, not to the pension fund.** The law tells the employee to keep every
+  payslip without time limit; the pension fund asks for it decades later, when the employer may be gone.
+  So the sealed payslip is a token in the **employee's** wallet that nobody can take back (no
+  `tfTransferable`: it moves between issuer and holder only, a payslip is not for sale; no
+  `tfBurnable`: the issuer cannot destroy it), and each administration holds a **key** to open it, not a
+  copy;
+- **the payslip itself never goes on the chain, even encrypted.** A ledger is immutable and a key can
+  leak in ten years; a regulator tolerates hashes on a chain, not personal data. The sealed file stays
+  off-chain (with the employer, the employee, or a private store); the token carries its hash as its URI.
+
+What `sceller.mjs` does, with the sealing scheme of the hackathon (`agent/confidentiel.mjs`: AES-256-GCM
+under a fresh content key, the key wrapped per reader with X25519 + HKDF-SHA256 + AES-256-GCM):
+
+1. `init-lecteurs`: X25519 keys for four readers — `employee`, `urssaf`, `dgfip`, `retraite`
+   (Agirc-Arrco for an employed pharmacist) — stand-ins on testnet (`paie/cles/lecteurs/`, 0600,
+   gitignored); public halves in `sortie/lecteurs_publics.json`;
+2. `sceller`: the statement JSON and the official PDF sealed together into `sortie/bulletin_scelle.json`
+   (23 210 bytes, ciphertext padded to 4 096-byte multiples, header authenticated as AAD), one envelope
+   per reader;
+3. `frapper`: `NFTokenMint` by the employer (taxon 1996 = the IDCC, URI
+   `dareskro:scelle/sha256/<hash of the sealed file>`, memos = statement SHA-256, PDF SHA-256, sealed
+   file SHA-256, readers), `NFTokenCreateOffer` for 0 XRP to the employee only, `NFTokenAcceptOffer` by
+   the employee's own key;
+4. `ouvrir --role R`: what that reader gets from the chain and the file.
+
+**Measured on testnet, 31/10/2026 09:33 UTC** (`sortie/nft.json`): issuer `rBYUzLoGJcfr9xGM329hfVgGjUsGkiRjQW`,
+holder `rsVJocSgCeUAMCX2Xg3yRoe6opxpBmvTuC`, NFT `0000000073982907650FF7D1C69E12D241A4778C19152D8398423CD1014F0F82`;
+mint [80885B0C…](https://testnet.xrpl.org/transactions/80885B0CF6B41C47F09D17FB6257CBB5E253C3F0CC2AA57EB76FF2F73BEF77BC),
+offer [910E24C4…](https://testnet.xrpl.org/transactions/910E24C4274E60280153FDB7A9F35EC634C42A4AD9AD9F0316545F55B6A81316),
+accept [F74B0BEE…](https://testnet.xrpl.org/transactions/F74B0BEE8CA66C2CEBA537557C052FBC912B9E2E49598BE412C5DD6FF1F15600),
+all `tesSUCCESS`. Then:
+
+| Reader | What it gets |
+|---|---|
+| the public | the token, its issuer, taxon 1996, the URI, four hashes and the readers' names; the file is 16 384 bytes of ciphertext: no name, no amount, no date — `RESULT: nothing private is readable by the public` |
+| `retraite` (pension fund) | opens the envelope with its key: statement `stmt-ffff3dd0e216`, gross 564.56 €, net paid 407.33 €, URSSAF 361.32, DGFiP 33.03; the statement hash recomputed = the memo, the PDF's hash = the memo (the PDF written to `sortie/ouvert/retraite/` is byte-identical to `bulletin_officiel.pdf`) — `RESULT: OK` |
+| `employee` | the same, `RESULT: OK` |
+| a stranger's X25519 key (`--cle`) tried as `retraite` | `retraite's key does not open this envelope` |
+
+Said plainly: this is an archive and a proof the employee carries for life, not a declaration — the
+pension fund still gets the rights through the DSN. On the device, in a real run, the mint and the offer
+are two more clear-signed approvals (`NFTokenMint`, `NFTokenCreateOffer`; the employee's accept is theirs).
+And no administration publishes an X25519 key today: the four readers are stand-ins.
 
 ## Run it, end to end
 
@@ -247,6 +300,7 @@ The table below is filled only from a run with the device in hand; until then it
 .venv/bin/python paie/bulletin_officiel.py --bureau      # the official payslip PDF, on the Desktop too
 .venv/bin/python paie/ordre_sepa.py                      # the SEPA order, written, not sent
 cd paie && npm install && node ancrer.mjs ancrer         # anchor the hash on testnet (creer-cle first)
+node sceller.mjs init-lecteurs && node sceller.mjs sceller && node sceller.mjs frapper && node sceller.mjs ouvrir --role retraite
 cd ../app && npm run dev                                 # the desk: http://localhost:5173/?bulletin=bulletin_eur.json
 ```
 

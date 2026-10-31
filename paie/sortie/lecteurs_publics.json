@@ -1,0 +1,19 @@
+{
+  "version": "dareskro/sealed-payslip-readers.v1",
+  "curve": "x25519",
+  "note": "stand-in keys for testnet. In real life each administration publishes its own key; none does today. Whoever is listed here can open every payslip sealed afterwards.",
+  "readers": {
+    "employee": {
+      "x25519_public_b64": "Tu7c4czJygZTDhUlMMRi++G+KxqEphJ1Q0HdcVQvBjw="
+    },
+    "urssaf": {
+      "x25519_public_b64": "OJE0Td1+lHU2/roobqOz5hBCK3Yp8IGgudZjTCYIK1g="
+    },
+    "dgfip": {
+      "x25519_public_b64": "cjvyKbr0wv2OES1yhrJG0UJ2nVWsIK+sQEte7VkfKj4="
+    },
+    "retraite": {
+      "x25519_public_b64": "eUgoaETlZXiuMqGNz/PQsEOIeH5Hk0blhBDrSaRTbQQ="
+    }
+  }
+}

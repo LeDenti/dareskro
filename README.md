@@ -710,8 +710,24 @@ pharmacy, in `paie/` ([its README](paie/README.md) has every hash). What changed
   [8427D2E4…](https://testnet.xrpl.org/transactions/8427D2E4C94EDCA694486B6E980C397328C051787C9E1B2E08BE2A7D0427A2DB)
   (ledger 21958530, `verifier`: MATCH, MATCH). Mainnet is prepared — offline key in a 0600 file written
   by the owner, reserve checked, `--mainnet-je-confirme` written in full — and **not executed**.
-- **The run on the Nano S Plus in three approvals is not done yet**: the procedure, press by press, is
-  in `paie/README.md`; its table is empty until the device is in hand.
+- **The run on the Nano S Plus, three approvals, 31/10 09:29 UTC.** The first attempt expired
+  (`tefMAX_LEDGER`: three reviews read screen by screen outlast a 150-ledger window; nothing applied),
+  the window was widened to 600 ledgers, and the second attempt signed the three legs on the device:
+  pay escrow #21793985 [D732477B…](https://testnet.xrpl.org/transactions/D732477B740BB5B8FE2166E088EAD390551F70F158C29C1D6E4DE0B3EC41EBA2)
+  **364.994310 XRP = 407.33 €**, Check #21793986 [7722EF6F…](https://testnet.xrpl.org/transactions/7722EF6F899A7451046095963101067C5C3C994211A7EF53DE0C3BBB0C15B227)
+  cashed by URSSAF [076D6ED3…](https://testnet.xrpl.org/transactions/076D6ED31AB2513F1AA0D5A9DC2FAEEFEE64241E372987084778B55A6BF7EDF8),
+  tax escrow #21793987 [2B51B60A…](https://testnet.xrpl.org/transactions/2B51B60AC4D4CC5F599EFE466385058EB196D43428E35BF86B4E480EE35BAC65);
+  the oracle released the pay at 09:38:35 UTC [956F34F6…](https://testnet.xrpl.org/transactions/956F34F69FB9832098C193F2238DA38CEAACC8E6E515FE726BB9869A40518D42) and the tax at 09:39:10 UTC [8BDE169A…](https://testnet.xrpl.org/transactions/8BDE169A906BF52F39C9C46C3A45D7B2D3FD97AFE5F1D0FFB4A03A057F804D9A). Captures and the
+  press-by-press account in `paie/README.md`.
+- **The sealed payslip as an NFT in the employee's wallet.** `paie/sceller.mjs` seals the statement and
+  the official PDF for four readers (employee, URSSAF, DGFiP, pension fund; X25519 envelopes, the
+  hackathon's scheme), keeps the file off-chain, and mints a non-transferable, non-burnable NFToken
+  whose URI is the sealed file's hash and whose memos are the statement's, the PDF's and the file's
+  SHA-256; offered to the employee for nothing, accepted with their key. Measured: mint
+  [80885B0C…](https://testnet.xrpl.org/transactions/80885B0CF6B41C47F09D17FB6257CBB5E253C3F0CC2AA57EB76FF2F73BEF77BC),
+  accept [F74B0BEE…](https://testnet.xrpl.org/transactions/F74B0BEE8CA66C2CEBA537557C052FBC912B9E2E49598BE412C5DD6FF1F15600);
+  the public reads hashes and ciphertext, the pension fund opens the byte-identical PDF, a stranger's key
+  is refused. An archive the employee keeps for life, not a declaration: the DSN remains the declaration.
 
 ## Honest limits, said before the jury asks
 

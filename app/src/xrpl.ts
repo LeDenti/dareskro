@@ -33,6 +33,12 @@ const TESTNET_URL = (import.meta.env.VITE_XRPL_URL as string | undefined) || "ws
 const FAUCET_URL = "https://faucet.altnet.rippletest.net/accounts";
 /** XRPL counts seconds since 2000-01-01, not 1970. */
 const RIPPLE_EPOCH = 946684800;
+/**
+ * How many ledgers a prepared transaction stays valid (LastLedgerSequence). 150 (about 8 minutes on testnet)
+ * was enough for one review on the device; the first real-mode run on the Nano S Plus (31/10/2026) expired
+ * with tefMAX_LEDGER after three reviews read screen by screen. 600 is about half an hour.
+ */
+const LEDGER_WINDOW = 600;
 
 export const explorerAccountUrl = (address: string) =>
   `https://testnet.xrpl.org/accounts/${address}`;
@@ -254,7 +260,7 @@ export async function prepareEscrowCreate(d: EscrowDraft): Promise<EscrowCreate>
     SigningPubKey: d.publicKey.toUpperCase(),
     ...(d.sequence !== undefined ? { Sequence: d.sequence } : {}),
     // autofill() gives about 1 minute. Give 10 minutes to read the device screen.
-    LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+    LastLedgerSequence: (await c.getLedgerIndex()) + LEDGER_WINDOW,
   }));
 }
 
@@ -301,7 +307,7 @@ export async function prepareConditionalEscrowCreate(d: ConditionalEscrowDraft):
     SigningPubKey: d.publicKey.toUpperCase(),
     ...(d.sequence !== undefined ? { Sequence: d.sequence } : {}),
     // autofill() gives about 1 minute. Give 10 minutes to read the device screen.
-    LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+    LastLedgerSequence: (await c.getLedgerIndex()) + LEDGER_WINDOW,
   }));
 }
 
@@ -336,7 +342,7 @@ export async function prepareCheckCreate(d: CheckDraft): Promise<CheckCreate> {
       : {}),
     SigningPubKey: d.publicKey.toUpperCase(),
     ...(d.sequence !== undefined ? { Sequence: d.sequence } : {}),
-    LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+    LastLedgerSequence: (await c.getLedgerIndex()) + LEDGER_WINDOW,
   }));
 }
 
@@ -395,7 +401,7 @@ export async function prepareBatch(args: { account: string; publicKey: string; i
       RawTransactions: raw,
       Sequence: seq,
       SigningPubKey: args.publicKey.toUpperCase(),
-      LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+      LastLedgerSequence: (await c.getLedgerIndex()) + LEDGER_WINDOW,
     } as unknown as SubmittableTransaction);
     return tx as unknown as Transaction;
   });
@@ -428,7 +434,7 @@ export async function prepareEscrowCancel(args: {
     Owner: args.account,
     OfferSequence: args.offerSequence,
     SigningPubKey: args.publicKey.toUpperCase(),
-    LastLedgerSequence: (await c.getLedgerIndex()) + 150,
+    LastLedgerSequence: (await c.getLedgerIndex()) + LEDGER_WINDOW,
   }));
 }
 
