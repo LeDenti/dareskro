@@ -51,3 +51,9 @@ zk/node_modules/
 zk/.witness/
 zk/target/
 ap4m/merchant-state-v2/
+presentation/video/build/
+presentation/video/node_modules/
+presentation/video/*.mp4
+near/node_modules/
+near/contract/target/
+near/.oracle_near.json

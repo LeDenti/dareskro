@@ -1,5 +1,9 @@
 # dareskro — agentic payroll escrow on the XRP Ledger, signed on a Ledger device
 
+> **NEAR Hackathon, 1–14 November 2026 — the NEAR integration lives in [`near/`](near/README.md).** Only that folder is built in
+> the NEAR window; the rest of this repository is the XRPL product of the New York hackathon below, baseline for NEAR judging
+> (disclosed as rule Q-002 asks). Diff: tag `pre-hackathon` → tag `hackathon-submission`.
+
 **AI & Fintech XRP Ledger Hackathon, New York, 24–25 October 2026.**
 Demo video (3 min 49, English): [dareskro explainer v2 — La Linea, with the one-day contract, URSSAF, and the oracle's real loop typed on its card](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea2.mp4) · earlier cut with the terminal logs: [split screen](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea_split.mp4) · release [v0.1-hackathon-nyc](https://github.com/LeDenti/dareskro/releases/tag/v0.1-hackathon-nyc).
 The spoken pitch: [PITCH.md](PITCH.md) (full, with the Q&A) and [PITCH_3MIN.md](PITCH_3MIN.md) (the 3-minute track version).

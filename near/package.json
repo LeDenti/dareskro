@@ -1,0 +1,14 @@
+{
+  "name": "dareskro-near",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "dareskro on NEAR: the oracle and the testnet demo for the escrow contract in ./contract",
+  "scripts": {
+    "demo": "node demo_near.mjs",
+    "oracle": "node oracle_near.mjs watch"
+  },
+  "dependencies": {
+    "near-api-js": "^7.4.0"
+  }
+}

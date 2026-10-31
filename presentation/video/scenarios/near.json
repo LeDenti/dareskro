@@ -1,0 +1,19 @@
+{
+  "name": "near",
+  "_note": "device, read and caption are filled from near/compte_rendu.json after the testnet run (node make.mjs fill --scenario near)",
+  "device": [
+    "NEAR 0.9963",
+    "after 2026-10-31",
+    "to dareskro-employee…"
+  ],
+  "read": "Uno NEAR… trentuno ottobre… dareskro employee… ah ah.",
+  "caption": [
+    "finish() called by the oracle 4 s after the date, nobody clicked",
+    "testnet.nearblocks.io/txns/BS411RjzQafP8NrJBTSQm9NHhmeKKtUYhC4XirAzYrxg"
+  ],
+  "card": [
+    "evidence  ·  code  ·  signature",
+    "NEAR testnet  ·  a contract with no keys  ·  agentic payroll escrow",
+    "NEAR Hackathon  ·  Build Beyond Boundaries  ·  November 2026"
+  ]
+}

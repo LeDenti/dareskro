@@ -1,0 +1,334 @@
+<!doctype html><meta charset="utf-8">
+<style>html,body{margin:0;background:#000}canvas{display:block;width:100vw;height:auto}</style>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// ======================= dareskro — La Linea style film =======================
+const W=1920,H=1080, cv=document.getElementById('c'), g=cv.getContext('2d');
+// What depends on the chain: the device's screen, what he reads aloud on it, the verification caption, the end card.
+// make.mjs injects window.FILM from scenarios/<name>.json before this script runs; without it, the XRPL version renders.
+const FILM=Object.assign({
+  device:['XRP 466.57','after 2026-10-31','to r3kiDtPb…'],
+  read:'Quattrocento sessantasei… trentuno ottobre… erre tre kappa… ah ah.',
+  caption:['EscrowFinish submitted by the oracle 12 s after the date, nobody clicked','testnet.xrpl.org/transactions/2F94E2BE970311999B3A759B4760CAC3EC4C9B0B2E9C1DCE54839655A48D79B2'],
+  card:['evidence  ·  code  ·  signature','XRP Ledger testnet  ·  Ledger Nano X  ·  agentic payroll escrow','AI & Fintech XRP Ledger Hackathon  ·  New York, October 2026']
+}, window.FILM||{});
+const INK='#ffffff', LW=18, LINE_Y=700, S=1.75;
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2, easeOut=t=>1-Math.pow(1-t,3), easeIn=t=>t*t*t;
+const seg=(t,a,b)=>clamp((t-a)/(b-a),0,1);
+const between=(t,a,b)=>t>=a&&t<b;
+
+// ---------- geometry helpers (polylines) ----------
+function quad(p0,c,p1,n=8){const o=[];for(let i=1;i<=n;i++){const u=i/n;o.push([(1-u)*(1-u)*p0[0]+2*(1-u)*u*c[0]+u*u*p1[0],(1-u)*(1-u)*p0[1]+2*(1-u)*u*c[1]+u*u*p1[1]]);}return o;}
+function circle(cx,cy,r,n=40,a0=0,a1=Math.PI*2){const o=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;o.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}return o;}
+function rect(x,y,w,h){return [[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]];}
+function rrect(x,y,w,h,r){const o=[];const A=(cx,cy,a0,a1)=>o.push(...circle(cx,cy,r,8,a0,a1));
+  o.push([x+r,y]); A(x+w-r,y+r,-Math.PI/2,0); A(x+w-r,y+h-r,0,Math.PI/2); A(x+r,y+h-r,Math.PI/2,Math.PI); A(x+r,y+r,Math.PI,Math.PI*1.5); o.push([x+r,y]); return o;}
+function line(x0,y0,x1,y1){return [[x0,y0],[x1,y1]];}
+function plen(pts){let L=0;for(let i=1;i<pts.length;i++)L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);return L;}
+function partial(pts,len){ // points up to arc-length len; returns {pts,tip}
+  if(len<=0) return {pts:[],tip:pts[0]};
+  const o=[pts[0]]; let acc=0;
+  for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+    if(acc+d>=len){const u=(len-acc)/d; const p=[lerp(pts[i-1][0],pts[i][0],u),lerp(pts[i-1][1],pts[i][1],u)]; o.push(p); return {pts:o,tip:p};}
+    acc+=d; o.push(pts[i]);}
+  return {pts:o,tip:pts[pts.length-1]};
+}
+function strokePts(pts,lw=LW){ if(pts.length<2)return; g.beginPath(); g.moveTo(...pts[0]); for(let i=1;i<pts.length;i++)g.lineTo(...pts[i]); g.strokeStyle=INK; g.lineWidth=lw; g.lineCap='round'; g.lineJoin='round'; g.stroke(); }
+
+// ---------- the character (one continuous polyline, local coords, feet on y=0, up=+y) ----------
+function figurePts(f){
+  const pts=[]; const L=(px,py)=>pts.push([px,py]);
+  const Q=(c,p)=>{const p0=pts[pts.length-1]; quad(p0,c,p,8).forEach(q=>pts.push(q));};
+  const ph=f.phase||0, sw=Math.sin(ph), cw=Math.cos(ph);
+  const walking=f.walking?1:0;
+  const bob=Math.abs(cw)*5*walking;
+  const fB=-32*sw*walking, fF=32*sw*walking;
+  const liftB=Math.max(0,-cw)*18*Math.abs(sw)*walking, liftF=Math.max(0,cw)*18*Math.abs(sw)*walking;
+  const ln=f.lean||0, d=f.look||0;
+  const hip=[0,100+bob];
+  const kB=[(fB)/2-14, 52+bob/2+liftB*0.5], kF=[(fF)/2+14, 52+bob/2+liftF*0.5];
+  const sh=[-8+ln*0.5,200+bob], neck=[18+ln*0.8,212+bob];
+  const hdB=[-14+ln,290+bob], top=[16+ln,320+bob], brow=[54+ln,302+bob-d*8];
+  const noseT=[108+ln,262+bob-d*28], noseB=[64+ln,244+bob-d*22];
+  const lip=[66+ln,236+bob-d*19], mouth=[54+ln,229+bob-d*17], lip2=[64+ln,222+bob-d*15], chin=[60+ln,206+bob-d*12];
+  const chest=[30+ln*0.5,170+bob], belly=[44,125+bob], hipF=[30,98+bob];
+  L(fB-18,0); L(fB,0); L(fB,liftB); L(...kB); L(...hip);
+  Q([-26+ln*0.3,150+bob],sh); Q([-30+ln*0.8,260+bob],hdB); Q([-10+ln,322+bob],top);
+  Q([44+ln,316+bob],brow); Q([100+ln,296+bob-d*12],noseT); Q([112+ln,240+bob-d*26],noseB);
+  L(...lip); L(...mouth); L(...lip2); L(...chin);
+  Q([40+ln*0.8,196+bob],neck); Q([34+ln*0.5,190+bob],chest); Q([54,150+bob],belly); Q([44,105+bob],hipF);
+  L(...kF); L(fF,liftF); L(fF,0); L(fF+18,0);
+  const out=pts.map(p=>toWorld(f,p));
+  if(f.dir<0) out.reverse();
+  return out;
+}
+const toWorld=(f,[px,py])=>[f.x+(f.jx||0)+f.dir*px*S, LINE_Y-py*S*(f.scaleY??1)];
+const toLocal=(f,[wx,wy])=>[(wx-f.x-(f.jx||0))/(f.dir*S),(LINE_Y-wy)/(S*(f.scaleY??1))];
+// arm: shoulder -> elbow -> hand (world target)
+function armPts(f,target,{local=false,elbowDrop=28}={}){
+  const sh=[14,196], hd=local?target:toLocal(f,target);
+  const mx=(sh[0]+hd[0])/2, my=(sh[1]+hd[1])/2;
+  const dx=hd[0]-sh[0], dy=hd[1]-sh[1], n=Math.hypot(dx,dy)||1;
+  const el=[mx+dy/n*elbowDrop, my-dx/n*elbowDrop];
+  return [sh,el,hd].map(p=>toWorld(f,p));
+}
+function hatPts(f){ return [ [[-30,318],[52,318]], [[-12,318],[-12,372],[38,372],[38,318]] ].map(s=>s.map(p=>toWorld(f,p))); }
+function bunPts(f){ return [circle(-30,300,22,24).map(p=>toWorld(f,p))]; }
+
+// ---------- movers ----------
+function mover(wp){ // waypoints [[t,x],...] -> {x,dist,walking}
+  return t=>{ if(t<=wp[0][0]) return {x:wp[0][1],dist:0,walking:false};
+    let dist=0; for(let i=1;i<wp.length;i++){const [t0,x0]=wp[i-1],[t1,x1]=wp[i];
+      if(t<=t1){const u=(t-t0)/(t1-t0); const x=lerp(x0,x1,u); return {x,dist:dist+Math.abs(x-x0),walking:x1!==x0};}
+      dist+=Math.abs(x1-x0);}
+    const last=wp[wp.length-1]; return {x:last[1],dist,walking:false}; };
+}
+const rise=(t,a,b)=>{ if(t<a) return 0; const u=seg(t,a,b); return 1-Math.pow(1-u,3)*(1+0.3*Math.sin(u*9)); };
+const sink=(t,a,b)=>1-rise(t,a,b);
+
+// ---------- story constants ----------
+const X0=300;
+const GAP1=[2200,2560], GAP2=[3800,3960];
+const HALT1=GAP1[0]-35*S, HALT2=GAP2[0]-35*S;
+const ROBOT_X=1750, V_X=1550, B_X=4150, E_X=4400, PAD_X=3880;
+const F_WP=[[0,X0],[2.3,X0],[6.0,1100],[10,1100],[14,HALT1],[46,HALT1],[52,HALT2],[104.5,HALT2],[108,4900]];
+const moveF=mover(F_WP);
+const BG=[[0,'#1d3a8a'],[10,'#c8891a'],[28,'#1f7a4d'],[48.5,'#7a1f33'],[72,'#1d3a8a'],[90,'#d9641e'],[108,'#0e1a3f']];
+const bgAt=t=>{let c=BG[0][1]; for(const [tt,cc] of BG) if(t>=tt)c=cc; return c;};
+
+// ---------- props drawn by the pencil ----------
+// prop: {ox,oy, parts:[{pts(local), t0,t1}], xf:(t)=>({x,y,s,rot,a,px,py}), text:(t)=>..., hide:(t)=>bool}
+const PROPS=[];
+function addProp(p){ p.parts.forEach(pt=>{pt.len=plen(pt.pts);}); PROPS.push(p); return p; }
+
+// scene 0: pharmacy cross + calendar
+addProp({ox:1420,oy:LINE_Y-420, parts:[{pts:[[-30,-100],[30,-100],[30,-30],[100,-30],[100,30],[30,30],[30,100],[-30,100],[-30,30],[-100,30],[-100,-30],[-30,-30],[-30,-100]],t0:4.2,t1:6.0}], hide:t=>t>=10});
+(function(){ const parts=[{pts:rect(-130,-110,260,220),t0:6.3,t1:7.3}];
+  for(let i=1;i<4;i++) parts.push({pts:line(-130,-110+i*55,130,-110+i*55),t0:7.3+(i-1)*0.25,t1:7.55+(i-1)*0.25});
+  for(let i=1;i<7;i++) parts.push({pts:line(-130+i*37,-55,-130+i*37,110),t0:8.0+(i-1)*0.12,t1:8.12+(i-1)*0.12});
+  parts.push({pts:circle(130-18,-55+27,24,20),t0:8.8,t1:9.4});
+  addProp({ox:1740,oy:LINE_Y-330,parts,hide:t=>t>=10}); })();
+
+// scene 1: planning, badge, book (stack above the gap), then fall, scatter, eaten by the robot
+const G1C=(GAP1[0]+GAP1[1])/2;
+function paperXf(t, home, land, scat, eatT){ // home: drawn position; land: fallen; scat: scattered; eatT: time it goes into the robot
+  if(t<23.5) return {x:home[0],y:home[1],s:1,rot:0,a:1};
+  if(t<25.5){const u=easeIn(seg(t,23.5,25.5)); return {x:lerp(home[0],land[0],u),y:lerp(home[1],land[1],u),s:1,rot:land[2]*u,a:1};}
+  if(t<26.5) return {x:land[0],y:land[1],s:1,rot:land[2],a:1};
+  if(t<27.5){const u=easeOut(seg(t,26.5,27.5)); return {x:lerp(land[0],scat[0],u),y:lerp(land[1],scat[1],u),s:1,rot:lerp(land[2],scat[2],u),a:1};}
+  if(t<eatT) return {x:scat[0],y:scat[1],s:1,rot:scat[2],a:1};
+  if(t<eatT+0.9){const u=easeIn(seg(t,eatT,eatT+0.9)); return {x:lerp(scat[0],ROBOT_X+85,u),y:lerp(scat[1],LINE_Y-200,u),s:1-u,rot:scat[2]*(1-u),a:1};}
+  return {a:0};
+}
+(function(){ // planning sheet
+  const parts=[{pts:rect(-75,-95,150,190),t0:14.5,t1:15.6}];
+  for(let i=0;i<4;i++) parts.push({pts:line(-55,-60+i*35,55,-60+i*35),t0:15.6+i*0.2,t1:15.8+i*0.2});
+  addProp({ox:0,oy:0,parts,xf:t=>paperXf(t,[2500,LINE_Y-220],[2060,LINE_Y-95,0.3],[2040,LINE_Y-95,0.15],32.5)}); })();
+(function(){ // badge
+  const parts=[{pts:rrect(-85,-55,170,110,18),t0:16.8,t1:17.8},{pts:circle(-45,0,24,20),t0:17.8,t1:18.1},{pts:line(0,-15,60,-15),t0:18.1,t1:18.25},{pts:line(0,15,60,15),t0:18.25,t1:18.4}];
+  addProp({ox:0,oy:0,parts,xf:t=>paperXf(t,[2500,LINE_Y-400],[2200,LINE_Y-55,-0.5],[2110,LINE_Y-55,-0.2],33.3)}); })();
+(function(){ // the collective agreement, thick as a phone book
+  const parts=[{pts:rect(-100,-100,200,200),t0:18.6,t1:19.6},{pts:[[-100,-100],[-80,-120],[120,-120],[120,80],[100,100]],t0:19.6,t1:20.2},{pts:line(100,-100,120,-120),t0:20.2,t1:20.3}];
+  for(let i=0;i<6;i++) parts.push({pts:line(-75,-70+i*30,70,-70+i*30),t0:20.3+i*0.1,t1:20.4+i*0.1});
+  addProp({ox:0,oy:0,parts,xf:t=>paperXf(t,[2500,LINE_Y-560],[2120,LINE_Y-130,0.15],[1960,LINE_Y-100,-0.1],34.1)}); })();
+
+// scene 2: robot
+(function(){ const parts=[
+  {pts:rect(-80,-160,160,140),t0:29,t1:30.0},            // body
+  {pts:rect(-55,-250,110,90),t0:30.0,t1:30.7},           // head
+  {pts:line(0,-250,0,-290),t0:30.7,t1:30.85},{pts:circle(0,-300,10,12),t0:30.85,t1:31.0}, // antenna
+  {pts:circle(-22,-212,9,12),t0:31.0,t1:31.1},{pts:circle(22,-212,9,12),t0:31.1,t1:31.2}, // eyes
+  {pts:rect(55,-215,30,30),t0:31.2,t1:31.4},             // mouth slot (front, right side)
+  {pts:circle(-45,-20,20,16),t0:31.4,t1:31.6},{pts:circle(45,-20,20,16),t0:31.6,t1:31.8}]; // wheels
+  addProp({ox:ROBOT_X,oy:LINE_Y,parts,hide:t=>t>=48.5}); })();
+// the statement sheet (output of the robot), with the check mark drawn later
+const SHEET={};
+(function(){ const parts=[{pts:rect(-75,-95,150,190),t0:35,t1:35.01}]; for(let i=0;i<3;i++) parts.push({pts:line(-55,-60+i*30,55,-60+i*30),t0:35,t1:35.01});
+  parts.push({pts:[[-45,20],[-12,55],[55,-30]],t0:41.5,t1:43}); // check mark
+  addProp({ox:0,oy:0,parts,text:t=>t>=36.3?{s:'466.57',x:0,y:60,size:40}:null,
+    xf:t=>{ if(t<35) return {a:0};
+      if(t<36.5){const u=easeOut(seg(t,35,36.5)); return {x:lerp(ROBOT_X+85,1880,u),y:lerp(LINE_Y-200,LINE_Y-260,u),s:u,rot:0,a:1};}
+      let rot=0; if(between(t,37.6,38.8)) rot=0.08*Math.sin(t*22)*(1-seg(t,38.4,38.8));
+      if(t<40.5) return {x:1880,y:LINE_Y-260,s:1,rot,a:1};
+      if(t<41.5){const u=ease(seg(t,40.5,41.5)); return {x:lerp(1880,1740,u),y:lerp(LINE_Y-260,LINE_Y-290,u),s:1,rot:0,a:1};}
+      if(t<45) return {x:1740,y:LINE_Y-290,s:1,rot:0,a:1};
+      if(t<45.8){const u=easeIn(seg(t,45,45.8)); return {x:lerp(1740,G1C,u),y:lerp(LINE_Y-290,LINE_Y,u),s:1-u,rot:u*1.2,a:1};}
+      return {a:0}; }}); })();
+
+// scene 3: safe -> padlock
+(function(){ const parts=[{pts:rect(-130,-130,260,260),t0:52.5,t1:53.8},{pts:rect(-105,-105,210,210),t0:53.8,t1:54.6},{pts:circle(10,0,38,24),t0:54.6,t1:55.0},{pts:line(10,0,10,-38),t0:55.0,t1:55.1},{pts:line(-70,-30,-70,30),t0:55.1,t1:55.3}];
+  addProp({ox:4080,oy:LINE_Y-500,parts,xf:t=>{ if(t<57.5) return {x:0,y:0,s:1,rot:0,a:1}; if(t<59.5){const u=easeIn(seg(t,57.5,59.5)); return {x:-200*u,y:u*380,s:1-u,rot:u*0.6,a:1};} return {a:0};}}); })();
+const padXf=t=>{ let s=t<57.5?0:t<59.5?easeOut(seg(t,57.5,59.5)):1; let y=0; if(t>=103){y=-easeIn(seg(t,103,105))*1500;} return {x:0,y,s,rot:0,a:t<105?1:0}; };
+addProp({ox:PAD_X,oy:LINE_Y,parts:[{pts:rrect(-80,-112,160,132,22),t0:57.5,t1:57.51}],xf:padXf});
+// shackle: separate prop, open/closed animation. closed: legs from -112 up to -170, arc r50 on top. open: lifted by 55 and swung
+function shackleState(t){ // returns {lift, rot} ; open before 84, closed 84.5..96, open after 97.5
+  const openPose={lift:55,rot:0.55}, closed={lift:0,rot:0};
+  if(t<84) return openPose;
+  if(t<84.45){const u=easeIn(seg(t,84,84.45)); return {lift:lerp(55,0,u),rot:lerp(0.55,0,u)};}
+  if(t<96) return closed;
+  if(t<97.5){const u=easeOut(seg(t,96,97.5)); return {lift:lerp(0,55,u),rot:lerp(0,0.55,u)};}
+  return openPose;
+}
+addProp({ox:PAD_X,oy:LINE_Y,parts:[{pts:[[ -50,-112],[-50,-170],...circle(0,-170,50,16,Math.PI,2*Math.PI),[50,-112]],t0:57.5,t1:57.51}],
+  xf:t=>{const p=padXf(t); const sh=shackleState(t); return {x:0,y:p.y-sh.lift*p.s,s:p.s,rot:-sh.rot,a:p.a,px:50,py:-170};}});
+// coins inside the padlock (locked at 82.5-84) : drawn as props falling in
+for(let i=0;i<3;i++){ const t0=82.4+i*0.35;
+  addProp({ox:PAD_X-30+i*30,oy:LINE_Y,parts:[{pts:circle(0,0,16,16),t0:t0,t1:t0+0.01}],
+    xf:t=>{ if(t<t0) return {a:0}; const u=easeIn(seg(t,t0,t0+0.5)); if(t<97.5) return {x:0,y:lerp(-420,-40-(i%2)*22,u),s:1,rot:0,a:1}; return {a:0}; }}); }
+
+// scene 4: Ledger Nano
+const LED=[3370,LINE_Y-600];
+(function(){ const parts=[{pts:rrect(-210,-75,420,150,32),t0:72.5,t1:74.0},{pts:rect(-185,-50,230,100),t0:74.0,t1:74.8},{pts:circle(150,0,28,20),t0:74.8,t1:75.2},{pts:line(80,-40,80,40),t0:75.2,t1:75.4}];
+  addProp({ox:LED[0],oy:LED[1],parts,hide:t=>t>=90,
+    text:t=>{const lines=[]; if(t>=76) lines.push(FILM.device[0]); if(t>=77.2) lines.push(FILM.device[1]); if(t>=78.4) lines.push(FILM.device[2]); return lines.length?{lines,x:-70,y:-18,size:26}:null;},
+    flash:t=>between(t,82.3,82.7)}); })();
+
+// ---------- sounds (exported for the audio script) ----------
+const SOUNDS=[
+  {t:2.0,kind:'plop'},
+  {t:7.2,kind:'say',voice:'Alice',rate:200,text:'Eh… la farmacìa. Domenìca, oh!'},
+  {t:21.0,kind:'say',voice:'Alice',rate:240,text:'Ma che stracatùffolo è questo! Pianìngo, badgìno, convenziòne! Porcaccia miseria!'},
+  {t:26.2,kind:'say',voice:'Alice',rate:220,text:'Mmmh! Bruttolo!'},
+  {t:37.2,kind:'say',voice:'Alice',rate:210,text:'Mmm? Robottìno… quattrocento sessantasei? Mah.'},
+  {t:43.2,kind:'say',voice:'Alice',rate:220,text:'Ah, va bene, va bene.'},
+  {t:45.8,kind:'plop'},
+  {t:55.8,kind:'say',voice:'Alice',rate:220,text:'Oooh! Soldìni!'},
+  {t:60.5,kind:'say',voice:'Alice',rate:230,text:'Nnngh! Mannàggia!'},
+  {t:65.5,kind:'say',voice:'Grandpa (Italien (Italie))',rate:190,text:'Nnngh! Niènte!'},
+  {t:68.8,kind:'say',voice:'Alice',rate:220,text:'Bah!'},
+  {t:68.9,kind:'say',voice:'Grandpa (Italien (Italie))',rate:190,text:'Bah!'},
+  {t:76.2,kind:'say',voice:'Alice',rate:200,text:FILM.read},
+  {t:84.4,kind:'tic'},
+  {t:86.0,kind:'say',voice:'Alice',rate:220,text:'Bene.'},
+  {t:92.0,kind:'say',voice:'Alice',rate:220,text:'Oh! L\'orològgio!'},
+  {t:96.0,kind:'tic'},
+  {t:104.6,kind:'whistle'},
+];
+for(let i=0;i<8;i++) SOUNDS.push({t:98.0+i*0.6,kind:'coin'});
+window.SOUNDS=SOUNDS;
+window.SCRATCH=(()=>{const o=[[0,1.5]]; PROPS.forEach(p=>p.parts.forEach(pt=>{ if(pt.t1-pt.t0>0.05) o.push([pt.t0,pt.t1]); })); return o;})();
+
+// ---------- figures over time ----------
+function figF(t){
+  const m=moveF(t); const f={x:m.x,dir:1,phase:m.dist/(32*S),walking:m.walking,scaleY:rise(t,1.5,2.3),lean:0,look:0,jx:0,arms:[]};
+  if(between(t,29,46)||between(t,75.5,84)) f.dir=-1;
+  if(between(t,8.3,10)) f.look=-0.35*ease(seg(t,8.3,8.8));
+  if(between(t,21,23.5)){ f.jx=Math.sin(t*60)*6; f.lean=10; f.look=-0.2; }
+  if(between(t,23.5,26)){ f.look=0.35; f.lean=-8; }
+  if(between(t,26,27.5)){ f.jx=Math.sin(t*50)*7; f.look=-0.15; }
+  if(between(t,37,39.5)){ const u=ease(seg(t,37,37.6))*(1-ease(seg(t,39,39.5))); f.lean=22*u; f.arms.push(armPts(f,[1880+75+8*Math.sin(t*22)*(between(t,37.6,38.8)?1:0),LINE_Y-260])); }
+  if(between(t,43,45)){ f.look=0.25*Math.sin((t-43)*12)*(1-seg(t,44.5,45)); }
+  if(between(t,55.5,58)){ const u=ease(seg(t,55.5,56))*(1-ease(seg(t,57.5,58))); f.lean=26*u; f.arms.push(armPts(f,[3950,LINE_Y-470])); }
+  if(between(t,60,63.5)){ const u=ease(seg(t,60,60.5)); f.lean=-22*u; f.jx=u*Math.sin(t*40)*4; f.arms.push(armPts(f,[PAD_X-50,LINE_Y-112-55],{elbowDrop:-30})); }
+  if(between(t,68.5,70.5)||between(t,103,104.5)){ const a=between(t,68.5,70.5)?68.5:103; const u=ease(seg(t,a,a+0.4)); f.look=-0.3*u; f.arms.push(armPts(f,[-70*u-14, 150+40*u],{local:true,elbowDrop:-20}), armPts(f,[14+100*u,150+40*u],{local:true,elbowDrop:-20})); }
+  if(between(t,76,81)){ f.look=-0.4*ease(seg(t,76,76.5)); if(t>=80) f.look+=0.25*Math.sin((t-80)*12); }
+  if(between(t,81.5,83.2)){ const u=ease(seg(t,81.5,82.2)); f.look=-0.4; f.arms.push(armPts(f,[LED[0]+150+28*u*0, LED[1]+20+(1-u)*300],{elbowDrop:-30})); }
+  return f;
+}
+function figV(t){ if(t<39||t>=47.5) return null; const f={x:V_X,dir:1,scaleY:t<46?rise(t,39,40):sink(t,46,47),lean:0,look:0,arms:[]};
+  if(between(t,40.5,46)) f.arms.push(armPts(f,[1720,LINE_Y-185])); f.bun=true; return f; }
+function figB(t){ if(t<63.5||t>=72) return null; const f={x:B_X,dir:-1,scaleY:t<71?rise(t,63.5,64.5):sink(t,71,72),lean:0,look:0,arms:[],jx:0,hat:true};
+  if(between(t,65,68)){ const u=ease(seg(t,65,65.5)); f.lean=-22*u; f.jx=u*Math.sin(t*40)*4; f.arms.push(armPts(f,[PAD_X+50,LINE_Y-112-55],{elbowDrop:-30})); }
+  if(between(t,68.5,70.5)){ const u=ease(seg(t,68.5,68.9)); f.look=-0.3*u; f.arms.push(armPts(f,[-70*u-14,150+40*u],{local:true,elbowDrop:-20}), armPts(f,[14+100*u,150+40*u],{local:true,elbowDrop:-20})); }
+  return f; }
+function figE(t){ if(t<90||t>=104.5) return null; const f={x:E_X,dir:-1,scaleY:t<103?rise(t,90,91):sink(t,103,104),lean:0,look:0,arms:[]};
+  if(between(t,99,103)){ f.scaleY*=1+0.06*Math.abs(Math.sin((t-99)*9)); f.look=-0.3; f.arms.push(armPts(f,[-40,330],{local:true,elbowDrop:-25}),armPts(f,[110,330],{local:true,elbowDrop:-25})); }
+  return f; }
+
+// ---------- the clock-oracle ----------
+function clockAt(t){ if(t<91||t>=104.5) return null;
+  let x,walk=true; if(t<95){x=lerp(5000,4010,easeOut(seg(t,91,95)));} else if(t<101){x=4010;walk=false;} else {x=lerp(4010,5100,seg(t,101,104)); }
+  const hands = t<95?{h:t*2.2,m:t*9}:t<96?{h:lerp(95*2.2,0,ease(seg(t,95,96))),m:lerp(95*9,0,ease(seg(t,95,96)))}:{h:0,m:0};
+  return {x,walk,hands,ph:t*14}; }
+function drawClock(c,cam){ const cx=c.x-cam, r=55, cy=LINE_Y-r-70, bob=c.walk?Math.abs(Math.cos(c.ph))*6:0;
+  strokePts(circle(cx,cy-bob,r,40),14);
+  for(let i=0;i<12;i++){const a=i*Math.PI/6; strokePts([[cx+Math.cos(a)*(r-12),cy-bob+Math.sin(a)*(r-12)],[cx+Math.cos(a)*(r-4),cy-bob+Math.sin(a)*(r-4)]],6);}
+  const ah=(c.hands.h%12)/12*Math.PI*2-Math.PI/2, am=(c.hands.m%60)/60*Math.PI*2-Math.PI/2;
+  strokePts([[cx,cy-bob],[cx+Math.cos(ah)*28,cy-bob+Math.sin(ah)*28]],8); strokePts([[cx,cy-bob],[cx+Math.cos(am)*40,cy-bob+Math.sin(am)*40]],6);
+  const sw=c.walk?Math.sin(c.ph)*16:0; strokePts([[cx-14,cy-bob+r-4],[cx-14-sw,LINE_Y]],10); strokePts([[cx+14,cy-bob+r-4],[cx+14+sw,LINE_Y]],10); }
+
+// ---------- coins flying to the employee ----------
+function drawCoins(t,cam){ for(let i=0;i<8;i++){ const t0=97.8+i*0.6; if(t<t0||t>t0+1.1) continue; const u=seg(t,t0,t0+1.0);
+    const x=lerp(PAD_X,E_X-170,u), y=lerp(LINE_Y-200,LINE_Y-400,u)-Math.sin(u*Math.PI)*260; const a=u>0.9?1-seg(u,0.9,1):1;
+    g.save(); g.globalAlpha=a; strokePts(circle(x-cam,y,16,16),10); strokePts([[x-cam-6,y],[x-cam+6,y]],6); g.restore(); } }
+
+// ---------- pencil ----------
+function drawPencil(x,y){ g.save(); g.translate(x,y); g.rotate(-0.95);
+  g.fillStyle='#e8c9a0'; g.beginPath(); g.moveTo(0,0); g.lineTo(-22,-70); g.lineTo(22,-70); g.closePath(); g.fill();
+  g.fillStyle='#222'; g.beginPath(); g.moveTo(0,0); g.lineTo(-7,-22); g.lineTo(7,-22); g.closePath(); g.fill();
+  g.fillStyle='#f2b705'; g.fillRect(-22,-590,44,520); g.fillStyle='#d99e00'; g.fillRect(-22,-590,14,520);
+  g.fillStyle='#b9b9b9'; g.fillRect(-22,-630,44,40); g.fillStyle='#e58b9b'; g.fillRect(-22,-670,44,40); g.restore(); }
+const OFF=[W+300,-300];
+function pencilPos(t,tips){ // tips: [{t0,t1,first,tip,last}] of parts drawn this frame or near
+  let cur=null, next=null, prev=null;
+  for(const p of tips){ if(t>=p.t0&&t<=p.t1) cur=p; else if(p.t0>t && (!next||p.t0<next.t0)) next=p; else if(p.t1<t && (!prev||p.t1>prev.t1)) prev=p; }
+  if(cur) return cur.tip;
+  const IN=0.35, OUT=0.3;
+  if(next && next.t0-t<IN){ const u=easeOut(seg(t,next.t0-IN,next.t0)); const from=(prev&&t-prev.t1<1.2)?prev.last:OFF; return [lerp(from[0],next.first[0],u),lerp(from[1],next.first[1],u)]; }
+  if(prev && t-prev.t1<OUT){ if(next && next.t0-t<1.2) return prev.last; const u=easeIn(seg(t,prev.t1,prev.t1+OUT)); return [lerp(prev.last[0],OFF[0],u),lerp(prev.last[1],OFF[1],u)]; }
+  if(prev && next && next.t0-t<1.2) return prev.last;
+  return null;
+}
+
+// ---------- ground line with figures and gaps ----------
+function drawLine(t,cam,figs,gaps,drawnTo){
+  const runs=[]; let run=[];
+  const push=p=>{ if(p[0]>drawnTo){ if(run.length)runs.push(run); run=[]; return; } run.push(p); };
+  const ground=(xa,xb)=>{ let x=xa; const cuts=gaps.filter(gp=>gp[1]>xa&&gp[0]<xb).sort((a,b)=>a[0]-b[0]);
+    for(const gp of cuts){ push([x,LINE_Y]); push([Math.max(x,gp[0]),LINE_Y]); if(run.length)runs.push(run); run=[]; x=Math.min(gp[1],xb); }
+    push([x,LINE_Y]); push([xb,LINE_Y]); };
+  const fs=figs.filter(Boolean).sort((a,b)=>a.x-b.x); let x=cam-150;
+  for(const f of fs){ const pts=figurePts(f); ground(x,pts[0][0]); pts.forEach(push); x=pts[pts.length-1][0]; }
+  ground(x,cam+W+150); if(run.length)runs.push(run);
+  runs.forEach(r=>strokePts(r.map(([px,py])=>[px-cam,py])));
+  fs.forEach(f=>{ (f.arms||[]).forEach(a=>strokePts(a.map(([px,py])=>[px-cam,py]))); if(f.hat&&f.scaleY>0.9) hatPts(f).forEach(s=>strokePts(s.map(([px,py])=>[px-cam,py]))); if(f.bun&&f.scaleY>0.9) bunPts(f).forEach(s=>strokePts(s.map(([px,py])=>[px-cam,py]))); });
+}
+
+// ---------- render ----------
+function render(t){
+  g.fillStyle=bgAt(t); g.fillRect(0,0,W,H);
+  const F=figF(t); const cam=F.x-760;
+  const fadeOut = t>=108 ? 1-seg(t,108,109) : 1;
+  g.save(); g.globalAlpha=fadeOut;
+  const gaps=[]; if(t<45.8) gaps.push(GAP1); if(between(t,48.5,103.5)) gaps.push(GAP2);
+  const drawnTo = t<1.5 ? lerp(cam-150, X0+40, ease(seg(t,0,1.5))) : Infinity;
+  drawLine(t,cam,[F,figV(t),figB(t),figE(t)],gaps,drawnTo);
+  const tips=[]; if(t<1.5) tips.push({t0:0,t1:1.5,first:[-150,LINE_Y],tip:[drawnTo-cam,LINE_Y],last:[X0+40-cam,LINE_Y]}); else if(t<2) tips.push({t0:0,t1:1.5,first:[-150,LINE_Y],tip:[X0+40-cam,LINE_Y],last:[X0+40-cam,LINE_Y]});
+  // props
+  for(const p of PROPS){ if(p.hide&&p.hide(t)) continue; const xf=p.xf?p.xf(t):{x:0,y:0,s:1,rot:0,a:1}; if(xf.a===0) continue;
+    g.save(); g.globalAlpha=(xf.a??1)*fadeOut; g.translate(p.ox+(xf.x||0)-cam, p.oy+(xf.y||0));
+    if(xf.rot){ const px=xf.px||0, py=xf.py||0; g.translate(px,py); g.rotate(xf.rot); g.translate(-px,-py); }
+    g.scale(xf.s??1,xf.s??1);
+    const M=g.getTransform();
+    for(const pt of p.parts){ if(t<pt.t0) continue; const u=t>=pt.t1?1:ease(seg(t,pt.t0,pt.t1)); const q=partial(pt.pts,u*pt.len);
+      strokePts(q.pts, LW/(xf.s||1)*Math.min(1,xf.s||1)+LW*(1-Math.min(1,xf.s||1)) );
+      if(t<=pt.t1+0.3 && pt.t1-pt.t0>0.05){ const tp=M.transformPoint(new DOMPoint(...q.tip)), fp=M.transformPoint(new DOMPoint(...pt.pts[0])), lp=M.transformPoint(new DOMPoint(...pt.pts[pt.pts.length-1])); tips.push({t0:pt.t0,t1:pt.t1,first:[fp.x,fp.y],tip:[tp.x,tp.y],last:[lp.x,lp.y]}); } }
+    if(p.text){ const tx=p.text(t); if(tx){ g.fillStyle=INK; g.textAlign='center'; if(tx.lines){ g.textAlign='left'; g.font='bold '+tx.size+'px Helvetica'; tx.lines.forEach((l,i)=>g.fillText(l,tx.x-95,tx.y+i*(tx.size+6))); } else { g.font='bold '+tx.size+'px Helvetica'; g.fillText(tx.s,tx.x,tx.y);} } }
+    if(p.flash&&p.flash(t)){ g.fillStyle=INK; g.beginPath(); g.arc(150,0,20,0,Math.PI*2); g.fill(); }
+    g.restore(); }
+  // upcoming parts (for the pencil's approach)
+  for(const p of PROPS){ for(const pt of p.parts){ if(pt.t0>t && pt.t0-t<0.4 && pt.t1-pt.t0>0.05){ const xf=p.xf?p.xf(pt.t0+0.001):{x:0,y:0,s:1}; if(xf.a===0) continue; const fx=p.ox+(xf.x||0)-cam+pt.pts[0][0]*(xf.s??1), fy=p.oy+(xf.y||0)+pt.pts[0][1]*(xf.s??1); tips.push({t0:pt.t0,t1:pt.t1,first:[fx,fy],tip:[fx,fy],last:[fx,fy]}); } } }
+  const cl=clockAt(t); if(cl) drawClock(cl,cam);
+  drawCoins(t,cam);
+  // sun crossing the sky
+  if(between(t,85,90)){ const u=seg(t,85,90); const sx=lerp(-120,W+120,u), sy=520-Math.sin(u*Math.PI)*380; strokePts(circle(sx,sy,60,40),12); for(let i=0;i<8;i++){const a=i*Math.PI/4+t; strokePts([[sx+Math.cos(a)*80,sy+Math.sin(a)*80],[sx+Math.cos(a)*110,sy+Math.sin(a)*110]],8);} }
+  // '?' and '!' marks
+  if(between(t,37.3,39.3)) mark('?',F,cam,t); if(between(t,21.2,23.4)) mark('!',F,cam,t,true);
+  // verification caption
+  if(between(t,98,107.5)){ const a=seg(t,98,98.6)*(1-seg(t,107,107.5)); g.save(); g.globalAlpha=a; g.fillStyle=INK; g.font='34px Helvetica'; g.textAlign='center';
+    g.fillText(FILM.caption[0], W/2, H-110);
+    g.fillText(FILM.caption[1], W/2, H-62); g.restore(); }
+  const pp=pencilPos(t,tips); if(pp) drawPencil(pp[0],pp[1]);
+  g.restore();
+  // end card
+  if(t>=109){ g.fillStyle=INK; g.textAlign='center';
+    const a1=seg(t,109,110.5), a2=seg(t,111,112), a3=seg(t,113,114.5), out=1-seg(t,118.5,120);
+    g.save(); g.globalAlpha=a1*out; g.font='bold 220px Helvetica'; g.fillText('dareskro',W/2,470); g.restore();
+    g.save(); g.globalAlpha=a2*out; g.font='64px Helvetica'; g.fillText(FILM.card[0],W/2,590); g.restore();
+    g.save(); g.globalAlpha=a3*out; g.font='40px Helvetica'; g.fillText(FILM.card[1],W/2,760); g.fillText(FILM.card[2],W/2,820); g.restore();
+    if(t>=109&&t<118.5){ const lx=lerp(-100,W+100,seg(t,109,111.5)); strokePts([[-100,900],[lx,900]]); } }
+}
+function mark(ch,F,cam,t,shake){ const hx=F.x-cam+F.dir*30*S, hy=132; g.save(); g.fillStyle=INK; g.font='bold 120px Helvetica'; g.textAlign='center'; g.translate(hx,hy); g.rotate(Math.sin(t*(shake?40:14))*0.08); g.fillText(ch,0,0); g.restore(); }
+window.render=render; render(0);
+</script>

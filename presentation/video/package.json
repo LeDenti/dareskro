@@ -1,0 +1,14 @@
+{
+  "name": "dareskro-film",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "The La Linea film of dareskro, one scenario file per chain",
+  "scripts": {
+    "xrpl": "node make.mjs all --scenario xrpl",
+    "near": "node make.mjs all --scenario near"
+  },
+  "dependencies": {
+    "playwright": "^1.58.0"
+  }
+}

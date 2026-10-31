@@ -1,0 +1,28 @@
+2026-10-31 07:58:12 UTC  contract dareskro.testnet, 0 escrow(s) before this run, employee dareskro-employee.testnet has 10.0000 NEAR
+2026-10-31 07:58:14 UTC  1 payroll escrow #1: 0.9963 NEAR to dareskro-employee.testnet, payable at 2026-10-31T07:59:25.853Z, memos ["sha256:dd3d7d8751aa0bfbeb3258064f7eefa619a0e9ef1eecf76b123b00913f3aa6af","net 440.36 EUR","dareskro/oracle:dareskro-oracle.testnet"]  https://testnet.nearblocks.io/txns/84KesLHxoSBJwvBwLMhBtbrzGZTJKLE3HaKhp57rUbof
+2026-10-31 07:58:16 UTC  2 stranger finishes before the date → refused: too early: the contract's clock has not reached finish_after  https://testnet.nearblocks.io/txns/3TV2JVA2adYTghpLfHSyCGu2JodRSuMAxvJXkKWsxHm1
+2026-10-31 07:58:18 UTC  3 employer cancels the payroll escrow → refused: this escrow has no cancel_after: nobody can cancel it  https://testnet.nearblocks.io/txns/39uHEe16B9xHiteNMzJw5rEXmuWnH4wrtDPg5XMgDZtj
+2026-10-31 07:58:21 UTC  4a batch with a short deposit → refused: deposit 1.00 NEAR does not cover the batch: 3.00 NEAR + storage 0.009 NEAR  https://testnet.nearblocks.io/txns/39tk4YJrCtQYFKskmkFzEG8AKYbyPcFAdPuJnPpCjtsd
+2026-10-31 07:58:23 UTC  4b one signature, three escrows #2, #3, #4: 0.5 + 0.4 + 0.04 NEAR, surplus returned  https://testnet.nearblocks.io/txns/HiosFJnELZszsrtqbaHntEsfyG5RYQMaAjcYg7L6NBjj
+2026-10-31 07:58:26 UTC  5 delivery escrow #5: 0.5 NEAR, condition b0e8e7ff27f1cc93…, proof = https://raw.githubusercontent.com/LeDenti/dareskro/main/LICENSE sha256 c3b463ae211f43f6…  https://testnet.nearblocks.io/txns/EMS1af4XSKb9Ec1Zbr8jL8JTca8jGGNob2XLTd7QjMw4
+2026-10-31 07:58:28 UTC  5a stranger finishes without the secret → refused: this escrow is locked by a condition: bring the fulfillment  https://testnet.nearblocks.io/txns/FsHeHu86v9LsJQwyRaTytHwnm2YecwXUnagJVEy9sxfc
+2026-10-31 07:58:30 UTC  5b stranger finishes with a wrong secret → refused: fulfillment does not match the condition  https://testnet.nearblocks.io/txns/DF9DHFJPH4735x3BrWQPodYdwx5XmEUrfVtuTJpHef1f
+2026-10-31 07:58:32 UTC  5c employer takes it back before the deadline → refused: too early: cancel_after not reached  https://testnet.nearblocks.io/txns/3g6XpGWSfQaVSyXqhgviP8TXXnRDiywRhvhRoYe3dC1b
+2026-10-31 07:58:34 UTC  6 delivery escrow #6: 0.25 NEAR, deadline in 90 s, will never be proven  https://testnet.nearblocks.io/txns/FCRaFjC5kUzbgvLMeeRimTGyt7aTv4CaUcPd8W5kmomw
+2026-10-31 07:58:34 UTC  7 oracle dareskro-oracle.testnet watching #1, #2, #3, #4, #5, #6; pay date in 52 s
+2026-10-31 07:58:37 UTC  escrow #5: delivery proven (sha256 matches), secret revealed → done, dareskro-employee.testnet credited https://testnet.nearblocks.io/txns/3StGQzE9oAtLnXjthuR1FKvpBF4wNen665rizRSzxecZ
+2026-10-31 07:58:38 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:58:46 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:58:55 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:59:03 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:59:12 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:59:20 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:59:32 UTC  escrow #1: date passed, finish → done, dareskro-employee.testnet credited https://testnet.nearblocks.io/txns/BS411RjzQafP8NrJBTSQm9NHhmeKKtUYhC4XirAzYrxg
+2026-10-31 07:59:35 UTC  escrow #2: date passed, finish → done, dareskro-employee.testnet credited https://testnet.nearblocks.io/txns/ACAYyJnBx7LqYUs9Ci9PsmYbjpa5LFscxT8Mvhj6bBEs
+2026-10-31 07:59:38 UTC  escrow #3: date passed, finish → done, dareskro-stranger.testnet credited https://testnet.nearblocks.io/txns/xmT6xDsgL3WqQALkFUwwwrr13srzgFe4YXcHcZUQ4TM
+2026-10-31 07:59:41 UTC  escrow #4: date passed, finish → done, dareskro-oracle.testnet credited https://testnet.nearblocks.io/txns/HkDMtpBsLe8M9DaNzzPU6SewfnjiTi7vSRFsjoVgKRET
+2026-10-31 07:59:42 UTC  escrow #6: delivery not proven (sha256 c3b463ae… ≠ 11111111…), waiting
+2026-10-31 07:59:53 UTC  escrow #6: past cancel_after, refund to dareskro-employer.testnet → done https://testnet.nearblocks.io/txns/7wotFYbchWeHEhr5BgjwgPyPjndgF2thUG2VJoYQ3X9D
+2026-10-31 07:59:53 UTC  7 done: employee 10.0000 → 11.9914 NEAR (+1.9914); payroll finished 4 s after the date by dareskro-oracle.testnet, nobody clicked
+2026-10-31 07:59:56 UTC  8 finish the payroll escrow twice → refused: escrow already closed  https://testnet.nearblocks.io/txns/2t7HjTMemFm1arDjCWqLQZHE7D5LTTGX3X5zvPpxk6Uz
+2026-10-31 07:59:56 UTC  report → compte_rendu.json; statuses {"1":{"status":"Finished","closed_by":"dareskro-oracle.testnet","fulfillment":null},"2":{"status":"Finished","closed_by":"dareskro-oracle.testnet","fulfillment":null},"3":{"status":"Finished","closed_by":"dareskro-oracle.testnet","fulfillment":null},"4":{"status":"Finished","closed_by":"dareskro-oracle.testnet","fulfillment":null},"5":{"status":"Finished","closed_by":"dareskro-oracle.testnet","fulfillment":"9224cc667e95427dd6394adce3736e46ec66bbe16ca5ffa112debc10811af598"},"6":{"status":"Cancelled","closed_by":"dareskro-oracle.testnet","fulfillment":null}}
