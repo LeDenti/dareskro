@@ -1,0 +1,117 @@
+{
+  "cluster": "devnet",
+  "startedAt": "2026-10-31T08:33:22.754Z",
+  "steps": [
+    {
+      "step": "1 create payroll",
+      "id": "1793435603821",
+      "escrow": "HbMBRDxKM4YRZYyutDc2P8VHa1SBByDdRpD9mqTjhpqr",
+      "signature": "28WMXA1oscVodSug53vhjQpmXBqy5LayoMFgwT2ecDpoQgZtzQucqe3Up2oMEuSit7xnyZwAZ8DZCiimE5LF4DjS",
+      "finishAfter": "2026-10-31T08:34:53.000Z",
+      "lamports": 50000000,
+      "tx": "https://explorer.solana.com/tx/28WMXA1oscVodSug53vhjQpmXBqy5LayoMFgwT2ecDpoQgZtzQucqe3Up2oMEuSit7xnyZwAZ8DZCiimE5LF4DjS?cluster=devnet",
+      "account": "https://explorer.solana.com/address/HbMBRDxKM4YRZYyutDc2P8VHa1SBByDdRpD9mqTjhpqr?cluster=devnet"
+    },
+    {
+      "step": "2 finish by passer-by BEFORE the date",
+      "code": "TooEarly",
+      "message": "too early: the cluster clock has not reached finish_after.",
+      "tx": "https://explorer.solana.com/tx/2ZZiTCoeenbsDWiSwg781vJv8vejaYwWbCgRDsUJwFHfVj3wdABk5LLCi45q98bhexFCcZ2dY7nNzRYXsSuJu8vT?cluster=devnet"
+    },
+    {
+      "step": "3 cancel by the employer",
+      "code": "NotCancellable",
+      "message": "this escrow has no cancel_after: nobody can cancel it.",
+      "tx": "https://explorer.solana.com/tx/3Bz8geRPhusMAxCW4XVuNcHaZP8fy6cJThWDD4BgLzvDo1TmvH4U7vjAW6yJjNdSAh64HqDGFRQrNdZviGwRogSw?cluster=devnet"
+    },
+    {
+      "step": "4 finish to another destination",
+      "code": "WrongDestination",
+      "message": "the destination account is not the one written at creation.",
+      "tx": "https://explorer.solana.com/tx/46QA1yhzD9STnSfB3ySE8tUSMjnQnxUBGvkuf6HGvpoKo2ggvEDw7jYP2Du88aF71SMEP7d9pP1v7rBUskF6qavS?cluster=devnet"
+    },
+    {
+      "step": "6a create conditional",
+      "id": "1793435607489",
+      "escrow": "5jDp6gs9x537XbtEwyPektvMVnXPp97Fa9wpn7h4KjQ2",
+      "signature": "544cTPxxafcRsubUTaPkdSMGNGCtS3s6HPfQUtz89Zxre7t12QBDthQmgpaqsXEDpq5aZ6xpCGRkqjbhTMopf49n",
+      "tx": "https://explorer.solana.com/tx/544cTPxxafcRsubUTaPkdSMGNGCtS3s6HPfQUtz89Zxre7t12QBDthQmgpaqsXEDpq5aZ6xpCGRkqjbhTMopf49n?cluster=devnet"
+    },
+    {
+      "step": "6b finish with a WRONG secret",
+      "code": "WrongFulfillment",
+      "message": "fulfillment does not match the condition.",
+      "tx": "https://explorer.solana.com/tx/4is1iBKPTNLWNAFsTh3u9EukWqRXiKGfjjLeHzQpAipMFTiGDN3XGoAQEZ81nZ6m86s1U1Gjwhm8Q9bEfp7uAcgd?cluster=devnet"
+    },
+    {
+      "step": "6c finish with the RIGHT secret",
+      "err": null,
+      "tx": "https://explorer.solana.com/tx/61y8jSQc4ZGW2xnctzGD1UZae15vga1Jig4Q8Edza4EG8AX8tMYDbaJpghjdBaKaa28YMx2mRPM7mr3G9rFUkAFn?cluster=devnet",
+      "status": "finished",
+      "fulfillmentOnChain": true
+    },
+    {
+      "step": "7 batch with one unaffordable line",
+      "failed": "Simulation failed. ",
+      "firstLineLocked": false
+    },
+    {
+      "step": "5 finish by passer-by AFTER the date",
+      "err": null,
+      "tx": "https://explorer.solana.com/tx/5cbxdS3dyJ5yQ2nHcfsdvdcmA5ibJYhLiwbXd8onCWfVSzKNNGu9ntghgyLikrFrpMZtGxPuDYhgDyxQcsKbDWfR?cluster=devnet",
+      "employeeCredited": 0.05,
+      "status": "finished",
+      "closedBy": "CLv5GxnM3NR9wwXXpFzjPLZZi66eBaFehBHXNsqYdYhN"
+    }
+  ],
+  "program": "6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu",
+  "parties": {
+    "employer": "4ypF64RBg6GUszSwcp8d46tUvDkjDdUXDTZbziVRSF2J",
+    "employee": "7zonozdooYTTRUtEk6TEQNRQYJSSSQQdyhci15Lw24uV",
+    "passerby": "CLv5GxnM3NR9wwXXpFzjPLZZi66eBaFehBHXNsqYdYhN",
+    "oracle": "DmA8pA8B9ohJUSEeBMQc3UQNvWfRwLDuuCqXduoKeh5L"
+  },
+  "registry": [
+    {
+      "address": "HbMBRDxKM4YRZYyutDc2P8VHa1SBByDdRpD9mqTjhpqr",
+      "owner": "4ypF64RBg6GUszSwcp8d46tUvDkjDdUXDTZbziVRSF2J",
+      "destination": "7zonozdooYTTRUtEk6TEQNRQYJSSSQQdyhci15Lw24uV",
+      "mint": null,
+      "amount": "50000000",
+      "finishAfter": 1793435693,
+      "cancelAfter": null,
+      "condition": null,
+      "memos": [
+        "sha256:4e3634e6c6bb0e259d1ef39d4b5770964f70e962a0af9812d7ef0630ba56abda",
+        "466.57 EUR",
+        "dareskro/oracle:DmA8pA8B9ohJUSEeBMQc3UQNvWfRwLDuuCqXduoKeh5L"
+      ],
+      "status": "finished",
+      "createdAt": 1793435604,
+      "closedAt": 1793435699,
+      "closedBy": "CLv5GxnM3NR9wwXXpFzjPLZZi66eBaFehBHXNsqYdYhN",
+      "fulfillment": null,
+      "id": "1793435603821"
+    },
+    {
+      "address": "5jDp6gs9x537XbtEwyPektvMVnXPp97Fa9wpn7h4KjQ2",
+      "owner": "4ypF64RBg6GUszSwcp8d46tUvDkjDdUXDTZbziVRSF2J",
+      "destination": "7zonozdooYTTRUtEk6TEQNRQYJSSSQQdyhci15Lw24uV",
+      "mint": null,
+      "amount": "20000000",
+      "finishAfter": null,
+      "cancelAfter": 1793439203,
+      "condition": "c0ee33b9872cd7dd021ce414cc8c65268f679ef984ba2e831a3b9d04b6b92679",
+      "memos": [
+        "delivery: url + sha256"
+      ],
+      "status": "finished",
+      "createdAt": 1793435607,
+      "closedAt": 1793435612,
+      "closedBy": "DmA8pA8B9ohJUSEeBMQc3UQNvWfRwLDuuCqXduoKeh5L",
+      "fulfillment": "ad099871236c8dde15cbdd57babc35f50cb9d22e914baecc7a705d71f1fa752b",
+      "id": "1793435607489"
+    }
+  ],
+  "endedAt": "2026-10-31T08:35:00.666Z"
+}
