@@ -443,7 +443,7 @@ measured tonight; the long version with every measurement is in [zk/README.md](z
 | Layer | Hides from the public | Leaves visible |
 |---|---|---|
 | **A. Unlinkable payee** — the employee is paid to a fresh account per pay period, derived from the employee's own Ledger (`44'/144'/<period>'/0/0`, `agent/compte_periode.mjs`) | *who* is paid: no account carries a person's pay history | that an escrow exists between two addresses |
-| **B. Selective disclosure** — `agent/confidentiel.mjs` seals the statement with AES-256-GCM (padded to a 1 kB class), the content key wrapped with X25519 + HKDF for two readers only: the employee and the administration. On the chain, hashes. `agent/divulgation.mjs --role administration` decrypts, recomputes the SHA-256, compares it with the escrow's memo and prints the statement; `--role public` shows what anyone sees and fails to open anything; `--role employee` the same as the administration, with the employee's key | *what*: the name, the hours, the lines, the total in dollars | a 3 072-byte opaque file and an empreinte |
+| **B. Selective disclosure** — `agent/confidentiel.mjs` seals the statement with AES-256-GCM (padded to a 1 kB class), the content key wrapped with X25519 + HKDF for the named readers of `agent/lecteurs.json` only: the employee, the administration and, since 31/10, the pension fund (statement only). On the chain, hashes. `agent/divulgation.mjs --role administration` decrypts, recomputes the SHA-256, compares it with the escrow's memo and prints the statement; `--role public` shows what anyone sees and fails to open anything; `--role employee` the same as the administration, with the employee's key | *what*: the name, the hours, the lines, the total in dollars | a 3 072-byte opaque file and an empreinte |
 | **C. Zero-knowledge compliance proof** — `zk/circuit/src/main.nr` (Noir, compiled and proven in WebAssembly with `@noir-lang/noir_wasm` and `@aztec/bb.js` 5.2.1, no binary installed) proves that the total is exactly the collective agreement's formula for *some* admissible hours, coefficient and seniority, and that the prover knows them behind a Pedersen commitment that also binds the statement's SHA-256; the commitment rides in the escrow as a memo (`dareskro/zk-commitment`) | *why it is right*, without the payer disclosing anything: the proof itself reveals nothing but "lawful under IDCC 1996" | the total, the Sunday/shutters context, the point value — all public already |
 
 Measured, 24/10/2026 (arm64 Mac, Node 26, one wasm thread): compile 0.42 s, witness 33 ms,
@@ -626,6 +626,147 @@ The desk's **Privacy** card (card 6 of the employee flow) talks to
 escrow just created, and shows, in the three readers' own words, what the public sees, what the
 administration opens, what the employee opens, and the proof verified against the chain.
 
+## La paie, transmise à la caisse — the payslip transmitted to the pension fund (31/10/2026)
+
+The question asked on 31/10: *a copy of the payslip on the chain, sent to the pension fund,
+invisible to everyone, visible to the competent administrations — an NFT?* The answer built and
+measured here: **the payslip never goes on the chain, in clear or encrypted.** What goes on the
+chain is an *act of transmission* — the hashes of the statement and of its sealed copy, the
+address where the sealed copy sits, the period, the employer — followed by the fund's
+*acknowledgement*. Both are 1-drop Payments in the fund's account history: anyone can see that
+an employer transmitted something to the fund on a given day and that the fund acknowledged it;
+nobody can read what. The sealed copy itself is in a store off the chain, addressed by its own
+hash, readable by three named keys only. Two reasons the document stays off the ledger, even
+sealed: a memo holds 1 kB and the sealed statement is 9.5 kB; and a ledger is immutable, so a
+ciphertext posted today is a ciphertext exposed forever, to every future attack on its cipher —
+and a ciphertext of personal data is still personal data (below).
+
+### What was added to the privacy layer
+
+- **A third reader and a directory.** `agent/lecteurs.json` names who can read: role, name,
+  X25519 public key, key id (first 16 hex of the key's SHA-256), `since`, `revoked`, scope.
+  Employee and administration keep their keys; the pension fund (Agirc-Arrco / CNAV) is the third.
+  `confidentiel.mjs --chiffre` wraps the content key for every active reader; the zero-knowledge
+  opening is sealed under a **second key** wrapped for the employee and the administration only:
+  the fund's scope is the statement, `zk/ouvrir.mjs --role retraite` is refused. `--revoke
+  retraite` retires the current key (kept on disk under its key id) and issues a new one; a
+  sealed file names the key id it was wrapped for, so the reader knows which key to use.
+- **A content-addressed deposit.** The sealed file goes to `agent/depots/<sealed-sha256>.json`,
+  served over HTTPS by GitHub; its IPFS CIDv1 (raw leaf, SHA-256) is computed and written in the
+  memos, so any pinning service gives the same address. Nothing is pinned by us: the store is
+  the employer's or the fund's choice, and it may be emptied when the retention period ends.
+- **The act of transmission.** A `Payment` of 1 drop from the employer to the fund, `InvoiceID` =
+  the statement's SHA-256 (a native 256-bit field, indexable), memos `dareskro/payslip-sha256`,
+  `dareskro/sealed-sha256`, `dareskro/sealed-uri`, `dareskro/sealed-cid`, `dareskro/period`,
+  `dareskro/employer` (the employer's SIRET, a legal person's public identifier).
+- **The acknowledgement.** The fund fetches the URI, checks the bytes against `sealed-sha256`,
+  opens with its key, recomputes the statement hash, and pays 1 drop back with memos
+  `dareskro/ack` = the statement hash, `dareskro/ack-sealed`, `dareskro/ack-of` = the
+  transmission's hash. The desk's Privacy card (`GET /transmission` on the privacy service) shows
+  "transmitted on…, acknowledged on…" with both hashes, and a fourth button, *Open as the
+  pension fund*.
+- **The NFT variant**, measured for the comparison below: `NFTokenMint` with the URI, flag
+  `tfBurnable` only (not transferable), `Destination` = the fund and `Amount` 0 (amendment
+  NFTokenMintOffer, active on testnet), accepted by the fund, then burnt by the issuer.
+
+All of it is `node agent/demo_transmission_retraite.mjs` (`seal`, then `transmit` once the deposit
+is pushed; `revocation` for the key measurement), captures in
+`presentation/demo-terminal/capture/transmission_*.log`, record in `agent/sortie/transmission.json`.
+
+### Measured on testnet, 31/10/2026 09:39 UTC (`wss://testnet.xrpl-labs.com`)
+
+Statement `384ec59c…` (the shipped one, bound to its pay escrow
+[99DBC2B3…](https://testnet.xrpl.org/transactions/99DBC2B3F8DCB1F50BAC12F12B34B0DD5E85A264FC9FAB8095D5A27A32BD2972)),
+employer `r9qWKQMe…`, pension fund `rwxybaKR…`, both testnet accounts created by the script.
+
+| Step | Result |
+|---|---|
+| Sealed for three readers: 4 845 bytes plain → 9 557-byte file, ciphertext 5 120 bytes, key ids employee `5b8f038c…`, administration `b7559188…`, retraite `cb820535…`; zk opening (400 bytes) under a second key for employee and administration only | `agent/depots/1ec596cc…json`, sha256 `1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653`, CID `bafkreia6ywlmyrzte56bbruuahfljx24ccy3ljnr2p74rynb4vygvjewkm` |
+| Deposit fetched from its HTTPS URI before transmitting: 9 557 bytes, same hash | `fetched, sha256 = the record's` |
+| **Transmission**: `Payment` 1 drop, fee 12 drops, `InvoiceID` = statement hash, six memos, validated 09:39:32 UTC, ledger 21959605 | [3EE8D4BD…](https://testnet.xrpl.org/transactions/3EE8D4BD9DBD222C37C3F6DDEE5D73C7C5CEC0DAB972E163F23853C3C85CA7E8) |
+| The fund fetches the URI: hash = memo `dareskro/sealed-sha256`; opens with its key (`divulgation.mjs --role retraite`): hash recomputed = `dareskro/payslip-sha256` = the pay escrow's memo, fiat and gross memos match, the statement printed | exit 0, `bound to escrow 99DBC2B3…: MATCH` |
+| The fund asks for the zk opening | exit 1, `not a reader of the zk opening (its scope is the statement only)` |
+| The public reads the same file and the chain: sizes, hashes, three key ids; a random key refused on all three blocks | exit 0, `RESULT: OK, the file and the escrow show the public nothing private` |
+| A stranger with a fresh X25519 key claims to be the fund | exit 1, `the GCM tag does not authenticate` |
+| **Acknowledgement**: `Payment` 1 drop from the fund, memos `ack` = `384ec59c…`, `ack-sealed` = `1ec596cc…`, `ack-of` = `3EE8D4BD…`, validated 09:39:52 UTC | [618A6ED2…](https://testnet.xrpl.org/transactions/618A6ED2AC0C7B0FB266E39D582F46DF094777675A94364ED4122D1893C06436) |
+| The fund's history (`account_tx`), as anyone reads it | `transmitted 2026-10-31T09:39:32Z 3EE8D4BD…` / `acknowledged 2026-10-31T09:39:52Z 618A6ED2…`, ack = the hash transmitted; no employee, no hours, no lines, no amount |
+| NFT variant — `NFTokenMint`, `tfBurnable`, URI 155 bytes, offered to the fund for 0 | [0E3F84F0…](https://testnet.xrpl.org/transactions/0E3F84F032665FFF839C7B6F3BC5919D332D0ACF84695F0176DCCD55111933A5), NFTokenID `00010000…014F1384`, sell offer `F21DB79A…` to the fund only |
+| — the fund accepts (`NFTokenAcceptOffer`): its `account_nfts` lists the token with the URI; **OwnerCount 0 → 1, 0.2 XRP of reserve locked on the fund's account** | [8678A995…](https://testnet.xrpl.org/transactions/8678A99529EC9F70C744A9012BF66B3CB13847C7A7A8AC3051387304D60AE9B8) |
+| — the employer burns it (`NFTokenBurn`, `Owner` = the fund) **without the fund's signature**: the fund's `account_nfts` no longer lists it | [F1CB0BFA…](https://testnet.xrpl.org/transactions/F1CB0BFA1C8ACDD4B620536CD366FE4F175567F4159594A3C354D4EBC333102E) |
+
+Said as it happened: the first run (09:36 UTC, `transmission_retraite_v1_escrow1F1F.log`) bound the
+seal to the escrow of 25/10 19:46 ([1F1FE2C7…](https://testnet.xrpl.org/transactions/1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D)),
+which cites the same statement hash but whose fiat and gross memos say `paid=440.36` — the net
+before tax, the pay desk's figure before the bug fixed the same morning in `paie/`. The chain part
+passed (transmission [AF17F5EF…](https://testnet.xrpl.org/transactions/AF17F5EFF8A9BA3CC6746F9C73CDDFA36912029EF9DFA2A7709A81C9AA5B6AF3),
+NFT [AD3E431C…](https://testnet.xrpl.org/transactions/AD3E431C069AF29DBB064AC0ED9F53198B93C42D621D4BCB06A5FA69C2200BBC) accepted and burnt,
+acknowledgement [9D11F9DF…](https://testnet.xrpl.org/transactions/9D11F9DF1AB8A8E3FD40B7E157813ECED75AF252C36A6ED316E3CB82F3715862)),
+and the fund's opening reported `MISMATCH` on those two memos and exited 1 — the reader doing its
+job on a wrong escrow. The run was repeated bound to the 14:35 escrow; both deposits stay in
+`agent/depots/`, since both were transmitted.
+
+**Revocation** (`demo_transmission_retraite.mjs revocation`, scratch keys,
+`transmission_revocation.log`): statement A sealed while the fund holds key 1; key 1 revoked and
+retired, key 2 issued and listed; statement B sealed. B with key 1: exit 1, the GCM tag refuses.
+B with key 2: opens. A with key 1 (the directory points the fund to its retired key): still opens
+— what was given before the revocation stays readable, nothing can be un-sent; revocation
+protects what is sealed afterwards. Without the retired key on disk, the directory says plainly
+`a key issued after the sealing does not open it`.
+
+### Memo or NFT — which form is the right one
+
+| | `Payment` 1 drop + memos (+ `InvoiceID`) | `NFTokenMint` (XLS-20), URI, `tfBurnable`, offered to the fund |
+|---|---|---|
+| What the chain carries | hashes, URI, period, employer: ≤ 1 kB of memos, in the transaction | the URI (≤ 256 bytes) in a ledger object, plus the same memos on the mint |
+| Cost measured | 1 drop + 12 drops fee each way: **26 drops** for transmission and acknowledgement | 12 drops to mint + 12 for the fund to accept + 12 to burn, **and 0.2 XRP of reserve** locked on the fund's account per NFT page (up to 32 tokens a page) as long as it holds them |
+| Who must act | the employer sends; the fund answers when it wants | the employer mints an offer; **the fund must sign an acceptance** before anything sits in its account (the acceptance doubles as an acknowledgement, with no room for a memo of its own on what was opened) |
+| Revocability | none: history is history. A correction is a new transmission citing the old one | the issuer **burns the fund's copy without the fund's signature** (measured): convenient for a withdrawn payslip, wrong for evidence — the record the fund relies on can vanish from the ledger state at the sender's will |
+| Where it is readable | the account's history (`account_tx`): kept by full-history servers, pruned by most others; the explorer shows the memos decoded | the ledger state (`account_nfts`): visible from any server while the token exists; the explorer shows an NFT page with the URI; after a burn, only the history |
+| Readability for a human | `testnet.xrpl.org` prints the six memos as text | the URI is hex in the object; the explorer decodes it; "an NFT" reads as a collectible, not as a filing |
+
+**Conclusion: the transmission is a `Payment` with memos**, the `InvoiceID` carrying the
+statement hash, answered by a `Payment` with the `ack` memo. It costs nothing, needs no
+reserve, needs nothing from the fund but its answer, and cannot be made to disappear. The NFT
+form is the right shape for something the fund should *hold* and that the issuer may legitimately
+withdraw — a credential, an entitlement — not for the proof of a filing; the XLS-70
+**Credentials** amendment (active on testnet) is the closer native fit for "the fund attests it
+holds this statement" and is a follow-up, not done here. If a server without full history is a
+concern, the NFT variant kept unburnt gives state visibility at 0.2 XRP of the fund's reserve;
+the act itself stays the Payment.
+
+### The legal channel, named
+
+In France the payslip's data reaches the pension funds through the **DSN**, the *déclaration
+sociale nominative*, monthly, on net-entreprises, the only legal declaration; Agirc-Arrco and
+the CNAV take their contributions and the career records from it. Nothing here produces a DSN
+(a certified payroll software's job, said in `paie/README.md`). This act **anchors the hash of
+what was declared and proves the transmission and its acknowledgement**, dated by the ledger:
+it is an evidence layer next to the DSN, not a substitute, and the fund's acknowledgement here is
+a testnet account played by the script, not an institution's signature.
+
+### GDPR, said in the README because the ledger is immutable
+
+- **A ciphertext of personal data is personal data** (CNIL, EDPB): pseudonymised or encrypted,
+  it remains attributable to a person by whoever holds a key. So the sealed statement never goes
+  on the chain, where nothing can be erased: it goes to a store that can be emptied. The chain
+  keeps a hash, which names nobody as long as the plaintext stays unpublished (a hash of a
+  known document is verifiable, a hash of an unknown one is 32 opaque bytes). The memos add the
+  period and the employer's SIRET: the fund's address receives every employer's transmissions,
+  so a period alone designates no employee.
+- **Retention.** The store (`agent/depots/`, or the IPFS pin, or the employer's server) can
+  delete the sealed file when the payroll retention period ends (5 years for the employer's
+  copy of the payslip, longer for the fund's career records); the hash on the ledger then points
+  to nothing, as a receipt number does after the archive is shredded. Right to erasure applies
+  to the store, and is satisfiable there.
+- **Keys.** The fund's X25519 private key is the fund's: generated by it, kept by it, its public
+  half listed in `agent/lecteurs.json` with a date, revocable. In this demo the three private
+  keys sit in `agent/cles/` on one machine (0600, never committed), because the script plays the
+  three parties; the directory is honest about it (`note`). Nothing here holds the fund's key for
+  it, and nothing should.
+- **Who sees what.** Public: two addresses, 1 drop, hashes, a URI, a period, a SIRET. The fund:
+  the statement. The administration and the employee: the statement and the proof's opening.
+  The employer: everything, it wrote it.
+
 ## Mastercard — the agent pays for its evidence (Agent Pay for Machines)
 
 The salary goes through the XRPL escrow. But before the engine can price the
@@ -738,10 +879,15 @@ cd app && npm install && npm run dev            # http://localhost:5173
 # 4. Mastercard AP4M (optional): download the SDK as shown in the AP4M section above, then
 cd ap4m && npm install && node merchant.mjs     # and node agent.mjs, node payout.mjs …
 
-# 5. the privacy layer: keys for the two readers, the proof, the service behind the Privacy card
+# 5. the privacy layer: keys for the three readers, the proof, the service behind the Privacy card
 node agent/confidentiel.mjs --init && (cd zk && npm install && node prove.mjs)
 node agent/service_confidentialite.mjs            # 127.0.0.1:8788
 node oracle/demo_confidentialite.mjs              # the whole layer end to end on testnet, no device
+
+# 6. the payslip transmitted to the pension fund: seal and deposit, push the branch, then transmit and acknowledge
+node agent/demo_transmission_retraite.mjs seal && git add agent/depots && git commit -m "deposit" && git push
+node agent/demo_transmission_retraite.mjs transmit    # Payment + memos, NFT variant, the fund opens, the public fails, ack
+node agent/demo_transmission_retraite.mjs revocation  # a revoked key opens nothing sealed afterwards
 ```
 
 On the page: validate the statement with your name → connect the Ledger (USB)

@@ -5,6 +5,7 @@
  *   POST /seal   { escrow }        seal the statement for the employee and the administration, bound to that escrow
  *   GET  /view?role=&escrow=       what the public, the administration or the employee sees (agent/divulgation.mjs)
  *   GET  /verify?escrow=           verify the zero-knowledge proof against the chain, as anyone can (zk/verify.mjs)
+ *   GET  /transmission             the last transmission to the pension fund (agent/sortie/transmission.json: hashes, tx, ack)
  *
  * In the demo the two private keys (employee, administration) sit on this machine in
  * agent/cles/ (0600, never committed); in production each reader runs its own copy of
@@ -20,7 +21,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
 const PORT = Number(process.env.PRIVACY_PORT || 8788);
-const ROLES = new Set(["public", "administration", "employee"]);
+const ROLES = new Set(["public", "administration", "employee", "retraite"]);
 const HEX64 = /^[0-9a-fA-F]{64}$/;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
@@ -60,6 +61,11 @@ const server = createServer(async (req, res) => {
     const pub = zkPublic();
     return pub ? json(res, 200, pub) : json(res, 404, { error: "no proof yet: node zk/prove.mjs" });
   }
+  if (req.method === "GET" && url.pathname === "/transmission") {
+    const f = path.join(HERE, "sortie", "transmission.json");
+    if (!existsSync(f)) return json(res, 404, { error: "no transmission yet: node agent/demo_transmission_retraite.mjs" });
+    return json(res, 200, JSON.parse(readFileSync(f, "utf8")));
+  }
   if (req.method === "POST" && url.pathname === "/seal") {
     let body = "";
     req.on("data", (d) => (body += d));
@@ -81,7 +87,7 @@ const server = createServer(async (req, res) => {
     const escrow = url.searchParams.get("escrow") ?? "";
     const role = url.pathname === "/verify" ? "public" : url.searchParams.get("role") ?? "";
     if (!HEX64.test(escrow)) return json(res, 400, { role, ok: false, exit: 2, lines: ["escrow must be a 64-hex EscrowCreate hash"] });
-    if (!ROLES.has(role)) return json(res, 400, { role, ok: false, exit: 2, lines: ["role must be public, administration or employee"] });
+    if (!ROLES.has(role)) return json(res, 400, { role, ok: false, exit: 2, lines: ["role must be public, administration, employee or retraite"] });
     const args = url.pathname === "/verify"
       ? [path.join(ROOT, "zk", "verify.mjs"), "--escrow", escrow]
       : [path.join(HERE, "divulgation.mjs"), "--role", role, "--escrow", escrow];
@@ -91,4 +97,4 @@ const server = createServer(async (req, res) => {
   }
   json(res, 404, { error: "not found" });
 });
-server.listen(PORT, "127.0.0.1", () => log(`privacy service listening on http://127.0.0.1:${PORT} — /zk, /seal, /view, /verify`));
+server.listen(PORT, "127.0.0.1", () => log(`privacy service listening on http://127.0.0.1:${PORT} — /zk, /seal, /view, /verify, /transmission`));

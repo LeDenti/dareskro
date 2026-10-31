@@ -1,5 +1,5 @@
 {
-  "phase": "sealed",
+  "phase": "acknowledged",
   "sealed_at": "2026-10-31T09:37:49.072Z",
   "node": "wss://testnet.xrpl-labs.com",
   "statement": {
@@ -25,7 +25,78 @@
     "zk_opening_readers": [
       "employee",
       "administration"
-    ]
+    ],
+    "uri_live_at_transmission": true
   },
-  "directory": "agent/lecteurs.json"
+  "directory": "agent/lecteurs.json",
+  "transmitted_at": "2026-10-31T09:39:31.056Z",
+  "accounts": {
+    "employer": "r9qWKQMehC9kV5PgmZnip7oD4KfvLkY7F1",
+    "pension_fund": "rwxybaKRZnMMnnTSp6kPvvy5LcctVMzmMp"
+  },
+  "reserves": {
+    "base_drops": 1000000,
+    "per_object_drops": 200000
+  },
+  "transmission": {
+    "hash": "3EE8D4BD9DBD222C37C3F6DDEE5D73C7C5CEC0DAB972E163F23853C3C85CA7E8",
+    "ledger": 21959605,
+    "at": "2026-10-31T09:39:32Z",
+    "fee_drops": "12",
+    "amount_drops": "1",
+    "memos": {
+      "dareskro/payslip-sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+      "dareskro/sealed-sha256": "1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653",
+      "dareskro/sealed-uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653.json",
+      "dareskro/sealed-cid": "bafkreia6ywlmyrzte56bbruuahfljx24ccy3ljnr2p74rynb4vygvjewkm",
+      "dareskro/period": "2026-10",
+      "dareskro/employer": "SIRET 12345678900012"
+    },
+    "invoice_id": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf"
+  },
+  "nft_variant": {
+    "mint": {
+      "hash": "0E3F84F032665FFF839C7B6F3BC5919D332D0ACF84695F0176DCCD55111933A5",
+      "fee_drops": "12",
+      "token_id": "0001000060ED71FD923BD2B796801E0F5524C35BFB753F8F5D51E11F014F1384",
+      "offer_id": "F21DB79A76A319C8AA86A126FEE4E2430F08BEED292DFFA22454AE746ABF6667",
+      "flags": "tfBurnable (1): not transferable, the issuer may burn it",
+      "uri": "https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653.json"
+    },
+    "accept": {
+      "hash": "8678A99529EC9F70C744A9012BF66B3CB13847C7A7A8AC3051387304D60AE9B8",
+      "fee_drops": "12",
+      "owner_count_before": 0,
+      "owner_count_after": 1,
+      "reserve_locked_drops": "200000"
+    },
+    "burn": {
+      "hash": "F1CB0BFA1C8ACDD4B620536CD366FE4F175567F4159594A3C354D4EBC333102E",
+      "fee_drops": "12",
+      "fund_still_holds": false
+    }
+  },
+  "opening": {
+    "fund_opens_exit": 0,
+    "fund_zk_opening_exit": 1,
+    "public_exit": 0,
+    "stranger_key_exit": 1,
+    "received_sha256": "1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653",
+    "fetched_from_uri": true
+  },
+  "acknowledgement": {
+    "hash": "618A6ED2AC0C7B0FB266E39D582F46DF094777675A94364ED4122D1893C06436",
+    "ledger": 21959611,
+    "at": "2026-10-31T09:39:52Z",
+    "fee_drops": "12",
+    "memos": {
+      "dareskro/ack": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+      "dareskro/ack-sealed": "1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653",
+      "dareskro/ack-of": "3EE8D4BD9DBD222C37C3F6DDEE5D73C7C5CEC0DAB972E163F23853C3C85CA7E8"
+    }
+  },
+  "timeline": {
+    "transmitted": "2026-10-31T09:39:32Z",
+    "acknowledged": "2026-10-31T09:39:52Z"
+  }
 }

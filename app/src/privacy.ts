@@ -9,7 +9,15 @@ const SERVICE_URL = "http://127.0.0.1:8788";
 
 export type ZkPublic = { commitment: string; total_cents: number; generated?: string; proof_bytes?: number; vk_sha256?: string };
 export type SealResult = { ok: boolean; sha256_plain?: string; file_bytes?: number; recipients?: string[]; error?: string };
-export type Role = "public" | "administration" | "employee";
+export type Role = "public" | "administration" | "employee" | "retraite";
+export type Transmission = {
+  phase: string;
+  statement: { sha256: string; period: string; employer: string };
+  sealed: { sha256: string; uri: string; bytes: number };
+  transmission?: { hash: string; at?: string };
+  acknowledgement?: { hash: string; at?: string; memos?: Record<string, string> };
+  nft_variant?: { mint?: { hash: string; token_id: string }; burn?: { hash: string } };
+};
 export type View = { role: Role; ok: boolean; exit: number; lines: string[] };
 
 /** The latest proof's public values, or undefined when the service is down or nothing was proven. */
@@ -54,5 +62,16 @@ export async function verifyProof(escrow: string): Promise<View> {
     return (await res.json()) as View;
   } catch {
     return { role: "public", ok: false, exit: -1, lines: ["privacy service not running (node agent/service_confidentialite.mjs)"] };
+  }
+}
+
+/** The last transmission of the sealed statement to the pension fund, or undefined when none was made. */
+export async function transmission(): Promise<Transmission | undefined> {
+  try {
+    const res = await fetch(`${SERVICE_URL}/transmission`);
+    if (!res.ok) return undefined;
+    return (await res.json()) as Transmission;
+  } catch {
+    return undefined;
   }
 }

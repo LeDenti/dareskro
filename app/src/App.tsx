@@ -260,6 +260,7 @@ function Desk(props: {
   const [zkPub, setZkPub] = useState<privacy.ZkPublic>();
   const [sealInfo, setSealInfo] = useState<privacy.SealResult>();
   const [viewOut, setViewOut] = useState<privacy.View>();
+  const [transmission, setTransmission] = useState<privacy.Transmission>();
   const [privacyBusy, setPrivacyBusy] = useState<string>();
   const [watched, setWatched] = useState<oracle.WatchedEscrow>();
   const [oracleError, setOracleError] = useState<unknown>();
@@ -267,6 +268,7 @@ function Desk(props: {
   useEffect(() => {
     oracle.identity().then(setOracleId);
     privacy.zkPublic().then(setZkPub);
+    privacy.transmission().then(setTransmission);
   }, []);
 
   // ---- the registry: everything the oracle watches, every kind, every 5 s
@@ -1316,7 +1318,7 @@ function Desk(props: {
       <Card n="6" title="Privacy — invisible to the public, visible to the administration" disabled={!escrow}>
         <p className="hint">
           Three layers on top of a transparent ledger. The employee is paid to a fresh account per period (nobody can name the payee).
-          The statement is sealed with AES-256-GCM, its key wrapped for two readers only, the employee and the administration (X25519):
+          The statement is sealed with AES-256-GCM, its key wrapped for three named readers only, the employee, the administration and the pension fund (X25519, directory agent/lecteurs.json):
           on the chain, hashes. A zero-knowledge proof (Noir, UltraHonk) lets anyone check the locked amount is a lawful pay under the
           collective agreement without the payer disclosing who, how many hours, which coefficient or seniority.
           The amount itself stays public until XLS-96 confidential transfers reach escrows.
@@ -1327,12 +1329,20 @@ function Desk(props: {
           <dt>Sealed statement</dt>
           <dd>
             {sealInfo === undefined && escrow ? "sealing…" : sealInfo?.ok
-              ? <>sealed for {sealInfo.recipients?.join(" and ") ?? "the employee and the administration"}, {sealInfo.file_bytes} bytes, plaintext SHA-256 <code>{sealInfo.sha256_plain?.slice(0, 16)}…</code> = the memo</>
+              ? <>sealed for {sealInfo.recipients?.join(", ") ?? "the employee, the administration and the pension fund"}, {sealInfo.file_bytes} bytes, plaintext SHA-256 <code>{sealInfo.sha256_plain?.slice(0, 16)}…</code> = the memo</>
               : <span className="ko">{sealInfo?.error ?? "not sealed"}</span>}
+          </dd>
+          <dt>Transmitted to the pension fund</dt>
+          <dd>
+            {transmission?.transmission
+              ? <>transmitted {transmission.transmission.at ?? ""} (<a href={`https://testnet.xrpl.org/transactions/${transmission.transmission.hash}`} target="_blank" rel="noreferrer">{transmission.transmission.hash.slice(0, 8)}…</a>),
+                {" "}{transmission.acknowledgement ? <>acknowledged {transmission.acknowledgement.at ?? ""} (<a href={`https://testnet.xrpl.org/transactions/${transmission.acknowledgement.hash}`} target="_blank" rel="noreferrer">{transmission.acknowledgement.hash.slice(0, 8)}…</a>)</> : "not acknowledged yet"};
+                {" "}statement <code>{transmission.statement.sha256.slice(0, 16)}…</code>, sealed file <code>{transmission.sealed.sha256.slice(0, 16)}…</code> ({transmission.sealed.bytes} bytes, off the chain). The DSN stays the legal declaration.</>
+              : "none yet (node agent/demo_transmission_retraite.mjs)"}
           </dd>
         </dl>
         <div className="row">
-          {(["public", "administration", "employee"] as privacy.Role[]).map((role) => (
+          {(["public", "administration", "employee", "retraite"] as privacy.Role[]).map((role) => (
             <button
               key={role}
               className={role === "administration" ? "primary" : undefined}
@@ -1347,7 +1357,7 @@ function Desk(props: {
                 }
               }}
             >
-              {role === "public" ? "Read as the public" : role === "administration" ? "Open as the administration" : "Open as the employee"}
+              {role === "public" ? "Read as the public" : role === "administration" ? "Open as the administration" : role === "employee" ? "Open as the employee" : "Open as the pension fund"}
             </button>
           ))}
           <button
