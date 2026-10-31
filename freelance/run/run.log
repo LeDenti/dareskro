@@ -1,0 +1,17 @@
+2026-10-31T08:57:25.166Z desk http://127.0.0.1:8781 · testnet · client r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo (40.999892 XRP) · oracle dareskro payroll oracle v1 rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+2026-10-31T08:57:32.425Z freelancer rw9g5tGPhmUMVzxXzmac6nGtcsS43uqdhy · deliverable landing-copy-v1.md 1918 bytes sha256 c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59 · proof URL http://127.0.0.1:8796/landing-copy-v1.md
+2026-10-31T08:57:32.560Z delivered: mission a2d9d71ffb7a created, share link http://127.0.0.1:8781/m/e4296fe833b16fac5cef656df4338cf9
+2026-10-31T08:57:39.238Z delivered: EscrowCreate tesSUCCESS #21958549 8 XRP, refund after 2026-10-31T09:57:32.000Z — https://testnet.xrpl.org/transactions/05CBA31FB4EA3AF2EFFA14D033B3CC04F767D472A56832CFC14B3910928B4F5F — handed to the oracle: true
+2026-10-31T08:57:39.242Z never: mission 9d5e823afd61 created, share link http://127.0.0.1:8781/m/34fc5109b0aba33e06b100a3f317174a
+2026-10-31T08:57:47.179Z never: EscrowCreate tesSUCCESS #21958550 5 XRP, refund after 2026-10-31T09:00:59.000Z — https://testnet.xrpl.org/transactions/D5A10D7252597C66A490D8E0B4AEC8A389F79ADFC748AB8B1C51C5B1CA3DE098 — handed to the oracle: true
+2026-10-31T08:57:47.182Z accepted: mission 2e5468fac417 created, share link http://127.0.0.1:8781/m/eea9f452e101b69860fdeebe7e9928eb
+2026-10-31T08:57:54.915Z accepted: EscrowCreate tesSUCCESS #21958551 6 XRP, refund after 2026-10-31T09:57:47.000Z — https://testnet.xrpl.org/transactions/640EFBA0369A20D811408DA1C1477E4981BBF3D175A13AF65DA08F4C648F7D07 — handed to the oracle: true
+2026-10-31T08:57:54.919Z delivered: before publication the oracle says "HTTP 404: nothing published at the URL yet" after 3 look(s)
+2026-10-31T08:57:54.921Z never: the oracle says "HTTP 404: nothing published at the URL yet"
+2026-10-31T08:58:02.725Z accepted: the client signed the acceptance tesSUCCESS — https://testnet.xrpl.org/transactions/7F700AA9A9B346C2BEA00C702E70A773DC9653E4EB4652DEE7D0C7FA8A493907 — oracle 202 release on the next tick; poll /escrows
+2026-10-31T08:58:12.785Z accepted: paid — accepted by the client on the ledger, tx 7F700AA9A9… — https://testnet.xrpl.org/transactions/0E70E4E28B12EA2B3C6F1878A07C105E9F7C5617F4E421078E0B394DB16E208A
+2026-10-31T08:58:12.785Z local server now serves the file (the oracle needs FREELANCE_ALLOW_PRIVATE=1 for 127.0.0.1)
+2026-10-31T08:58:18.829Z delivered: paid — match (1918 bytes) — https://testnet.xrpl.org/transactions/64B01AA5283B5BD2CDAABCBD99A67F4BD2E4CFA1B2CF65035A00B7F8271DE7B8
+2026-10-31T08:58:18.829Z never: waiting for the deadline (200 s after the lock)…
+2026-10-31T09:01:15.552Z never: refunded — https://testnet.xrpl.org/transactions/1D5207B9FE14D8CA35BF41E59C123099E52DDBD2D465FCEC40FDE35BF3920EAD
+2026-10-31T09:01:15.621Z client balance after: 26.999844 XRP · report in run/compte_rendu.json

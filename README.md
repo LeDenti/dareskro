@@ -377,7 +377,11 @@ masked in the evidence), retries network errors, 5xx, 429 and truncated bodies
 wrong file), refuses private hosts by default, and writes every observation and
 every decision of the oracle in a JSON-lines journal per delivery
 (`freelance/evidence/`, the run's copies in `freelance/run/`). 15 checks against
-a server that misbehaves on purpose: `node freelance/verifier.test.mjs`.
+a server that misbehaves on purpose: `node freelance/verifier.test.mjs`. On a
+real GitHub release asset (the hackathon film, 11 058 072 bytes): 302 to
+`release-assets.githubusercontent.com` with the signature masked, streamed and
+hashed `969d7e3b…` in 5.2 s, ETag and Last-Modified kept
+(`node freelance/verifier.mjs <url>`, 31/10/2026 09:00 UTC).
 
 **The screens.** `node freelance/service.mjs` (127.0.0.1:8781): the client's
 desk creates the mission, asks the oracle for the condition, shows the unsigned
@@ -410,10 +414,10 @@ not by a script; the memos below were read back from the ledger.
 | The client tries `EscrowCancel` before the deadline | `tecNO_PERMISSION` [57099DA2…](https://testnet.xrpl.org/transactions/57099DA2453085E4F381EC6CD203C171D1FAED519CC1A87CD5A6AB2BF45C0280): the client cannot take the money back before the date, 08:50 UTC |
 | The file is published at the agreed URL (GitHub release asset, 302 to a signed blob URL) | **pending at the time of writing**: creating the public release was refused to the agent by its permission layer ("create public surface"), so the asset waits for Julien's own `gh release create … freelance/run/landing-copy-v1.md`. The escrow stays locked until 01/11 08:41 UTC and the oracle keeps reading the URL every 4 s; the moment the asset is there it streams it through the redirect, matches `c7f52892…` and reveals. The hash of that `EscrowFinish` goes here; if the asset never comes, the refund's does |
 | **Mission 2, agreed hash, never delivered** — 10 XRP, URL `…/never-delivered.pdf`, `CancelAfter` 08:56 UTC | `EscrowCreate` `tesSUCCESS` #21958545 [C4D11480…](https://testnet.xrpl.org/transactions/C4D11480DF0D9251E7B22646A66E3DD8044FC78AA035C0F860F298A05C2F7F87), 08:46 UTC; the oracle: `HTTP 404` until the deadline |
-| Deadline passed, nothing published: the oracle submits the refund | `EscrowCancel` `tesSUCCESS` [A01F1459…](https://testnet.xrpl.org/transactions/A01F14593424C4B0EF11920B12AAD76EB79BAAF53F8F1E6A4897EF5A3332D3A0), ledger 21958866 closed 08:56:12 UTC, six seconds after the deadline: 10 XRP back to the client; journal `evidence-a9ff66058dab.jsonl` ends with `decision: refund` |
+| Deadline passed, nothing published: the oracle submits the refund | `EscrowCancel` `tesSUCCESS` [A01F1459…](https://testnet.xrpl.org/transactions/A01F14593424C4B0EF11920B12AAD76EB79BAAF53F8F1E6A4897EF5A3332D3A0), ledger 21958866 closed 08:56:12 UTC, twelve seconds after the deadline (the oracle waits a 6 s close-time margin): 10 XRP back to the client; journal `evidence-a9ff66058dab.jsonl` ends with `decision: refund` |
 | **Mission 3, client's signed acceptance** — "Logo, three proposals", 15 XRP (memo `16.73 EUR @ 1.11563`), proof `acceptance-by:r9eDSQ2C…`, `CancelAfter` 09:20 UTC | `EscrowCreate` `tesSUCCESS` #21958546 [C52076F9…](https://testnet.xrpl.org/transactions/C52076F9DEF79846A33B92135971BAAC8F923207D3F31622BE4CFF65279A7842), 08:46 UTC; the oracle: `waiting for the client's signed acceptance` |
 | The client clicks "Accept the delivery": an `AccountSet` from its account, memo `dareskro/accept = r9eDSQ2C…#21958546`, signed with its key, submitted, hash given to `POST /accept` | `tesSUCCESS` [D1FE7ACB…](https://testnet.xrpl.org/transactions/D1FE7ACB3F47370743870A0991F5CB41B53A39C14A6A1B80E383082B1E2BE593), 08:48:49 UTC; the oracle verifies it on the ledger (owner, validated, memo) and answers 202 |
-| The oracle reveals the secret, memo `dareskro/accepted-by` = the client and the acceptance's hash | `EscrowFinish` + `Fulfillment` `tesSUCCESS` [9DD401BF…](https://testnet.xrpl.org/transactions/9DD401BF2CEC63B38942CA2E251B42CBCABA9072CC6D5111F9203A5B71EACDEC), 08:48:55 UTC: 15 XRP to the freelancer, six seconds after the signature |
+| The oracle reveals the secret, memo `dareskro/accepted-by` = the client and the acceptance's hash | `EscrowFinish` + `Fulfillment` `tesSUCCESS` [9DD401BF…](https://testnet.xrpl.org/transactions/9DD401BF2CEC63B38942CA2E251B42CBCABA9072CC6D5111F9203A5B71EACDEC), ledger 21958742 closed 08:48:51 UTC: 15 XRP to the freelancer, nine seconds after the acceptance's ledger (21958740, 08:48:42 UTC); memo read back: `dareskro/accepted-by = r9eDSQ2C… D1FE7ACB…`, fulfillment 36 bytes, fee 460 drops |
 
 Rehearsal of the same three paths through the API only, a quarter of an hour
 earlier, with the file on a local server (`FREELANCE_ALLOW_PRIVATE=1`): wrong
@@ -422,7 +426,12 @@ right file → `match (48 bytes)` → [A87CCAE2…](https://testnet.xrpl.org/tra
 acceptance signed [E7F0520E…](https://testnet.xrpl.org/transactions/E7F0520E1F7010C35641FD61858941EC65A0C913844C9C2C02D66AFC112B20D7)
 → released [89D7E4ED…](https://testnet.xrpl.org/transactions/89D7E4EDC41AF784392773DF178DF04FCAB39E14E02C4124A0E008929DC0A217);
 acceptance never signed → refunded at the deadline [722566A0…](https://testnet.xrpl.org/transactions/722566A09A4B088BF01D06690C52A02D1E5D6E09D6B94CD06234C17538BBFACC).
-`freelance/demo_freelance.mjs` replays the three missions through the desk's API.
+`freelance/demo_freelance.mjs` replays the three missions through the desk's API;
+run at 08:57–09:01 UTC with the same file on a local server (`freelance/run/run.log`,
+`compte_rendu.json`): acceptance [7F700AA9…](https://testnet.xrpl.org/transactions/7F700AA9A9B346C2BEA00C702E70A773DC9653E4EB4652DEE7D0C7FA8A493907)
+→ released [0E70E4E2…](https://testnet.xrpl.org/transactions/0E70E4E28B12EA2B3C6F1878A07C105E9F7C5617F4E421078E0B394DB16E208A),
+file published → `match (1918 bytes)` → [64B01AA5…](https://testnet.xrpl.org/transactions/64B01AA5283B5BD2CDAABCBD99A67F4BD2E4CFA1B2CF65035A00B7F8271DE7B8),
+never delivered → refunded [1D5207B9…](https://testnet.xrpl.org/transactions/1D5207B9FE14D8CA35BF41E59C123099E52DDBD2D465FCEC40FDE35BF3920EAD).
 
 **Not done.** The dollar leg (RLUSD through Mastercard AP4M) is not wired to
 this desk: the sandbox was at 1/1000 of the amounts when the hackathon closed;

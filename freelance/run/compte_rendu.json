@@ -1,0 +1,332 @@
+{
+  "at": "2026-10-31T08:57:32.425Z",
+  "desk": "http://127.0.0.1:8781",
+  "network": "testnet",
+  "client": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+  "freelancer": "rw9g5tGPhmUMVzxXzmac6nGtcsS43uqdhy",
+  "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+  "deliverable": {
+    "file": "landing-copy-v1.md",
+    "bytes": 1918,
+    "sha256": "c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59",
+    "url": "http://127.0.0.1:8796/landing-copy-v1.md"
+  },
+  "missions": {
+    "accepted": {
+      "id": "2e5468fac417",
+      "mid": "797e02",
+      "shareUrl": "http://127.0.0.1:8781/m/eea9f452e101b69860fdeebe7e9928eb",
+      "escrow": {
+        "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+        "sequence": 21958551,
+        "hash": "640EFBA0369A20D811408DA1C1477E4981BBF3D175A13AF65DA08F4C648F7D07",
+        "result": "tesSUCCESS",
+        "destination": "rw9g5tGPhmUMVzxXzmac6nGtcsS43uqdhy",
+        "amountXrp": "6",
+        "cancelAfter": 846755867,
+        "ledgerIndex": 21958894,
+        "lockedAt": "2026-10-31T08:57:54.906Z",
+        "signedBy": "this desk's key"
+      },
+      "deliveryId": "61a45f2a7627",
+      "acceptance": {
+        "hash": "7F700AA9A9B346C2BEA00C702E70A773DC9653E4EB4652DEE7D0C7FA8A493907",
+        "result": "tesSUCCESS",
+        "at": "2026-10-31T08:58:02.656Z",
+        "ledgerIndex": 21958896,
+        "ref": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo#21958551",
+        "oracle": {
+          "status": 202,
+          "ok": true,
+          "note": "release on the next tick; poll /escrows"
+        }
+      },
+      "finishHash": "0E70E4E28B12EA2B3C6F1878A07C105E9F7C5617F4E421078E0B394DB16E208A",
+      "status": "paid"
+    },
+    "delivered": {
+      "id": "a2d9d71ffb7a",
+      "mid": "261747",
+      "shareUrl": "http://127.0.0.1:8781/m/e4296fe833b16fac5cef656df4338cf9",
+      "escrow": {
+        "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+        "sequence": 21958549,
+        "hash": "05CBA31FB4EA3AF2EFFA14D033B3CC04F767D472A56832CFC14B3910928B4F5F",
+        "result": "tesSUCCESS",
+        "destination": "rw9g5tGPhmUMVzxXzmac6nGtcsS43uqdhy",
+        "amountXrp": "8",
+        "cancelAfter": 846755852,
+        "ledgerIndex": 21958890,
+        "lockedAt": "2026-10-31T08:57:39.229Z",
+        "signedBy": "this desk's key"
+      },
+      "deliveryId": "8a80abf044f3",
+      "finishHash": "64B01AA5283B5BD2CDAABCBD99A67F4BD2E4CFA1B2CF65035A00B7F8271DE7B8",
+      "status": "paid",
+      "lastWhy": "match (1918 bytes)",
+      "journal": [
+        {
+          "at": "2026-10-31T08:57:39.236Z",
+          "kind": "lock",
+          "escrow": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo#21958549",
+          "hash": "05CBA31FB4EA3AF2EFFA14D033B3CC04F767D472A56832CFC14B3910928B4F5F",
+          "result": "tesSUCCESS",
+          "amountXrp": "8",
+          "cancelAfter": 846755852,
+          "handedToOracle": true
+        },
+        {
+          "at": "2026-10-31T08:57:42.883Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/landing-copy-v1.md",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 6,
+          "finalUrl": "http://127.0.0.1:8796/landing-copy-v1.md"
+        },
+        {
+          "at": "2026-10-31T08:57:47.079Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T08:57:51.209Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/landing-copy-v1.md",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 2,
+          "finalUrl": "http://127.0.0.1:8796/landing-copy-v1.md"
+        },
+        {
+          "at": "2026-10-31T08:57:55.358Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 3
+        },
+        {
+          "at": "2026-10-31T08:57:59.486Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/landing-copy-v1.md",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 3,
+          "finalUrl": "http://127.0.0.1:8796/landing-copy-v1.md"
+        },
+        {
+          "at": "2026-10-31T08:58:03.618Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T08:58:13.330Z",
+          "kind": "observation",
+          "verdict": "match",
+          "why": "match (1918 bytes)",
+          "status": 200,
+          "bytes": 1918,
+          "sha256": "c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59",
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/landing-copy-v1.md",
+              "status": 200
+            }
+          ],
+          "contentType": "text/markdown",
+          "attempts": 1,
+          "ms": 4,
+          "finalUrl": "http://127.0.0.1:8796/landing-copy-v1.md"
+        },
+        {
+          "at": "2026-10-31T08:58:18.821Z",
+          "kind": "decision",
+          "escrow": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo#21958549",
+          "decision": "reveal",
+          "why": "match (1918 bytes)",
+          "result": "tesSUCCESS",
+          "hash": "64B01AA5283B5BD2CDAABCBD99A67F4BD2E4CFA1B2CF65035A00B7F8271DE7B8"
+        }
+      ]
+    },
+    "never": {
+      "id": "9d5e823afd61",
+      "mid": "d3571c",
+      "shareUrl": "http://127.0.0.1:8781/m/34fc5109b0aba33e06b100a3f317174a",
+      "escrow": {
+        "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+        "sequence": 21958550,
+        "hash": "D5A10D7252597C66A490D8E0B4AEC8A389F79ADFC748AB8B1C51C5B1CA3DE098",
+        "result": "tesSUCCESS",
+        "destination": "rw9g5tGPhmUMVzxXzmac6nGtcsS43uqdhy",
+        "amountXrp": "5",
+        "cancelAfter": 846752459,
+        "ledgerIndex": 21958892,
+        "lockedAt": "2026-10-31T08:57:47.172Z",
+        "signedBy": "this desk's key"
+      },
+      "deliveryId": "203195ca78b3",
+      "refundHash": "1D5207B9FE14D8CA35BF41E59C123099E52DDBD2D465FCEC40FDE35BF3920EAD",
+      "status": "refunded",
+      "journal": [
+        {
+          "at": "2026-10-31T09:00:20.354Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T09:00:24.488Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/never-delivered.pdf",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 3,
+          "finalUrl": "http://127.0.0.1:8796/never-delivered.pdf"
+        },
+        {
+          "at": "2026-10-31T09:00:28.638Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T09:00:32.793Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/never-delivered.pdf",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 1,
+          "finalUrl": "http://127.0.0.1:8796/never-delivered.pdf"
+        },
+        {
+          "at": "2026-10-31T09:00:36.933Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 1
+        },
+        {
+          "at": "2026-10-31T09:00:41.086Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/never-delivered.pdf",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 2,
+          "finalUrl": "http://127.0.0.1:8796/never-delivered.pdf"
+        },
+        {
+          "at": "2026-10-31T09:00:45.227Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T09:00:49.481Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/never-delivered.pdf",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 3,
+          "finalUrl": "http://127.0.0.1:8796/never-delivered.pdf"
+        },
+        {
+          "at": "2026-10-31T09:00:53.649Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T09:00:57.917Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "why": "HTTP 404: nothing published at the URL yet",
+          "status": 404,
+          "hops": [
+            {
+              "url": "http://127.0.0.1:8796/never-delivered.pdf",
+              "status": 404
+            }
+          ],
+          "attempts": 1,
+          "ms": 1,
+          "finalUrl": "http://127.0.0.1:8796/never-delivered.pdf"
+        },
+        {
+          "at": "2026-10-31T09:01:02.056Z",
+          "kind": "observation",
+          "verdict": "absent",
+          "same": true,
+          "ms": 2
+        },
+        {
+          "at": "2026-10-31T09:01:10.679Z",
+          "kind": "decision",
+          "escrow": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo#21958550",
+          "decision": "refund",
+          "why": "deadline passed without a matching file",
+          "result": "tesSUCCESS",
+          "hash": "1D5207B9FE14D8CA35BF41E59C123099E52DDBD2D465FCEC40FDE35BF3920EAD"
+        }
+      ]
+    }
+  },
+  "clientBalanceAfter": 26.999844
+}
