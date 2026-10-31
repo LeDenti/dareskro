@@ -62,3 +62,6 @@ near/.oracle_near.json
 placements/node_modules/
 placements/server.log
 oracle/oracle.log
+
+# the pension fund's fetched copy of a deposit (a duplicate of agent/depots/<sha>.json)
+agent/sortie/recu_caisse.json

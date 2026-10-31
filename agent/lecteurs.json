@@ -1,0 +1,42 @@
+{
+  "version": "dareskro/readers.v1",
+  "curve": "x25519",
+  "kdf": "HKDF-SHA256, info \"dareskro/bulletin/v1\", salt = ephemeral pk || reader pk",
+  "wrap": "AES-256-GCM",
+  "kid": "first 16 hex of SHA-256 of the raw public key",
+  "note": "Who can read the statements sealed after `since` and before `revoked`. Public keys only; each reader generates its own key pair and keeps the private half (the pension fund's key is the pension fund's, never ours). Demo: the three private keys sit in agent/cles/ on one machine. A revoked key still opens what it was given before (nothing can be un-sent); it opens nothing sealed afterwards.",
+  "readers": [
+    {
+      "role": "employee",
+      "name": "the employee",
+      "kid": "5b8f038cfd6e63e0",
+      "x25519_public_b64": "rPHW9DgRW90m7kMLQcf1ucTPHqz2MhGrUeiwEEQJERo=",
+      "since": "2026-10-31T09:31:14Z",
+      "scope": [
+        "statement",
+        "zk-opening"
+      ]
+    },
+    {
+      "role": "administration",
+      "name": "the tax and social administration (DGFiP, URSSAF)",
+      "kid": "b7559188b97af8cd",
+      "x25519_public_b64": "/5xpG4kWl5W/mS1lQM8NaNCoKjUBXXuVqVV5273o8Ak=",
+      "since": "2026-10-31T09:31:14Z",
+      "scope": [
+        "statement",
+        "zk-opening"
+      ]
+    },
+    {
+      "role": "retraite",
+      "name": "the pension fund (Agirc-Arrco / CNAV)",
+      "kid": "cb8205351cb0d611",
+      "x25519_public_b64": "IBF6/KKdLRvObkM5CCdx4t24PXMz0jKrK2a83RG6eC4=",
+      "since": "2026-10-31T09:31:14Z",
+      "scope": [
+        "statement"
+      ]
+    }
+  ]
+}

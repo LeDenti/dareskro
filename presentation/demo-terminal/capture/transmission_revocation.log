@@ -1,0 +1,104 @@
+09:34:38 scratch directory /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074 (keys and directory of this measurement only; agent/cles is untouched)
+09:34:38 $ node agent/confidentiel.mjs --init
+    created ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/employee.key (x25519, 0600, gitignored)
+    listed  employee (9b65836e38089f6e) in ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/lecteurs.json
+    created ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/administration.key (x25519, 0600, gitignored)
+    listed  administration (9a420d25f808350f) in ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/lecteurs.json
+    created ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/retraite.key (x25519, 0600, gitignored)
+    listed  retraite (10f3064edb87b4dd) in ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/lecteurs.json
+    directory ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/lecteurs.json: employee 9b65836e38089f6e, administration 9a420d25f808350f, retraite 10f3064edb87b4dd
+09:34:38 statement A sealed while the fund holds key 1
+09:34:38 $ node agent/confidentiel.mjs --chiffre --out /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/A.json
+    sealed agent/sortie/bulletin.json: 4 845 bytes plain -> 9 572 bytes file, 3 readers, 3.7 ms
+           -> ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/A.json
+           sealed file sha256 db4355eacbba7ce6f383fcc3cdf6c7e0393c019c9996c89c66560b00439ef52a
+    what the public sees in that file:
+      version       dareskro/confidential-statement.v2
+      sha256_plain  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf  (= the escrow memo)
+      escrow        (not bound)
+      ciphertext    5 120 bytes, iv 12, tag 16  (statement padded to 1024 bytes: a size class, content opaque)
+      zk opening    400 bytes sealed under a second key for employee, administration; commitment 0x20613f4b2d866d2c... in clear (it is public already)
+      readers       employee (kid 9b65836e38089f6e), administration (kid 9a420d25f808350f), retraite (kid 10f3064edb87b4dd): ephemeral pk 32, wrapped key 32, tag 16 each
+      nothing else: no name, no hours, no coefficient, no lines, no amount, no nonce.
+09:34:38 the fund's key 1 (10f3064edb87b4dd) is revoked: retired on disk, a key 2 is issued and listed
+09:34:38 $ node agent/confidentiel.mjs --revoke retraite
+    revoked retraite 10f3064edb87b4dd at 2026-10-31T09:34:38Z: key retired to ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/retraite.10f3064edb87b4dd.key
+    issued  retraite 1124a99b3599b2e4 -> ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/retraite.key; listed in ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/lecteurs.json
+09:34:38 statement B sealed afterwards: wrapped for key 2 only
+09:34:38 $ node agent/confidentiel.mjs --chiffre --out /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/B.json
+    sealed agent/sortie/bulletin.json: 4 845 bytes plain -> 9 572 bytes file, 3 readers, 3.1 ms
+           -> ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/B.json
+           sealed file sha256 dcd9c78bf5c538750c4d601f3e1761abcc1ed2ddf094d57a2dfd81c3e4e9e1a8
+    what the public sees in that file:
+      version       dareskro/confidential-statement.v2
+      sha256_plain  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf  (= the escrow memo)
+      escrow        (not bound)
+      ciphertext    5 120 bytes, iv 12, tag 16  (statement padded to 1024 bytes: a size class, content opaque)
+      zk opening    400 bytes sealed under a second key for employee, administration; commitment 0x20613f4b2d866d2c... in clear (it is public already)
+      readers       employee (kid 9b65836e38089f6e), administration (kid 9a420d25f808350f), retraite (kid 1124a99b3599b2e4): ephemeral pk 32, wrapped key 32, tag 16 each
+      nothing else: no name, no hours, no coefficient, no lines, no amount, no nonce.
+09:34:38 $ node agent/divulgation.mjs --role retraite --offline --file /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/B.json --key /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/retraite.10f3064edb87b4dd.key
+    ! role retraite: decryption failed, the GCM tag does not authenticate (tampered file or wrong key): Unsupported state or unable to authenticate data
+09:34:38 B opened with the revoked key 1: exit 1 (refused by the GCM tag)
+09:34:38 $ node agent/divulgation.mjs --role retraite --offline --file /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/B.json
+    role retraite (the pension fund (Agirc-Arrco / CNAV)): unwrapped with ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/retraite.key (kid 1124a99b3599b2e4), decrypted 4 837 bytes (+ padding) in 1.7 ms
+      recomputed sha256 384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      = sha256_plain of the sealed file = sha256 field of the statement
+      zk opening sealed in the same file for employee, administration only: this role's scope is the statement, it has no key to the opening
+    --- statement (sealed for the public, open for this role) ---
+      employee  Pharmacien adjoint, coefficient 600, 18 ans d'anciennete  (badge A-0412)
+      period    2026-10, 2026-10-25 09:00-21:00, garde dimanche, volets ouverts
+      temps de garde                 250.51
+      majorations heures sup.         83.50
+      indemnite de dimanche           94.99
+      prime d anciennete              37.58
+      indemnite de fin de contrat     46.66
+      indemnite compensatrice de conges payes    51.32
+      gross                          564.56 USD  (CDD d'un jour (journee de garde))
+      employee contributions        -124.20 USD  (22 %)
+      net before tax                 440.36 USD
+      income tax withheld            -33.03 USD  (7.5 % personalised rate, to DGFiP by 2026-11-15)
+      NET PAID                       407.33 USD  -> the employee's escrow
+      employer contributions         237.12 USD  (42 %)
+      to URSSAF                      361.32 USD  -> a Check URSSAF cashes itself, due 2026-11-15
+      status    PROPOSITION, computed by officine.garde — deterministic, replayable to the cent
+09:34:38 B opened with key 2: exit 0 (opens)
+09:34:38 $ node agent/divulgation.mjs --role retraite --offline --file /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/A.json
+    role retraite (the pension fund (Agirc-Arrco / CNAV)): unwrapped with ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/cles/retraite.10f3064edb87b4dd.key (kid 10f3064edb87b4dd), decrypted 4 837 bytes (+ padding) in 1.7 ms
+      recomputed sha256 384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      = sha256_plain of the sealed file = sha256 field of the statement
+      zk opening sealed in the same file for employee, administration only: this role's scope is the statement, it has no key to the opening
+    --- statement (sealed for the public, open for this role) ---
+      employee  Pharmacien adjoint, coefficient 600, 18 ans d'anciennete  (badge A-0412)
+      period    2026-10, 2026-10-25 09:00-21:00, garde dimanche, volets ouverts
+      temps de garde                 250.51
+      majorations heures sup.         83.50
+      indemnite de dimanche           94.99
+      prime d anciennete              37.58
+      indemnite de fin de contrat     46.66
+      indemnite compensatrice de conges payes    51.32
+      gross                          564.56 USD  (CDD d'un jour (journee de garde))
+      employee contributions        -124.20 USD  (22 %)
+      net before tax                 440.36 USD
+      income tax withheld            -33.03 USD  (7.5 % personalised rate, to DGFiP by 2026-11-15)
+      NET PAID                       407.33 USD  -> the employee's escrow
+      employer contributions         237.12 USD  (42 %)
+      to URSSAF                      361.32 USD  -> a Check URSSAF cashes itself, due 2026-11-15
+      status    PROPOSITION, computed by officine.garde — deterministic, replayable to the cent
+09:34:38 A opened again by the fund (the directory points it to the retired key 1): exit 0 (opens: what was given before revocation stays readable, nothing can be un-sent)
+09:34:38 $ node agent/divulgation.mjs --role public --offline --file /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/B.json
+    what anyone sees in ../../../var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-revocation-57074/B.json:
+      version       dareskro/confidential-statement.v2
+      sha256_plain  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      escrow        (not bound)
+      ciphertext    5 120 bytes, opaque (spaces to a 1024-byte multiple)
+      zk opening    400 bytes, opaque; commitment 0x20613f4b2d866d2c... (public already); readers employee, administration
+      readers       employee (kid 9b65836e38089f6e), administration (kid 9a420d25f808350f), retraite (kid 1124a99b3599b2e4) (wrapped content key each; a key id names a key, it is not one)
+    what the public cannot do: open it.
+      tried to unwrap the employee block with a random key: refused ("Unsupported state or unable to authenticate data")
+      tried to unwrap the administration block with a random key: refused ("Unsupported state or unable to authenticate data")
+      tried to unwrap the retraite block with a random key: refused ("Unsupported state or unable to authenticate data")
+      the 3 private keys (the employee; the tax and social administration (DGFiP, URSSAF); the pension fund (Agirc-Arrco / CNAV)) are the only way in: who worked, how many hours, which lines stay sealed in the file.
+    RESULT: OK, the file and the escrow show the public nothing private
+09:34:38 B read by the public: exit 0
+RESULT: OK, a revoked key opens nothing sealed after its revocation

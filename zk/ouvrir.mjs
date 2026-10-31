@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs';
 import { compile_program, createFileManager } from '@noir-lang/noir_wasm';
 import { Noir } from '@noir-lang/noir_js';
 import { ZK, ROOT, SORTIE, arg, readJson, shaLimbs, inputsFromStatement, toField, ms } from './commun.mjs';
-import { CHIFFRE, ROLES, decryptOpening, decryptStatement, loadPrivateKey, rel, unwrapKey } from '../agent/confidentiel.mjs';
+import { CHIFFRE, ROLES, UsageError, contentKeyFor, decryptOpening, decryptStatement, openingKeyFor, rel } from '../agent/confidentiel.mjs';
 
 const role = arg('role', null);
 if (!ROLES.includes(role)) { console.error(`usage: node zk/ouvrir.mjs --role ${ROLES.join('|')} [--file <sealed statement>]`); process.exit(2); }
@@ -24,11 +24,15 @@ let failed = false;
 let statement, opening;
 let t = performance.now();
 try {
-  const contentKey = unwrapKey(file.recipients[role], loadPrivateKey(role));
+  // v2 files wrap the opening's key separately, for the readers whose scope includes it (not the pension fund)
+  const contentKey = contentKeyFor(file, role);
   statement = JSON.parse(decryptStatement(file, contentKey).toString('utf8'));
-  opening = JSON.parse(decryptOpening(file, contentKey).toString('utf8'));
   contentKey.fill(0);
+  const openingKey = openingKeyFor(file, role);
+  opening = JSON.parse(decryptOpening(file, openingKey).toString('utf8'));
+  openingKey.fill(0);
 } catch (e) {
+  if (e instanceof UsageError) { console.error(`role ${role}: ${e.message}`); process.exit(1); }
   console.error(`role ${role}: decryption failed, the GCM tag does not authenticate (tampered file or wrong key): ${e.message}`);
   process.exit(1);
 }
