@@ -1,0 +1,133 @@
+{
+  "cluster": "devnet",
+  "startedAt": "2026-10-31T09:33:53.835Z",
+  "steps": [
+    {
+      "step": "1 escrow",
+      "escrow": "8hHgaM5Pud3DXxJRWViSwXNRLLW6Ug5YMVg2jKM5BzbT",
+      "tx": "https://explorer.solana.com/tx/iZ1rJ8eHKbSHCuHsbVBY5r3PAmKebqdBTBTEg6j5DPJBEyjjUUmuLB9KMMChWaa8Kf4i7K1tchbxF1wn5ugkHfC?cluster=devnet"
+    },
+    {
+      "step": "2 payslip token (Token-2022, NonTransferable)",
+      "mint": "BeURzSfU7aw2CmubvUnAQWfaTE53ZH5vdVqpXQmTbsWs",
+      "account": "https://explorer.solana.com/address/BeURzSfU7aw2CmubvUnAQWfaTE53ZH5vdVqpXQmTbsWs?cluster=devnet",
+      "holder": "WkNx7hprWNMEjasZDNyJ5JLEV1dyKxykExohpn4ZAiw",
+      "points_at": "EwRpdCAo9w1d99qJCh4MPMY2scg4TWaTwB7ttT3Ta1V5"
+    },
+    {
+      "step": "3 sealed on chain",
+      "statement": "EwRpdCAo9w1d99qJCh4MPMY2scg4TWaTwB7ttT3Ta1V5",
+      "account": "https://explorer.solana.com/address/EwRpdCAo9w1d99qJCh4MPMY2scg4TWaTwB7ttT3Ta1V5?cluster=devnet",
+      "plain_bytes": 4845,
+      "ciphertext_bytes": 5120,
+      "chunks": 7,
+      "readers": [
+        "employee",
+        "urssaf",
+        "retraite",
+        "dgfip",
+        "employer"
+      ],
+      "sealed": true,
+      "token": "BeURzSfU7aw2CmubvUnAQWfaTE53ZH5vdVqpXQmTbsWs",
+      "txs": [
+        "https://explorer.solana.com/tx/3mxKQDBKarsKWw7Eifkm2RVhisyx2ns2xE9Akd3icp8FtzrcmhYdb27m1K98SNqLfGAxGeBobXM591v7BqYyAE52?cluster=devnet",
+        "https://explorer.solana.com/tx/XvueRY3Wve4QGicSkbQQFVTVoiTLimKtf7qMhmTc5cpuTg1rRAACqP6rBiFmNrMHhRzuBrhPBruVNrDSR38ixMm?cluster=devnet",
+        "https://explorer.solana.com/tx/5KrMdDmfiMqR4De6Yd5o2CRpZVekUNYe1ashTWkcAWdt3xc1qWfa5HiEmgAS6oTMu6oB65BS6g81f6W4KZV5GUmg?cluster=devnet",
+        "https://explorer.solana.com/tx/5WRZQmnxJS4BGxxxFwUD6uroMCcM2KC8KwaCfhoEr9MJLkWsWbKjxsojfnmJhGuZ8bQ3FAjakndbkEiPyAC8dhAt?cluster=devnet",
+        "https://explorer.solana.com/tx/5vYF9H24typgV38NFi3fL3CDrDw8AxXyt3XMNyJUaMyTMNaAhcSyDQZoG4pBCcHc5KDR6KRTR9XS9hHqjEvANJLV?cluster=devnet",
+        "https://explorer.solana.com/tx/33HvJApji5DSapHwbvVBJMmJhj5tQAkBwDmJWmBJj6niQ988SvDscAXS1dyt91H7GRkX8M1Y1xddtqjXyueAu8FH?cluster=devnet",
+        "https://explorer.solana.com/tx/3DEngtdePLxn7NVkiXe3BAizrkJKJcsz7q3TYNn1RwRDKnRYB9gHYQsjyHTu4Pk9Fscu8QMeVKXCozzg1ebcQhPi?cluster=devnet",
+        "https://explorer.solana.com/tx/2a63pXdWGw7iCeyG8w21wXcyus4wmfErJXpvooxP14aqQ4pKM742rzEZE9We9cb5WZi7ufdXsMq6czLcUz9T8VWB?cluster=devnet",
+        "https://explorer.solana.com/tx/rJu7B5aLZGxPBDuvbABVF47dpeREnkdsRjUi59bk9tyKUciNQ3KiwjJ8M7ebBzXqecwnfsnak8kAYtPpiQQzh9e?cluster=devnet"
+      ]
+    },
+    {
+      "step": "4 employee opens",
+      "bytes": 4845,
+      "sha256_matches_escrow_memo": true,
+      "first_line": "(real statement)"
+    },
+    {
+      "step": "4 urssaf opens",
+      "bytes": 4845,
+      "sha256_matches_escrow_memo": true,
+      "first_line": "(real statement)"
+    },
+    {
+      "step": "4 retraite opens",
+      "bytes": 4845,
+      "sha256_matches_escrow_memo": true,
+      "first_line": "(real statement)"
+    },
+    {
+      "step": "4 dgfip opens",
+      "bytes": 4845,
+      "sha256_matches_escrow_memo": true,
+      "first_line": "(real statement)"
+    },
+    {
+      "step": "5 what the public sees",
+      "statement": "EwRpdCAo9w1d99qJCh4MPMY2scg4TWaTwB7ttT3Ta1V5",
+      "escrow": "8hHgaM5Pud3DXxJRWViSwXNRLLW6Ug5YMVg2jKM5BzbT",
+      "owner": "4ypF64RBg6GUszSwcp8d46tUvDkjDdUXDTZbziVRSF2J",
+      "sha256_plain": "1eff5d758800550ef629d30042d76b04476fd930e83c2928ae77cfe4ddce7d91",
+      "sha256_cipher": "3705da4f4737a49cd26b09f4f457e9a7fbaf3a66a163c98849f776e7f3e42aa8",
+      "ciphertext_bytes": 5120,
+      "size_class": "5120 bytes",
+      "sealed": true,
+      "readers": [
+        {
+          "role": "employee",
+          "x25519": "b765ad52116dff59…"
+        },
+        {
+          "role": "urssaf",
+          "x25519": "28647b72af98b265…"
+        },
+        {
+          "role": "retraite",
+          "x25519": "1d0012a344756d3d…"
+        },
+        {
+          "role": "dgfip",
+          "x25519": "924193415a0d4ad3…"
+        },
+        {
+          "role": "employer",
+          "x25519": "0b8f2adb94ee46b0…"
+        }
+      ],
+      "token": "BeURzSfU7aw2CmubvUnAQWfaTE53ZH5vdVqpXQmTbsWs",
+      "created_at": "2026-10-31T09:33:58.000Z"
+    },
+    {
+      "step": "6a stranger with a fresh key",
+      "refused": "not a reader of this statement"
+    },
+    {
+      "step": "6b tampered ciphertext",
+      "refused": "Unsupported state or unable to authenticate data"
+    },
+    {
+      "step": "7 add_reader agirc-arrco",
+      "tx": "https://explorer.solana.com/tx/4bTaguC8hqNQupqXFZiZc4oGAPszRYxQiAbuZcRjZ3LYqBtXkMNhLwvWCvsPBsp6rdzcmXA7DDbmu3j6P5C2WG2s?cluster=devnet",
+      "readers": [
+        "employee",
+        "urssaf",
+        "retraite",
+        "dgfip",
+        "employer",
+        "agirc-arrco"
+      ],
+      "agirc_opens": "4845 bytes"
+    },
+    {
+      "step": "8 employee tries to transfer the token",
+      "refused": "custom program error: 0x25 = Token-2022 error 37, NonTransferable",
+      "employee_still_holds": "1"
+    }
+  ],
+  "statement_source": "agent/sortie/bulletin.json",
+  "endedAt": "2026-10-31T09:34:08.388Z"
+}

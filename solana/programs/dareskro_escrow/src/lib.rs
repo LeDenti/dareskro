@@ -42,6 +42,12 @@ pub const MAX_MEMOS: u8 = 3;
 pub const MAX_MEMO_LEN: u16 = 128;
 #[constant]
 pub const MAX_FULFILLMENT_LEN: u16 = 64;
+#[constant]
+pub const STATEMENT_SEED: &[u8] = b"statement";
+#[constant]
+pub const MAX_CIPHERTEXT: u16 = 8192;
+#[constant]
+pub const MAX_READERS: u8 = 6;
 
 #[program]
 pub mod dareskro_escrow {
@@ -232,6 +238,84 @@ pub mod dareskro_escrow {
     pub fn close(_ctx: Context<Close>) -> Result<()> {
         Ok(())
     }
+
+    // ------------------------------------------------------- the sealed statement
+
+    /// The pay statement itself, sealed next to its escrow. Public: its SHA-256
+    /// (the one the escrow memo already carries), the ciphertext's size class and
+    /// hash, the list of who may read it. Private: everything else. The content
+    /// key is AES-256-GCM; it is wrapped once per reader (X25519 + HKDF + GCM, as
+    /// `agent/confidentiel.mjs` does on XRPL). Only the escrow's owner may seal.
+    /// The ciphertext comes afterwards in chunks (a transaction is 1 232 bytes),
+    /// and `finalize_statement` checks its hash before the record counts as sealed.
+    #[allow(clippy::too_many_arguments)]
+    pub fn seal_statement(
+        ctx: Context<SealStatement>,
+        sha256_plain: [u8; 32],
+        sha256_cipher: [u8; 32],
+        cipher_len: u32,
+        iv: [u8; 12],
+        tag: [u8; 16],
+        uri: String,
+        readers: Vec<Reader>,
+        token: Option<Pubkey>,
+    ) -> Result<()> {
+        require!(cipher_len as usize <= MAX_CIPHERTEXT as usize, EscrowError::CiphertextTooLong);
+        require!(cipher_len > 0 || !uri.is_empty(), EscrowError::NoContent);
+        require!(uri.len() <= 128, EscrowError::UriTooLong);
+        require!(!readers.is_empty() && readers.len() <= MAX_READERS as usize, EscrowError::TooManyReaders);
+        require!(readers.iter().all(|r| r.role.len() <= 16), EscrowError::RoleTooLong);
+        let st = &mut ctx.accounts.statement;
+        st.escrow = ctx.accounts.escrow.key();
+        st.owner = ctx.accounts.owner.key();
+        st.sha256_plain = sha256_plain;
+        st.sha256_cipher = sha256_cipher;
+        st.cipher_len = cipher_len;
+        st.iv = iv;
+        st.tag = tag;
+        st.ciphertext = Vec::new();
+        st.uri = uri;
+        st.token = token;
+        st.readers = readers;
+        st.sealed = cipher_len == 0; // nothing to write: the content lives at `uri`
+        st.created_at = Clock::get()?.unix_timestamp;
+        st.bump = ctx.bumps.statement;
+        emit!(StatementSealed { statement: st.key(), escrow: st.escrow, sha256_plain, readers: st.readers.len() as u8, sealed: st.sealed });
+        Ok(())
+    }
+
+    /// One chunk of the ciphertext, in order. Refused once the record is sealed.
+    pub fn write_ciphertext(ctx: Context<WriteStatement>, offset: u32, data: Vec<u8>) -> Result<()> {
+        let st = &mut ctx.accounts.statement;
+        require!(!st.sealed, EscrowError::StatementSealed);
+        require!(offset as usize == st.ciphertext.len(), EscrowError::BadChunk);
+        require!(offset as usize + data.len() <= st.cipher_len as usize, EscrowError::BadChunk);
+        st.ciphertext.extend_from_slice(&data);
+        Ok(())
+    }
+
+    /// The ciphertext is complete and hashes to what `seal_statement` announced:
+    /// from now on nothing in the record can change but the list of readers.
+    pub fn finalize_statement(ctx: Context<WriteStatement>) -> Result<()> {
+        let st = &mut ctx.accounts.statement;
+        require!(!st.sealed, EscrowError::StatementSealed);
+        require!(st.ciphertext.len() == st.cipher_len as usize, EscrowError::CipherIncomplete);
+        require!(sha256(&st.ciphertext).to_bytes() == st.sha256_cipher, EscrowError::CipherHashMismatch);
+        st.sealed = true;
+        emit!(StatementSealed { statement: st.key(), escrow: st.escrow, sha256_plain: st.sha256_plain, readers: st.readers.len() as u8, sealed: true });
+        Ok(())
+    }
+
+    /// A new reader (a pension fund that got its key…): the owner wraps the same
+    /// content key for them. Nothing is re-encrypted, nobody else is affected.
+    pub fn add_reader(ctx: Context<WriteStatement>, reader: Reader) -> Result<()> {
+        let st = &mut ctx.accounts.statement;
+        require!(st.readers.len() < MAX_READERS as usize, EscrowError::TooManyReaders);
+        require!(reader.role.len() <= 16, EscrowError::RoleTooLong);
+        require!(st.readers.iter().all(|r| r.key != reader.key), EscrowError::ReaderExists);
+        st.readers.push(reader);
+        Ok(())
+    }
 }
 
 // ------------------------------------------------------------------ accounts
@@ -397,6 +481,35 @@ pub struct Close<'info> {
     pub escrow: Account<'info, Escrow>,
 }
 
+#[derive(Accounts)]
+pub struct SealStatement<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(has_one = owner @ EscrowError::WrongOwner)]
+    pub escrow: Account<'info, Escrow>,
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + SealedStatement::INIT_SPACE,
+        seeds = [STATEMENT_SEED, escrow.key().as_ref()],
+        bump
+    )]
+    pub statement: Account<'info, SealedStatement>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct WriteStatement<'info> {
+    pub owner: Signer<'info>,
+    #[account(
+        mut,
+        has_one = owner @ EscrowError::WrongOwner,
+        seeds = [STATEMENT_SEED, statement.escrow.as_ref()],
+        bump = statement.bump,
+    )]
+    pub statement: Account<'info, SealedStatement>,
+}
+
 // --------------------------------------------------------------------- state
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
@@ -509,6 +622,45 @@ impl Escrow {
     }
 }
 
+/// Who may read the sealed statement: their X25519 public key and the content
+/// key wrapped for them (ephemeral public key, GCM nonce, 32 bytes + 16-byte tag).
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
+pub struct Reader {
+    #[max_len(16)]
+    pub role: String,
+    pub key: [u8; 32],
+    pub epk: [u8; 32],
+    pub iv: [u8; 12],
+    pub wrapped: [u8; 48],
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct SealedStatement {
+    pub escrow: Pubkey,
+    pub owner: Pubkey,
+    /// the statement's SHA-256, the same the escrow memo carries
+    pub sha256_plain: [u8; 32],
+    /// what the ciphertext must hash to once complete
+    pub sha256_cipher: [u8; 32],
+    pub cipher_len: u32,
+    pub iv: [u8; 12],
+    pub tag: [u8; 16],
+    /// AES-256-GCM of the statement (padded to a size class), written in chunks
+    #[max_len(8192)]
+    pub ciphertext: Vec<u8>,
+    /// where a larger ciphertext lives instead (optional)
+    #[max_len(128)]
+    pub uri: String,
+    /// the non-transferable token the employee holds for this statement, if any
+    pub token: Option<Pubkey>,
+    #[max_len(6)]
+    pub readers: Vec<Reader>,
+    pub sealed: bool,
+    pub created_at: i64,
+    pub bump: u8,
+}
+
 fn check_shape(
     amount: u64,
     finish_after: Option<i64>,
@@ -609,6 +761,15 @@ pub struct Finished {
 }
 
 #[event]
+pub struct StatementSealed {
+    pub statement: Pubkey,
+    pub escrow: Pubkey,
+    pub sha256_plain: [u8; 32],
+    pub readers: u8,
+    pub sealed: bool,
+}
+
+#[event]
 pub struct Cancelled {
     pub escrow: Pubkey,
     pub by: Pubkey,
@@ -658,4 +819,24 @@ pub enum EscrowError {
     WrongRail,
     #[msg("a Locked escrow cannot be deleted")]
     StillLocked,
+    #[msg("ciphertext longer than 8192 bytes: use uri")]
+    CiphertextTooLong,
+    #[msg("neither a ciphertext nor a uri")]
+    NoContent,
+    #[msg("uri longer than 128 bytes")]
+    UriTooLong,
+    #[msg("between 1 and 6 readers")]
+    TooManyReaders,
+    #[msg("a role longer than 16 bytes")]
+    RoleTooLong,
+    #[msg("the statement is sealed: its content cannot change")]
+    StatementSealed,
+    #[msg("chunk out of order or beyond the announced length")]
+    BadChunk,
+    #[msg("ciphertext incomplete")]
+    CipherIncomplete,
+    #[msg("the ciphertext does not hash to what was announced")]
+    CipherHashMismatch,
+    #[msg("this key is already a reader")]
+    ReaderExists,
 }

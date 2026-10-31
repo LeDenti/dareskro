@@ -322,4 +322,77 @@ describe("dareskro escrow on Solana", () => {
     assert.equal((await getAccount(connection, employerAta.address)).amount.toString(), "10000000");
     assert.isNull(await connection.getAccountInfo(vault));
   });
+
+  // ------------------------------------------------------------ the sealed statement
+
+  const statementPda = (escrow: PublicKey) =>
+    PublicKey.findProgramAddressSync([Buffer.from("statement"), escrow.toBuffer()], program.programId)[0];
+  const reader = (role: string) => ({
+    role, key: Array.from(randomBytes(32)), epk: Array.from(randomBytes(32)), iv: Array.from(randomBytes(12)), wrapped: Array.from(randomBytes(48)),
+  });
+  const seal = (owner: Keypair, escrow: PublicKey, cipher: Buffer, readers: any[], declaredHash?: Buffer) =>
+    program.methods
+      .sealStatement(
+        Array.from(sha256(Buffer.from("statement"))), Array.from(declaredHash ?? sha256(cipher)), cipher.length,
+        Array.from(randomBytes(12)), Array.from(randomBytes(16)), "", readers, null)
+      .accountsPartial({ owner: owner.publicKey, escrow, statement: statementPda(escrow) })
+      .signers([owner]).rpc();
+  const write = (owner: Keypair, statement: PublicKey, offset: number, data: Buffer) =>
+    program.methods.writeCiphertext(offset, data).accountsPartial({ owner: owner.publicKey, statement }).signers([owner]).rpc();
+  const finalize = (owner: Keypair, statement: PublicKey) =>
+    program.methods.finalizeStatement().accountsPartial({ owner: owner.publicKey, statement }).signers([owner]).rpc();
+
+  it("sealed statement: written in chunks by the owner only, sealed once its hash checks, readers added later", async () => {
+    const { escrow } = await create(employer, employee.publicKey, 1000, { finishAfter: (await chainNow()) + 3600 });
+    const statement = statementPda(escrow);
+    const cipher = randomBytes(2000);
+    // a stranger cannot seal someone else's escrow
+    await refused(seal(passerby, escrow, cipher, [reader("employee")]), "WrongOwner");
+    await seal(employer, escrow, cipher, [reader("employee"), reader("urssaf"), reader("retraite"), reader("dgfip")]);
+    let st = await program.account.sealedStatement.fetch(statement);
+    assert.isFalse(st.sealed); assert.equal(st.readers.length, 4); assert.equal(st.cipherLen, 2000);
+    // not complete yet
+    await refused(finalize(employer, statement), "CipherIncomplete");
+    // chunks must come in order and inside the announced length
+    await refused(write(employer, statement, 900, cipher.subarray(900, 1800)), "BadChunk");
+    await write(employer, statement, 0, cipher.subarray(0, 900));
+    await write(employer, statement, 900, cipher.subarray(900, 1800));
+    await refused(write(employer, statement, 1800, Buffer.concat([cipher.subarray(1800), Buffer.alloc(10)])), "BadChunk");
+    await write(employer, statement, 1800, cipher.subarray(1800));
+    await refused(write(passerby, statement, 2000, Buffer.alloc(0)), "WrongOwner");
+    await finalize(employer, statement);
+    st = await program.account.sealedStatement.fetch(statement);
+    assert.isTrue(st.sealed);
+    assert.equal(Buffer.from(st.ciphertext).toString("hex"), cipher.toString("hex"));
+    // sealed: no more writing, no second finalize
+    await refused(write(employer, statement, 2000, Buffer.alloc(1)), "StatementSealed");
+    await refused(finalize(employer, statement), "StatementSealed");
+    // readers: up to six, no duplicate key, owner only
+    const r5 = reader("agirc-arrco");
+    await program.methods.addReader(r5).accountsPartial({ owner: employer.publicKey, statement }).signers([employer]).rpc();
+    await refused(program.methods.addReader(r5).accountsPartial({ owner: employer.publicKey, statement }).signers([employer]).rpc(), "ReaderExists");
+    await refused(program.methods.addReader(reader("x")).accountsPartial({ owner: passerby.publicKey, statement }).signers([passerby]).rpc(), "WrongOwner");
+    await program.methods.addReader(reader("employer")).accountsPartial({ owner: employer.publicKey, statement }).signers([employer]).rpc();
+    await refused(program.methods.addReader(reader("seventh")).accountsPartial({ owner: employer.publicKey, statement }).signers([employer]).rpc(), "TooManyReaders");
+    st = await program.account.sealedStatement.fetch(statement);
+    assert.equal(st.readers.length, 6);
+    assert.equal(st.readers[4].role, "agirc-arrco");
+  });
+
+  it("sealed statement: a ciphertext that does not hash to what was announced never seals", async () => {
+    const { escrow } = await create(employer, employee.publicKey, 1000, { finishAfter: (await chainNow()) + 3600 });
+    const statement = statementPda(escrow);
+    const cipher = randomBytes(500);
+    await seal(employer, escrow, cipher, [reader("employee")], sha256(Buffer.from("something else")));
+    await write(employer, statement, 0, cipher);
+    await refused(finalize(employer, statement), "CipherHashMismatch");
+    assert.isFalse((await program.account.sealedStatement.fetch(statement)).sealed);
+    // shape at creation: neither a ciphertext nor a uri (on a fresh escrow: one record per escrow)
+    const { escrow: e2 } = await create(employer, employee.publicKey, 1000, { finishAfter: (await chainNow()) + 3600 });
+    await refused(
+      program.methods.sealStatement(Array.from(randomBytes(32)), Array.from(randomBytes(32)), 0, Array.from(randomBytes(12)), Array.from(randomBytes(16)), "", [reader("a")], null)
+        .accountsPartial({ owner: employer.publicKey, escrow: e2, statement: statementPda(e2) }).signers([employer]).rpc(),
+      "NoContent"
+    );
+  });
 });

@@ -72,7 +72,7 @@ Events `Created`, `Finished`, `Cancelled` are emitted for indexers.
 cd solana
 npm install
 anchor build
-anchor test --skip-build --validator legacy     # solana-test-validator; 8 tests, ~35 s
+anchor test --skip-build --validator legacy     # solana-test-validator; 10 tests, ~40 s
 ```
 
 Toolchain used: Rust 1.99 / rustup toolchain 1.89 (Anchor's pin), Solana CLI 4.3.2
@@ -118,12 +118,68 @@ explorer, like a `tecNO_PERMISSION` on XRPL. Raw results: `client/compte_rendu.j
 Same shape as the XRPL table of 24/10: the device signed `EscrowCancel` and the
 ledger refused it; here the employer signs `cancel` and the program refuses it.
 
+## The sealed statement — invisible to the public, readable by the administrations
+
+The escrow is public: accounts, amount, the statement's SHA-256 in a memo. The
+statement itself is sealed **next to it on chain**, in a `SealedStatement` record
+at `["statement", escrow]`:
+
+- public: the SHA-256 of the statement (the memo's), the ciphertext padded to a
+  1 024-byte class, its hash, and the list of readers (role + X25519 key);
+- private: every line of the payslip. The content key is AES-256-GCM, bound by
+  AAD to the hash and the escrow; it is wrapped once per reader with X25519 +
+  HKDF-SHA256 + AES-GCM — the primitives of `agent/confidentiel.mjs`, imported,
+  not rewritten.
+
+A Solana transaction is 1 232 bytes, so the ciphertext is written in chunks:
+`seal_statement` announces the hash and length and the readers, `write_ciphertext`
+appends in order, `finalize_statement` recomputes the SHA-256 on chain and only
+then marks the record sealed. Afterwards nothing can change but the list of
+readers: `add_reader` lets the employer wrap the same key for a pension fund that
+got its key later, without re-encrypting anything.
+
+The employee also receives a **Token-2022 token that cannot move** (NonTransferable
+extension, metadata pointing at the record, mint authority revoked): a payslip in
+their wallet that nobody can take, sell or fake, and that reveals nothing by itself.
+The record stores the token's mint.
+
+| Instruction | Who | What |
+|---|---|---|
+| `seal_statement(sha256_plain, sha256_cipher, cipher_len, iv, tag, uri, readers, token?)` | the escrow's owner | creates the record (≤ 8 192 bytes of ciphertext, or a `uri` for larger) |
+| `write_ciphertext(offset, bytes)` | the owner | one chunk, in order, while not sealed |
+| `finalize_statement()` | the owner | hash checked on chain → sealed |
+| `add_reader(reader)` | the owner | one more wrapped key, up to 6 readers, no duplicate key |
+
+Honest limits: no French administration publishes an encryption key today, so the
+demo generates one per administration; the DSN remains the legal channel and this
+record is the opposable, timestamped copy. Encrypted personal data on an
+immutable ledger is a choice the payer makes knowingly: the `uri` path keeps the
+ciphertext in erasable storage and anchors only its hash, with the same readers.
+
+### Measured on devnet, 2026-10-31 09:33 UTC — `client/demo_scelle.mjs`, raw results in `client/compte_rendu_scelle.json`
+
+Record [`EwRpdCAo…`](https://explorer.solana.com/address/EwRpdCAo9w1d99qJCh4MPMY2scg4TWaTwB7ttT3Ta1V5?cluster=devnet), statement = the real `agent/sortie/bulletin.json` of the New York run.
+
+| Step | Signed by | Result on chain |
+|---|---|---|
+| payroll escrow, memo = `sha256:1eff5d758800…` — [iZ1rJ8eH…](https://explorer.solana.com/tx/iZ1rJ8eHKbSHCuHsbVBY5r3PAmKebqdBTBTEg6j5DPJBEyjjUUmuLB9KMMChWaa8Kf4i7K1tchbxF1wn5ugkHfC?cluster=devnet) | the employer | locked |
+| Token-2022 mint, NonTransferable + MetadataPointer, 1 unit to the employee, mint authority revoked — [`BeURzSfU…`](https://explorer.solana.com/address/BeURzSfU7aw2CmubvUnAQWfaTE53ZH5vdVqpXQmTbsWs?cluster=devnet) | the employer | the employee holds it; metadata points at the record |
+| `seal_statement` (5 readers: employee, URSSAF, retraite, DGFiP, employer) — [3mxKQDBK…](https://explorer.solana.com/tx/3mxKQDBKarsKWw7Eifkm2RVhisyx2ns2xE9Akd3icp8FtzrcmhYdb27m1K98SNqLfGAxGeBobXM591v7BqYyAE52?cluster=devnet) | the employer | record created, not sealed yet |
+| `write_ciphertext` × 7 (5120 bytes for a 4845-byte statement) | the employer | chunks accepted in order |
+| `finalize_statement` — [rJu7B5aL…](https://explorer.solana.com/tx/rJu7B5aLZGxPBDuvbABVF47dpeREnkdsRjUi59bk9tyKUciNQ3KiwjJ8M7ebBzXqecwnfsnak8kAYtPpiQQzh9e?cluster=devnet) | the employer | sha256 of the ciphertext checked **on chain**, `sealed = true` |
+| employee, URSSAF, retraite, DGFiP each unwrap and decrypt | their own key | 4845 bytes, SHA-256 equal to the escrow memo |
+| a fresh key tries | a stranger | `not a reader of this statement` |
+| one byte of the ciphertext flipped | anyone | GCM refuses: `unable to authenticate data` |
+| `add_reader` agirc-arrco, wrapped from the employer's copy — [4bTaguC8…](https://explorer.solana.com/tx/4bTaguC8hqNQupqXFZiZc4oGAPszRYxQiAbuZcRjZ3LYqBtXkMNhLwvWCvsPBsp6rdzcmXA7DDbmu3j6P5C2WG2s?cluster=devnet) | the employer | 6 readers; Agirc-Arrco opens 4845 bytes |
+| the employee transfers the token to someone | the employee | **refused** by Token-2022: Token-2022 error 37, NonTransferable |
+
+
 ## Client
 
 `client/dareskro_solana.mjs` — the same verbs as the XRPL rail, for the pay desk,
 the oracle and the demos: `connect`, `createEscrow`, `createInstruction` (for
 batches), `finishEscrow`, `cancelEscrow`, `closeEscrow`, `getEscrow`,
-`listEscrows`, `conditionPair`, `chainNow`, `sendRecorded`. The signer is always
+`listEscrows`, `conditionPair`, `chainNow`, `sendRecorded`. `client/scelle.mjs` seals and opens the statement, writes it in chunks and mints the employee's token; `node client/scelle.mjs selftest` runs the crypto offline. The signer is always
 passed in; nothing here holds a key for anyone else.
 
 ## Aurora Intents: funding the escrow from any chain
