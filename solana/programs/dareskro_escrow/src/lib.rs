@@ -173,6 +173,11 @@ pub mod dareskro_escrow {
         let escrow = &mut ctx.accounts.escrow;
         escrow.release(now, caller, fulfillment)?;
         let amount = escrow.amount;
+        // the vault's whole balance, not `amount`: anyone can drop a unit into the vault,
+        // and the Token program refuses to close a non-empty account. Whatever landed
+        // there goes to the destination with the pay; nothing can jam the escrow.
+        let in_vault = ctx.accounts.vault.amount;
+        require!(in_vault >= amount, EscrowError::VaultShort);
         let (owner, id, bump) = (escrow.owner, escrow.id.to_le_bytes(), [escrow.bump]);
         let seeds: &[&[u8]] = &[ESCROW_SEED, owner.as_ref(), &id, &bump];
         pay_from_vault(
@@ -183,7 +188,7 @@ pub mod dareskro_escrow {
             &ctx.accounts.owner_account,
             &escrow.to_account_info(),
             seeds,
-            amount,
+            in_vault,
         )?;
         emit!(Finished {
             escrow: escrow.key(),
@@ -216,6 +221,8 @@ pub mod dareskro_escrow {
         let escrow = &mut ctx.accounts.escrow;
         escrow.refund(now, caller)?;
         let amount = escrow.amount;
+        let in_vault = ctx.accounts.vault.amount; // same rule as finish_token: empty the vault
+        require!(in_vault >= amount, EscrowError::VaultShort);
         let (owner, id, bump) = (escrow.owner, escrow.id.to_le_bytes(), [escrow.bump]);
         let seeds: &[&[u8]] = &[ESCROW_SEED, owner.as_ref(), &id, &bump];
         pay_from_vault(
@@ -226,7 +233,7 @@ pub mod dareskro_escrow {
             &ctx.accounts.owner_account,
             &escrow.to_account_info(),
             seeds,
-            amount,
+            in_vault,
         )?;
         emit!(Cancelled { escrow: escrow.key(), by: caller, to: escrow.owner, amount });
         Ok(())
@@ -839,4 +846,6 @@ pub enum EscrowError {
     CipherHashMismatch,
     #[msg("this key is already a reader")]
     ReaderExists,
+    #[msg("the vault holds less than the escrow's amount")]
+    VaultShort,
 }

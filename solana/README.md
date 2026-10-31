@@ -1,6 +1,7 @@
 # dareskro on Solana — an escrow program with no owner
 
 **Encode Club Solana Hackathon 2026** (12 October → 8 November, online). Tracks: Aurora Intents, Best Consumer App.
+Demo video (2 min, English, explanations at the bottom of the frame): [dareskro_la_linea_solana.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.2-solana-midpoint/dareskro_la_linea_solana.mp4) · release [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet).
 
 > The agent reads the evidence. The code computes the amount. A human validates.
 > A Solana program pays at the date, or when the proof is public. Nobody holds the
@@ -42,7 +43,7 @@ seven below.
 | `create(id, destination, amount, finish_after?, cancel_after?, condition?, memos)` | the owner (payer) | locks `amount` lamports in a new escrow PDA `["escrow", owner, id]` |
 | `create_token(...)` same arguments | the owner | same, for a mint: the tokens move to a vault PDA `["vault", escrow]` |
 | `finish(fulfillment?)` | anyone | pays the destination if the clock and the condition allow |
-| `finish_token(fulfillment?)` | anyone | same, to a token account owned by the destination; the vault is closed, its rent goes back to the owner |
+| `finish_token(fulfillment?)` | anyone | same, to a token account owned by the destination; the vault is **emptied** (anyone can drop a stray unit in it, and a non-empty account cannot be closed — the stray unit goes with the pay), then closed, its rent back to the owner |
 | `cancel()` | anyone | refunds the owner, only after `cancel_after` |
 | `cancel_token()` | anyone | same, for a token escrow |
 | `close()` | the owner | deletes a **Finished or Cancelled** record and takes the rent back; a Locked one cannot be deleted |
@@ -72,7 +73,7 @@ Events `Created`, `Finished`, `Cancelled` are emitted for indexers.
 cd solana
 npm install
 anchor build
-anchor test --skip-build --validator legacy     # solana-test-validator; 10 tests, ~40 s
+anchor test --skip-build --validator legacy     # solana-test-validator; 11 tests, ~45 s
 ```
 
 Toolchain used: Rust 1.99 / rustup toolchain 1.89 (Anchor's pin), Solana CLI 4.3.2
@@ -214,6 +215,9 @@ of real USDC)._
 - The record costs ~0.005 SOL of rent until the owner closes it.
 - `finish_token` needs a token account of the destination to exist (its ATA,
   usually); anyone may create it, the oracle does in the demo.
+- Whatever lands in a vault beyond the escrow's amount is paid out with it: the
+  alternative (paying exactly `amount`) would let one stray unit jam the escrow for
+  good, since the Token program refuses to close a non-empty account (tested).
 - A payroll escrow is **one possible outcome**: if the statement was wrong, the
   correction is a new escrow, as on XRPL. That is the point.
 - Devnet only for the hackathon. On mainnet the upgrade authority would be

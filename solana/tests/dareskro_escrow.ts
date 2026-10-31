@@ -323,6 +323,34 @@ describe("dareskro escrow on Solana", () => {
     assert.isNull(await connection.getAccountInfo(vault));
   });
 
+
+  it("token: a stranger drops 1 unit into the vault; the escrow still pays and closes (nothing can jam it)", async () => {
+    const mint = await createMint(connection, payer, payer.publicKey, null, 6);
+    const employerAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, employer.publicKey);
+    const employeeAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, employee.publicKey);
+    const passerbyAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, passerby.publicKey);
+    await mintTo(connection, payer, mint, employerAta.address, payer, 5_000_000);
+    await mintTo(connection, payer, mint, passerbyAta.address, payer, 10);
+    const id = newId();
+    const escrow = escrowPda(employer.publicKey, id);
+    const vault = vaultPda(escrow);
+    await program.methods
+      .createToken(id, employee.publicKey, new BN(5_000_000), null, null, null, [])
+      .accountsPartial({ owner: employer.publicKey, mint, ownerToken: employerAta.address, escrow, vault, tokenProgram: TOKEN_PROGRAM_ID })
+      .signers([employer]).rpc();
+    // the griefing attempt: one unit straight into the vault
+    const { transfer } = await import("@solana/spl-token");
+    await transfer(connection, passerby, passerbyAta.address, vault, passerby, 1);
+    assert.equal((await getAccount(connection, vault)).amount.toString(), "5000001");
+    await program.methods.finishToken(null)
+      .accountsPartial({ caller: passerby.publicKey, escrow, mint, vault, destinationToken: employeeAta.address, ownerAccount: employer.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
+      .signers([passerby]).rpc();
+    assert.equal((await getAccount(connection, employeeAta.address)).amount.toString(), "5000001", "pay plus the stray unit");
+    assert.isNull(await connection.getAccountInfo(vault), "vault closed despite the stray unit");
+    const e = await program.account.escrow.fetch(escrow);
+    assert.equal(e.amount.toNumber(), 5_000_000, "the record keeps what was promised");
+  });
+
   // ------------------------------------------------------------ the sealed statement
 
   const statementPda = (escrow: PublicKey) =>
