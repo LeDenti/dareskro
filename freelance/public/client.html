@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dareskro · freelance desk</title>
+<link rel="stylesheet" href="/public/app.css">
+</head>
+<body>
+<header>
+  <h1>dareskro · the client's desk <small>lock the fee at the order, pay on proof, refund at the deadline</small></h1>
+  <span class="meta" id="net">…</span>
+</header>
+<main>
+  <section class="card" id="who">
+    <h2>Who is paying, and who holds the secret</h2>
+    <div id="whoBody" class="hint">loading…</div>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <h2>New mission</h2>
+      <p class="hint">What the ledger will enforce: one escrow per milestone, <b>Amount</b> to the freelancer's address, a <b>Condition</b> whose secret the oracle holds, <b>CancelAfter</b> = the deadline. Two outcomes only: paid on proof, or refunded at the deadline.</p>
+      <form id="f">
+        <div class="row">
+          <label class="grow">Mission title<input name="title" required placeholder="Landing page copy, v1"></label>
+        </div>
+        <div class="row">
+          <label class="grow">What is expected (the freelancer reads this)<textarea name="description" rows="2" placeholder="A Markdown file, 600–800 words, in English, following the brief sent on …"></textarea></label>
+        </div>
+        <div class="row">
+          <label class="grow">Freelancer's XRPL address (where the money goes)<input name="freelancer" required placeholder="r…" spellcheck="false"></label>
+          <label>Freelancer's name (optional)<input name="freelancerLabel" placeholder="Ada, Lagos"></label>
+        </div>
+        <div class="row">
+          <label>Amount (XRP)<input name="amountXrp" required value="20" size="8" inputmode="decimal"></label>
+          <label>≈ in<select name="currency"><option>EUR</option><option>USD</option></select></label>
+          <span class="muted" id="fiatHint"></span>
+          <label>Deadline (refund after)<input name="deadline" type="datetime-local" required></label>
+        </div>
+        <div class="row">
+          <label>Proof of delivery
+            <select name="proofMode" id="proofMode">
+              <option value="hash">Agreed file hash — a fact pays</option>
+              <option value="acceptance">My signed acceptance — I decide</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint" id="modeHint"></p>
+        <div id="hashFields">
+          <div class="row">
+            <label class="grow">URL where the exact file will be published<input name="url" placeholder="https://github.com/…/releases/download/v1/file.pdf"></label>
+          </div>
+          <div class="row">
+            <label class="grow">SHA-256 of the exact file (64 hex)<input name="sha256" placeholder="3be52427…" spellcheck="false"></label>
+            <label>…or hash a file here<input type="file" id="hashFile"></label>
+          </div>
+        </div>
+        <div id="acceptFields" hidden>
+          <div class="row">
+            <label class="grow">Where the delivery will be made (optional, for the freelancer's page)<input name="aurl" placeholder="https://… or empty"></label>
+          </div>
+        </div>
+        <details><summary class="muted">Milestones (optional: several escrows, one per milestone)</summary>
+          <p class="hint">Each milestone has its own amount, deadline and proof. Leave empty for a single escrow with the fields above.</p>
+          <div id="milestones"></div>
+          <button type="button" id="addMs">+ add a milestone</button>
+        </details>
+        <div class="row">
+          <button class="primary" type="submit" id="create">Create the mission</button>
+          <span class="muted">Nothing moves yet: the lock is the next step, signed by you.</span>
+        </div>
+        <pre class="error" id="ferr" hidden></pre>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Missions</h2>
+      <div class="mission-list" id="list"><span class="muted">none yet</span></div>
+    </section>
+  </div>
+
+  <section class="card" id="detail" hidden></section>
+</main>
+<script src="/public/common.js"></script>
+<script>
+let cfg, current, missions = [], rate;
+const f = $("#f");
+const modeHints = {
+  hash: "The oracle reads the URL by itself and reveals the secret when the published file has this exact SHA-256. Nobody decides: a fact does. You cannot refuse a conforming file; the freelancer cannot be paid for another one. Nothing matching before the deadline: the ledger refunds you.",
+  acceptance: "You decide: once delivered, you sign an acceptance on the ledger from this same account, and the oracle reveals the secret. Said plainly to the freelancer: you cannot take the money back before the deadline, and your silence past the deadline is a refund. There is no arbiter.",
+};
+function setMode() {
+  const m = $("#proofMode").value;
+  $("#modeHint").textContent = modeHints[m];
+  $("#hashFields").hidden = m !== "hash";
+  $("#acceptFields").hidden = m !== "acceptance";
+}
+$("#proofMode").addEventListener("change", setMode); setMode();
+$("#hashFile").addEventListener("change", async (e) => { const file = e.target.files[0]; if (file) f.sha256.value = await sha256File(file); });
+(() => { const d = new Date(Date.now() + 7 * 86400e3); d.setMinutes(0, 0, 0); f.deadline.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); })();
+async function fiatHint() {
+  try { rate = await api(`/rate?currency=${f.currency.value}`); $("#fiatHint").textContent = `≈ ${(Number(f.amountXrp.value || 0) * rate.fiatPerXrp).toFixed(2)} ${rate.currency} at ${rate.fiatPerXrp} (${rate.source})`; } catch { $("#fiatHint").textContent = ""; }
+}
+f.amountXrp.addEventListener("input", fiatHint); f.currency.addEventListener("change", fiatHint); fiatHint();
+
+let msCount = 0;
+$("#addMs").addEventListener("click", () => {
+  const i = ++msCount;
+  const div = document.createElement("div");
+  div.className = "milestone";
+  div.innerHTML = `<div class="row"><label class="grow">Milestone ${i} title<input data-k="title" placeholder="Sketches"></label><label>XRP<input data-k="amountXrp" size="6" value="10"></label><label>Deadline<input data-k="deadline" type="datetime-local" value="${f.deadline.value}"></label><label>Proof<select data-k="mode"><option value="hash">file hash</option><option value="acceptance">my acceptance</option></select></label></div>
+  <div class="row"><label class="grow">URL<input data-k="url" placeholder="https://… (required for a file hash)"></label><label class="grow">SHA-256<input data-k="sha256" placeholder="64 hex, file hash only" spellcheck="false"></label></div>
+  <div class="row"><label class="grow">What is expected<input data-k="description"></label><button type="button" class="rm">remove</button></div>`;
+  div.querySelector(".rm").addEventListener("click", () => div.remove());
+  $("#milestones").appendChild(div);
+});
+
+f.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("#ferr").hidden = true;
+  const body = {
+    title: f.title.value, description: f.description.value, client: cfg.client?.address ?? f.dataset.client ?? "", freelancer: f.freelancer.value, freelancerLabel: f.freelancerLabel.value,
+    amountXrp: f.amountXrp.value, deadline: new Date(f.deadline.value).toISOString(), proofMode: f.proofMode.value,
+    url: f.proofMode.value === "hash" ? f.url.value : f.aurl.value, sha256: f.sha256.value, currency: f.currency.value,
+  };
+  const rows = [...document.querySelectorAll("#milestones .milestone")];
+  if (rows.length) body.milestones = rows.map((r) => { const g = (k) => r.querySelector(`[data-k="${k}"]`).value; return { title: g("title"), amountXrp: g("amountXrp"), deadline: new Date(g("deadline")).toISOString(), description: g("description"), proof: { mode: g("mode"), url: g("url"), sha256: g("sha256") } }; });
+  if (!body.client) { $("#ferr").textContent = "no client account: create a testnet one above, or put your key in freelance/.client.json"; $("#ferr").hidden = false; return; }
+  $("#create").disabled = true;
+  try {
+    const m = await api("/missions", body);
+    await refresh();
+    show(m.id);
+    f.reset(); setMode(); $("#milestones").innerHTML = "";
+  } catch (err) { $("#ferr").textContent = err.message; $("#ferr").hidden = false; }
+  finally { $("#create").disabled = false; }
+});
+
+async function loadConfig() {
+  cfg = await api("/config");
+  $("#net").textContent = `${cfg.network} · ${cfg.node} · oracle ${cfg.oracleUrl}`;
+  const o = cfg.oracle;
+  const c = cfg.client;
+  $("#whoBody").innerHTML = `<dl>
+    <dt>Client (you)</dt><dd>${c ? `${accLink(cfg.explorer, c.address)} · ${c.balance === null ? "not funded yet" : c.balance === undefined ? "balance unknown" : `${c.balance} XRP`} · key in <code>freelance/.client.json</code> (yours; the desk signs with it on your click; never leaves this machine)` : `<span class="ko">no key on this desk.</span> Put your own seed in <code>freelance/.client.json</code> (0600) yourself${cfg.canCreateTestnetAccount ? `, or <button id="mkClient">create a testnet account</button>` : ""}. Without a key you can still paste signed blobs.`}</dd>
+    <dt>Oracle</dt><dd>${o ? `${esc(o.name)} · ${accLink(cfg.explorer, o.address)} · born ${txLink(cfg.explorer, o.birth, "on-chain certificate")} · watching ${o.watching}` : `<span class="ko">no oracle at ${esc(cfg.oracleUrl)}: a conditional escrow needs one (<code>cd oracle && node oracle.mjs watch</code>)</span>`} — holds the secret of each condition, never the money; reveals on proof, submits the refund after the deadline</dd>
+    <dt>Verifier</dt><dd>streams the file, ${cfg.verifier.maxHops} redirects at most, ${cfg.verifier.attempts} attempts, ${fmtBytes(cfg.verifier.maxBytes)} cap${cfg.verifier.allowPrivate ? ', <span class="pending">private hosts allowed (demo setting)</span>' : ", private hosts refused"}</dd>
+  </dl>`;
+  $("#mkClient")?.addEventListener("click", async (e) => { e.target.disabled = true; try { await api("/client/create", {}); await loadConfig(); } catch (err) { alert(err.message); } });
+}
+
+async function refresh() {
+  missions = (await api("/missions")).missions;
+  const listKey = missions.map((m) => `${m.id}:${m.milestones.map((x) => x.status).join()}`).join("|");
+  if (listKey !== lastList) {
+    lastList = listKey;
+    renderList();
+  }
+  if (current) renderIfChanged(missions.find((m) => m.id === current));
+}
+let lastList = "";
+function renderList() {
+  $("#list").innerHTML = missions.length ? missions.map((m) => `<button data-id="${m.id}">${esc(m.title)} <span class="muted">· ${m.totalXrp} XRP · ${m.milestones.length} milestone(s) · ${m.milestones.map((x) => x.status).join(", ")}</span></button>`).join("") : '<span class="muted">none yet</span>';
+  document.querySelectorAll("#list button").forEach((b) => b.addEventListener("click", () => show(b.dataset.id)));
+}
+
+// Re-render the detail only when its data changed: a page redrawn every 5 s would eat a blob being pasted.
+let lastRendered = "";
+function renderIfChanged(m) {
+  const key = JSON.stringify(m);
+  if (key === lastRendered) return;
+  lastRendered = key;
+  render(m);
+}
+
+function show(id) { current = id; lastRendered = ""; renderIfChanged(missions.find((m) => m.id === id)); $("#detail").scrollIntoView({ behavior: "smooth" }); }
+
+function render(m) {
+  if (!m) return;
+  const ex = cfg.explorer;
+  const keyOk = cfg.client && cfg.client.address === m.client;
+  $("#detail").hidden = false;
+  $("#detail").innerHTML = `
+    <h2>${esc(m.title)} <span class="muted">· ${m.totalXrp} XRP · ${m.milestones.length} milestone(s)</span></h2>
+    ${m.description ? `<p>${esc(m.description)}</p>` : ""}
+    <dl>
+      <dt>Client</dt><dd>${accLink(ex, m.client)}${keyOk ? "" : ` <span class="ko">(this desk's key is ${cfg.client ? cfg.client.address : "absent"}: sign elsewhere and paste the blob)</span>`}</dd>
+      <dt>Freelancer</dt><dd>${accLink(ex, m.freelancer)} ${m.freelancerLabel ? `· ${esc(m.freelancerLabel)}` : ""}</dd>
+      <dt>Freelancer's link</dt><dd><span class="copy" id="share">${esc(m.shareUrl)}</span> <button id="copyShare">copy</button> <a href="${m.shareUrl}" target="_blank" rel="noopener">open</a><br><span class="muted">What to deliver, where, before when, the escrow on the explorer, what the address receives. No account needed.</span></dd>
+    </dl>
+    ${m.milestones.map((v) => renderMilestone(m, v, keyOk)).join("")}`;
+  $("#copyShare").addEventListener("click", () => navigator.clipboard?.writeText(m.shareUrl));
+  m.milestones.forEach((v) => wire(m, v));
+}
+
+function renderMilestone(m, v, keyOk) {
+  const ex = cfg.explorer;
+  const mode = cfg.proofModes[v.proof.mode];
+  const deadline = fmtDate(v.deadline);
+  const fiat = v.fiat ? ` <span class="muted">≈ ${v.fiat.amount} ${v.fiat.currency} at ${v.fiat.rate}</span>` : "";
+  let actions = "";
+  if (v.status === "draft" || v.status === "prepared") {
+    actions += `<div class="row"><button class="primary" data-a="prepare">${v.status === "draft" ? "1. Ask the oracle for the condition and build the lock" : "Rebuild the lock"}</button></div>`;
+    if (v.status === "prepared") actions += `<p class="hint">Condition issued (delivery id <code>${esc(v.condition.deliveryId)}</code>). Read the transaction, then sign it: <b>what you sign is what the ledger holds</b> — amount, destination, condition, refund date, memos.</p>
+      <details open><summary>Unsigned EscrowCreate · ${v.unsignedTx ? `${Number(v.unsignedTx.Amount) / 1e6} XRP · sequence ${v.unsignedTx.Sequence} · refund after ${fmtDate(fromRipple(v.unsignedTx.CancelAfter))}` : ""}</summary><pre id="tx-${v.id}">${esc(JSON.stringify(v.unsignedTx, null, 2))}</pre></details>
+      <div class="row">${keyOk ? `<button class="primary" data-a="lock">2. Sign with this desk's key and lock</button>` : ""}<label class="grow">…or paste the blob signed elsewhere (Ledger via the pay desk, xrpl.js, any signer)<textarea data-blob rows="2" placeholder="1200012280…"></textarea></label><button data-a="lockblob">Submit the signed blob</button></div>`;
+    if (v.lastError) actions += `<pre class="error">${esc(v.lastError)}</pre>`;
+  }
+  if (v.escrow) {
+    actions += `<dl><dt>Escrow</dt><dd>#${v.escrow.sequence} of ${short(v.escrow.owner)} · ${v.escrow.amountXrp} XRP · ${esc(v.escrow.result)} · ${txLink(ex, v.escrow.hash, "EscrowCreate on the explorer")} · signed by ${esc(v.escrow.signedBy)}</dd>
+      <dt>On the ledger now</dt><dd>${v.ledger ? v.ledger.exists ? `<span class="pending">yes: ${v.ledger.amountXrp} XRP held, destination ${short(v.ledger.destination)}, CancelAfter ${fmtDate(fromRipple(v.ledger.cancelAfter))}</span>` : v.ledger.unknown ? `<span class="muted">could not read the ledger (${esc(v.ledger.error)})</span>` : (Date.now() - new Date(v.escrow.lockedAt).getTime() < 90000 ? `<span class="muted">just submitted; waiting for the ledger to show it</span>` : `<span class="muted">no longer: finished or cancelled</span>`) : ""}</dd>
+      <dt>Oracle</dt><dd>${oracleLine(v, ex, "client")}</dd></dl>`;
+  }
+  if (v.status === "locked") {
+    if (v.proof.mode === "hash") actions += `<div class="row"><button data-a="check">Look at the URL now</button><span class="muted">the oracle looks every few seconds anyway; this records a check in the evidence</span></div><pre id="chk-${v.id}" hidden></pre>`;
+    else actions += `<div class="row">${keyOk ? `<button class="primary" data-a="accept">Accept the delivery: sign on the ledger</button>` : ""}<button data-a="acceptprep">Build the unsigned acceptance</button><span class="muted">or do nothing: refunded ${countdown(v.deadline)} (${deadline})</span></div>
+      <details id="acc-${v.id}" hidden><summary>Unsigned acceptance (AccountSet with memo dareskro/accept)</summary><pre id="acctx-${v.id}"></pre><div class="row"><label class="grow">Signed blob<textarea data-accblob rows="2"></textarea></label><button data-a="acceptblob">Submit the signed acceptance</button></div></details>`;
+    if (v.acceptance) actions += `<p class="${v.acceptance.result === "tesSUCCESS" ? "ok" : "ko"}">Acceptance ${esc(v.acceptance.result)} · ${txLink(ex, v.acceptance.hash, "your signed acceptance")} · oracle: ${esc(v.acceptance.oracle ? `${v.acceptance.oracle.status} ${v.acceptance.oracle.note ?? v.acceptance.oracle.error ?? ""}` : "not told")}</p>`;
+  }
+  return `<div class="milestone" data-ms="${v.id}">
+    <h3>${esc(v.title)} <span class="pill ${v.status}">${v.status}</span></h3>
+    ${v.description ? `<p>${esc(v.description)}</p>` : ""}
+    <dl>
+      <dt>Amount</dt><dd><b>${v.amountXrp} XRP</b>${fiat} to ${short(m.freelancer)}</dd>
+      <dt>Deadline</dt><dd>${deadline} · ${countdown(v.deadline)} — past it, the ledger refunds you</dd>
+      <dt>Proof</dt><dd><b>${esc(mode.label)}</b> — decided by ${esc(mode.whoDecides)}.<br><span class="muted">Dispute: ${esc(mode.dispute)}</span>${v.proof.url ? `<br>URL: <a href="${esc(v.proof.url)}" target="_blank" rel="noopener">${esc(v.proof.url)}</a>` : ""}${v.proof.sha256 ? `<br>SHA-256: <code>${v.proof.sha256}</code>` : ""}</dd>
+    </dl>
+    ${actions}
+    ${v.journal && v.journal.length ? `<details><summary class="muted">Evidence journal (${v.journal.length} last entries)</summary>${journalList(v.journal, ex)}</details>` : ""}
+    <pre class="error" data-err hidden></pre>
+  </div>`;
+}
+
+function wire(m, v) {
+  const root = document.querySelector(`[data-ms="${v.id}"]`);
+  const err = root.querySelector("[data-err]");
+  const run = (btn, fn) => btn.addEventListener("click", async () => {
+    err.hidden = true; btn.disabled = true;
+    try { await fn(); await refresh(); } catch (e) { err.textContent = e.message; err.hidden = false; btn.disabled = false; }
+  });
+  const P = `/missions/${m.id}/milestones/${v.id}`;
+  root.querySelectorAll("[data-a]").forEach((b) => {
+    const a = b.dataset.a;
+    if (a === "prepare") run(b, () => api(`${P}/prepare`, {}));
+    if (a === "lock") run(b, () => api(`${P}/lock`, {}));
+    if (a === "lockblob") run(b, () => api(`${P}/lock`, { signedTxHex: root.querySelector("[data-blob]").value }));
+    if (a === "accept") run(b, () => api(`${P}/accept`, {}));
+    if (a === "acceptprep") b.addEventListener("click", async () => { err.hidden = true; try { const r = await api(`${P}/accept-prepare`, {}); $(`#acc-${v.id}`).hidden = false; $(`#acc-${v.id}`).open = true; $(`#acctx-${v.id}`).textContent = JSON.stringify(r.unsignedTx, null, 2); } catch (e) { err.textContent = e.message; err.hidden = false; } });
+    if (a === "acceptblob") run(b, () => api(`${P}/accept`, { signedTxHex: root.querySelector("[data-accblob]").value }));
+    if (a === "check") b.addEventListener("click", async () => { b.disabled = true; try { const o = await api(`${P}/check`, { by: "client" }); const pre = $(`#chk-${v.id}`); pre.hidden = false; pre.textContent = `${o.verdict}: ${o.why}\n${JSON.stringify({ status: o.status, bytes: o.bytes, sha256: o.sha256, hops: o.hops, headers: o.headers, ms: o.ms }, null, 2)}`; await refresh(); } catch (e) { err.textContent = e.message; err.hidden = false; } finally { b.disabled = false; } });
+  });
+}
+
+(async () => {
+  try { await loadConfig(); await refresh(); } catch (e) { $("#whoBody").innerHTML = `<span class="ko">${esc(e.message)}</span>`; }
+  setInterval(() => refresh().catch(() => {}), 5000);
+})();
+</script>
+</body>
+</html>

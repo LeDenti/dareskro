@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dareskro · your mission</title>
+<link rel="stylesheet" href="/public/app.css">
+</head>
+<body>
+<header>
+  <h1>Your mission <small>the fee is locked on the XRP Ledger before you start; you are paid on proof, with no one to chase</small></h1>
+  <span class="meta" id="net">…</span>
+</header>
+<main>
+  <section class="card" id="top"><div class="hint">loading…</div></section>
+  <div id="ms"></div>
+  <section class="card">
+    <h2>How this works, in four sentences</h2>
+    <p>The client locked the money in an <b>escrow of the XRP Ledger</b>: it left the client's balance and sits in the ledger, with your address as the only possible destination. The client cannot take it back before the deadline. A named <b>oracle</b> holds the secret that releases it and reveals that secret on proof: a file with the agreed hash at the agreed URL, or the client's signed acceptance. If no proof comes before the deadline, the ledger <b>refunds the client</b>; nobody, including us, ever holds the money.</p>
+    <p class="hint">You need nothing but your XRPL address. Check everything on the explorer links: they are the ledger, not our word.</p>
+  </section>
+</main>
+<script src="/public/common.js"></script>
+<script>
+const token = location.pathname.split("/").pop();
+let data, lastKey = "";
+async function load() {
+  data = await api(`/share/${token}`);
+  const ex = data.explorer;
+  $("#net").textContent = `${data.network}${data.oracle ? ` · oracle ${data.oracle.name} ${short(data.oracle.address)}` : ""}`;
+  const total = data.milestones.reduce((s, m) => s + Number(m.amountXrp), 0);
+  $("#top").innerHTML = `<h2>${esc(data.title)}</h2>${data.description ? `<p>${esc(data.description)}</p>` : ""}
+    <dl><dt>From</dt><dd>${accLink(ex, data.client)}${data.clientLabel ? ` · ${esc(data.clientLabel)}` : ""}</dd>
+    <dt>To (you)</dt><dd>${accLink(ex, data.freelancer)}</dd>
+    <dt>Total</dt><dd><span class="big">${total} XRP</span> over ${data.milestones.length} milestone(s)</dd>
+    ${data.oracle ? `<dt>Oracle</dt><dd>${esc(data.oracle.name)} · ${accLink(ex, data.oracle.address)} — holds the secret, never the money</dd>` : ""}</dl>`;
+  const key = JSON.stringify(data.milestones);
+  if (key === lastKey) return;
+  lastKey = key;
+  $("#ms").innerHTML = data.milestones.map(renderMs).join("");
+  data.milestones.forEach((m) => {
+    const root = document.querySelector(`[data-ms="${m.id}"]`);
+    root.querySelector("[data-check]")?.addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      try { const o = await api(`/share/${token}/milestones/${m.id}/check`, {}); const pre = root.querySelector("[data-chk]"); pre.hidden = false; pre.textContent = `${o.verdict}: ${o.why}\n${JSON.stringify({ status: o.status, bytes: o.bytes, sha256: o.sha256, hops: o.hops, ms: o.ms }, null, 2)}`; } catch (err) { alert(err.message); } finally { e.target.disabled = false; }
+    });
+    root.querySelector("[data-file]")?.addEventListener("change", async (e) => { const file = e.target.files[0]; if (!file) return; const h = await sha256File(file); const out = root.querySelector("[data-fileout]"); out.innerHTML = h === m.proof.sha256 ? `<span class="ok">this file has the agreed hash: publish exactly it at the URL</span>` : `<span class="ko">this file's SHA-256 is ${short(h)}, not the agreed ${short(m.proof.sha256)}: it would not be paid</span>`; });
+  });
+}
+function renderMs(m) {
+  const ex = data.explorer;
+  const mode = data.proofModes[m.proof.mode];
+  const locked = m.ledger?.exists;
+  let state;
+  if (m.status === "paid") state = `<p class="ok big">Paid.</p><p>${oracleLine(m, ex, "client")}</p>`;
+  else if (m.status === "refunded") state = `<p class="ko big">Not delivered in time: the client was refunded.</p><p>${oracleLine(m, ex, "client")}</p>`;
+  else if (m.status === "failed" || m.status === "gone") state = `<p class="ko">${oracleLine(m, ex, "client")}</p>`;
+  else if (m.status === "locked") state = `<p class="${locked ? "pending" : "ko"}">${locked ? `<b>The money is locked.</b> ${m.ledger.amountXrp} XRP sit in escrow #${m.escrow.sequence}, destination ${short(m.ledger.destination)} (you), refund to the client only after ${fmtDate(fromRipple(m.ledger.cancelAfter))} — ${txLink(ex, m.escrow.hash, "see the lock on the explorer")}` : m.ledger?.unknown ? "could not read the ledger right now" : (Date.now() - new Date(m.escrow.lockedAt).getTime() < 90000 ? "the lock was just submitted; waiting for the ledger to show it (re-read every few seconds)" : "the escrow is no longer on the ledger: finished or cancelled")}</p><p>${oracleLine(m, ex, "client")}</p>`;
+  else state = `<p class="ko"><b>Not locked yet.</b> The client has not signed the escrow: nothing is guaranteed. Do not start before this line turns into "the money is locked".</p>`;
+  const how = m.proof.mode === "hash"
+    ? `<p>Publish <b>the exact file</b> whose SHA-256 is <code>${m.proof.sha256}</code> at <a href="${esc(m.proof.url)}" target="_blank" rel="noopener">${esc(m.proof.url)}</a>. The oracle reads that URL every few seconds (${locked ? "it is watching now" : "once the money is locked"}): the moment the hash matches, it reveals the secret and the ${m.amountXrp} XRP go to your address. A different file is not paid; nothing by the deadline and the client is refunded. Nobody has to approve anything.</p>
+      <div class="row"><button data-check>Check my URL now</button><label>Hash a file to compare<input type="file" data-file></label><span data-fileout></span></div><pre data-chk hidden></pre>`
+    : `<p>Deliver as agreed${m.proof.url ? ` at <a href="${esc(m.proof.url)}" target="_blank" rel="noopener">${esc(m.proof.url)}</a>` : ""}; then <b>the client signs an acceptance on the ledger</b> from the account that locked the money, and the oracle releases the ${m.amountXrp} XRP to your address. Plainly: the client decides, there is no arbiter. What protects you is the lock: the client cannot take the money back before ${fmtDate(m.deadline)}. If the client stays silent past that date, the ledger refunds the client, and you keep the on-chain proof that the money was locked and that no acceptance was signed.</p>`;
+  return `<section class="card" data-ms="${m.id}">
+    <h2>${esc(m.title)} <span class="pill ${m.status}">${m.status}</span></h2>
+    ${m.description ? `<p>${esc(m.description)}</p>` : ""}
+    <dl>
+      <dt>You receive</dt><dd><b>${m.amountXrp} XRP</b>${m.fiat ? ` <span class="muted">(≈ ${m.fiat.amount} ${m.fiat.currency} at the rate of the order, ${m.fiat.rate})</span>` : ""} at ${short(data.freelancer)}</dd>
+      <dt>Before</dt><dd>${fmtDate(m.deadline)} · ${countdown(m.deadline)}</dd>
+      <dt>Proof</dt><dd><b>${esc(mode.label)}</b> — decided by ${esc(mode.whoDecides)}</dd>
+    </dl>
+    ${state}
+    <h3>What to do</h3>
+    ${how}
+    ${m.journal && m.journal.length ? `<details><summary class="muted">What the oracle saw (evidence journal)</summary>${journalList(m.journal, ex)}</details>` : ""}
+  </section>`;
+}
+load().catch((e) => { $("#top").innerHTML = `<span class="ko">${esc(e.message)}</span>`; });
+setInterval(() => load().catch(() => {}), 5000);
+</script>
+</body>
+</html>

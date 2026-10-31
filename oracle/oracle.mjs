@@ -55,6 +55,12 @@
  *                                cancelAfter, destination, amountXrp, proof: { orderRef? } }
  *   POST /affiliate/confirm    { deliveryId, orderHash, token } — the merchant's system
  *                                says the sale happened; 403 on a bad token
+ *   POST /accept               { deliveryId, txHash } — the client accepted the freelancer's
+ *                                delivery by SIGNING: a validated transaction from the escrow's
+ *                                own account with a memo dareskro/accept = "<owner>#<sequence>".
+ *                                The oracle checks it on the ledger; 403 if signed by anyone else
+ *                              acceptance: { kind: "acceptance", deliveryId, owner, sequence,
+ *                                cancelAfter, destination, amountXrp } (condition: { kind, acceptBy, url? })
  *   POST /payout/retry         { owner, sequence } — run the dollar leg again
  *
  * FOUR SHAPES, ONE ACCOUNT.
@@ -72,6 +78,11 @@
  *             oracle only guarantees that the money was locked *before* the sale
  *             and that the release carries the order hash, in a memo anyone can
  *             read on the explorer.
+ *   acceptance (Condition + CancelAfter): the freelance case when the deliverable
+ *             is not known in advance. The CLIENT decides, by signing an acceptance
+ *             on the ledger from the account that locked the money; the oracle
+ *             verifies that signature and reveals the secret. Silence past the
+ *             deadline is a refund: no arbiter, said before signing (freelance/).
  *   In the three conditional shapes, past CancelAfter it submits the refund; the
  *   payroll escrow has no CancelAfter. In none of them can it keep or redirect
  *   the money.
@@ -94,7 +105,8 @@ const IDENTITY = path.join(HERE, ".oracle.json");
 const REGISTRY = path.join(HERE, "registry.json");
 /** The secrets of conditional escrows (delivery, presence, affiliate token hashes): 0600, never committed. */
 const SECRETS = path.join(HERE, ".deliveries.json");
-const TESTNET = "wss://testnet.xrpl-labs.com";
+/** The testnet node; XRPL_WSS overrides it (the Ripple node answered 503 on 25/10/2026). */
+const TESTNET = process.env.XRPL_WSS || "wss://testnet.xrpl-labs.com";
 const PORT = Number(process.env.ORACLE_PORT || 8787);
 const RIPPLE_EPOCH = 946684800;
 const TICK_MS = 4000;
@@ -191,8 +203,38 @@ const sha256hex = (s) => createHash("sha256").update(s).digest("hex");
 /** Compare two hex digests in constant time: the affiliate token is a password. */
 const sameHex = (a, b) => a.length === b.length && timingSafeEqual(Buffer.from(a, "hex"), Buffer.from(b, "hex"));
 
+/**
+ * The hardened verifier of freelance/verifier.mjs — streams, redirects, retries,
+ * an evidence journal per delivery id — when that module is present; the plain
+ * fetch below otherwise. Loaded once.
+ */
+let hardened;
+async function hardenedVerifier() {
+  if (hardened === undefined) {
+    try {
+      const m = await import("../freelance/verifier.mjs");
+      hardened = { verify: m.verifyAndJournal, journal: m.journal };
+    } catch {
+      hardened = null;
+    }
+  }
+  return hardened;
+}
+/** A decision line in the delivery's evidence journal (no-op without the verifier module or a delivery id). */
+async function evidence(e, entry) {
+  const h = await hardenedVerifier();
+  if (h && e.deliveryId) {
+    try { h.journal(e.deliveryId, { kind: "decision", escrow: `${e.owner}#${e.sequence}`, ...entry }); } catch (err) { log("evidence journal:", err.message); }
+  }
+}
+
 /** Read the agreed URL and compare its SHA-256 with the agreed one. */
-async function checkProof(proof) {
+async function checkProof(proof, deliveryId) {
+  const h = await hardenedVerifier();
+  if (h) {
+    const r = await h.verify(deliveryId ?? "unknown", proof);
+    return { ok: r.ok, why: r.why };
+  }
   let res;
   try {
     res = await fetch(proof.url, { signal: AbortSignal.timeout(10000), cache: "no-store" });
@@ -259,7 +301,7 @@ const KINDS = {
     watchFields: ["owner", "sequence", "cancelAfter", "destination", "deliveryId", "proof"],
     watching: (e) =>
       `${e.amountXrp ?? "?"} XRP to ${e.destination} once ${e.proof.url} has sha256 ${e.proof.sha256.slice(0, 10)}…, refund after ripple time ${e.cancelAfter}`,
-    verdict: (e) => checkProof(e.proof),
+    verdict: (e) => checkProof(e.proof, e.deliveryId),
     expired: "deadline passed without a matching file",
   },
   presence: {
@@ -302,6 +344,31 @@ const KINDS = {
     },
     expired: "deadline passed without a confirmed sale",
   },
+  acceptance: {
+    // The freelance case when the deliverable is not known in advance: the CLIENT
+    // decides, by signing on the ledger. /accept verifies that a validated transaction
+    // from the escrow's own account carries a memo naming this escrow, and records it
+    // here; the finish carries the acceptance's hash, so the chain is on the explorer.
+    agree: (p) =>
+      !p.acceptBy || !/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(p.acceptBy)
+        ? { error: "need acceptBy (the client's XRPL address, the escrow's owner)" }
+        : { proof: p.url ? { acceptBy: p.acceptBy, url: String(p.url) } : { acceptBy: p.acceptBy } },
+    issued: (proof) => `accepted by ${proof.acceptBy} signing on the ledger${proof.url ? `, delivery expected at ${proof.url}` : ""}`,
+    watchFields: ["owner", "sequence", "cancelAfter", "destination", "deliveryId"],
+    validate: (e) => (Number.isInteger(e.cancelAfter) ? null : "cancelAfter must be a ripple time (integer)"),
+    watching: (e) =>
+      `${e.amountXrp ?? "?"} XRP to ${e.destination} once ${e.owner} signs the acceptance on the ledger, refund after ripple time ${e.cancelAfter}`,
+    polls: false,
+    verdict: (e) =>
+      e.accepted
+        ? { ok: true, why: `accepted by the client on the ledger, tx ${e.accepted.hash.slice(0, 10)}…` }
+        : { ok: false, why: "waiting for the client's signed acceptance" },
+    memos: (e) => [{ Memo: { MemoType: toHex("dareskro/accepted-by"), MemoData: toHex(`${e.owner} ${e.accepted.hash}`) } }],
+    finished: (e) => {
+      e.acceptHash = e.accepted.hash;
+    },
+    expired: "deadline passed without the client's acceptance",
+  },
 };
 /** The kind's table for a registry entry, or undefined for payroll (no kind, or one we do not know). */
 const kindOf = (e) => (Object.hasOwn(KINDS, e.kind ?? "") ? KINDS[e.kind] : undefined);
@@ -343,6 +410,7 @@ async function tickConditional(e, wallet) {
       e.status = "failed";
       log(`${label}: cancel ${code}`);
     }
+    await evidence(e, { decision: "refund", why: kind.expired, result: code, hash: res.result.hash });
     return true;
   }
   // A presence escrow is decided at checkAfter, and the ledger refuses a finish
@@ -387,6 +455,7 @@ async function tickConditional(e, wallet) {
   e.lastHash = res.result.hash;
   e.lastTry = new Date().toISOString();
   e.lastWhy = check.why;
+  await evidence(e, { decision: "reveal", why: check.why, result: code, hash: res.result.hash });
   if (code === "tesSUCCESS") {
     e.status = "finished";
     e.finishedAt = e.lastTry;
@@ -679,6 +748,64 @@ function serve(identity) {
         }
         json(res, 202, { ok: true, note: "release on the next tick; poll /escrows" });
       });
+    }
+    if (req.method === "POST" && req.url === "/accept") {
+      // The client accepted the delivery by SIGNING: a validated transaction from the
+      // escrow's own account, with a memo dareskro/accept = "<owner>#<sequence>". The
+      // oracle reads it on the ledger — the client's signature, not a token of ours —
+      // records it, and reveals the secret on the next tick.
+      let body = "";
+      req.on("data", (d) => (body += d));
+      req.on("end", async () => {
+        try {
+          const q = JSON.parse(body);
+          if (!q.deliveryId || !HEX64.test(q.txHash ?? "")) return json(res, 400, { error: "need deliveryId and txHash (64 hex)" });
+          const secret = loadSecrets()[q.deliveryId];
+          if (!secret) return json(res, 404, { error: "unknown deliveryId" });
+          if (secret.kind !== "acceptance") return json(res, 409, { error: `deliveryId is a ${secret.kind ?? "delivery"} condition, not acceptance` });
+          const reg = loadRegistry();
+          const e =
+            reg.escrows.find((x) => x.deliveryId === q.deliveryId && x.status === "waiting") ??
+            reg.escrows.find((x) => x.deliveryId === q.deliveryId);
+          if (!e) return json(res, 409, { error: "no escrow locked behind this condition yet" });
+          if (e.status !== "waiting") return json(res, 409, { error: `escrow is ${e.status}` });
+          const hash = q.txHash.toUpperCase();
+          const c = await ledger();
+          let t;
+          try {
+            t = (await c.request({ command: "tx", transaction: hash })).result;
+          } catch (err) {
+            return json(res, 404, { error: `transaction not found on the ledger: ${err?.data?.error ?? err.message}` });
+          }
+          const tx = t.tx_json ?? t;
+          const result = typeof t.meta === "object" ? t.meta.TransactionResult : t.meta_blob ? "?" : t.meta;
+          if (!t.validated) return json(res, 409, { error: "transaction not validated yet" });
+          if (result !== "tesSUCCESS") return json(res, 403, { error: `transaction result is ${result}, not tesSUCCESS` });
+          if (tx.Account !== e.owner) {
+            log(`acceptance #${e.sequence}: refused — ${hash.slice(0, 10)}… signed by ${tx.Account}, not by the owner ${e.owner}`);
+            return json(res, 403, { error: `signed by ${tx.Account}, not by the escrow's owner ${e.owner}` });
+          }
+          const ref = `${e.owner}#${e.sequence}`;
+          const memos = (tx.Memos ?? []).map((m) => ({
+            type: Buffer.from(m.Memo?.MemoType ?? "", "hex").toString("utf8"),
+            data: Buffer.from(m.Memo?.MemoData ?? "", "hex").toString("utf8"),
+          }));
+          if (!memos.some((m) => m.type === "dareskro/accept" && m.data.includes(ref))) {
+            return json(res, 403, { error: `no memo dareskro/accept naming ${ref} in that transaction` });
+          }
+          if (e.accepted && e.accepted.hash !== hash) return json(res, 409, { error: "already accepted with another transaction" });
+          if (!e.accepted) {
+            e.accepted = { hash, at: new Date().toISOString(), ledgerIndex: t.ledger_index };
+            saveRegistry(reg);
+            await evidence(e, { decision: "accepted", by: tx.Account, hash, ledgerIndex: t.ledger_index });
+            log(`acceptance #${e.sequence}: the client ${e.owner} signed the acceptance — ${explorerTx(hash)} — releasing on the next tick`);
+          }
+          json(res, 202, { ok: true, note: "release on the next tick; poll /escrows" });
+        } catch (err) {
+          json(res, 400, { error: String(err) });
+        }
+      });
+      return;
     }
     if (req.method === "POST" && req.url === "/watch") {
       return withBody(req, res, (e) => {

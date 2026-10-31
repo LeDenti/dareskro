@@ -57,3 +57,8 @@ presentation/video/*.mp4
 near/node_modules/
 near/contract/target/
 near/.oracle_near.json
+
+# freelance desk: the client's local signing key (testnet rehearsals), local mission state, live evidence journals
+freelance/.client.json
+freelance/.missions.json
+freelance/evidence/
