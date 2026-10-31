@@ -16,5 +16,23 @@
     "fee_drops": "12",
     "explorer": "https://testnet.xrpl.org/transactions/8427D2E4C94EDCA694486B6E980C397328C051787C9E1B2E08BE2A7D0427A2DB",
     "at": "2026-10-31T08:36:32.506Z"
+  },
+  {
+    "network": "mainnet",
+    "node": "wss://xrplcluster.com",
+    "account": "rNY2Vc9hBPBcbZZVqzLgzxtTp7e9wVGknb",
+    "tx": "4C8F8BB70B9EB61A16FDB73729063981DE9A010F98257A55C362242424CAB284",
+    "result": "tesSUCCESS",
+    "validated": true,
+    "ledger_index": 108020762,
+    "close_time_iso": "2026-10-31T09:50:52Z",
+    "statement": "paie/sortie/bulletin_eur.json",
+    "statement_sha256": "268a8a7830cd037fa013ce497266debebf50e4c421248bf8fec6c0a56db5b94b",
+    "statement_id": "stmt-ffff3dd0e216",
+    "pdf": "paie/sortie/bulletin_officiel.pdf",
+    "pdf_sha256": "ec75f4ce516c5793514dbff371f1fab4fcba76d6a27a94826dd441808f2cbceb",
+    "fee_drops": "12",
+    "explorer": "https://livenet.xrpl.org/transactions/4C8F8BB70B9EB61A16FDB73729063981DE9A010F98257A55C362242424CAB284",
+    "at": "2026-10-31T09:50:58.720Z"
   }
 ]

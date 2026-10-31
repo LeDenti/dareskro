@@ -11,7 +11,7 @@ measured on 31/10/2026; every hash is on the XRPL testnet.
 | The official payslip (French mandatory mentions), deterministic PDF, same SHA-256 on it as in the escrow memo | `bulletin_officiel.py` → `sortie/bulletin_officiel.pdf` | done, byte-identical across runs |
 | The desk's real mode: one approval per transaction when a Ledger device signs, a "what leaves, to whom, when" screen, the test wallet kept for rehearsals | `app/src/PaieReelle.tsx`, localized changes in `app/src/App.tsx` and `app/src/xrpl.ts` | done, rehearsed twice on testnet — the first rehearsal caught a real bug (below) |
 | The last mile to bank accounts: a SEPA credit transfer order (ISO 20022 pain.001) from the statement, written, **not executed** | `ordre_sepa.py` → `sortie/ordre_virement.pain001.xml` | done |
-| Anchoring the statement's SHA-256 (never the document) on the ledger: testnet measured, mainnet prepared and **not executed** | `ancrer.mjs` → `sortie/ancrages.json` | testnet done; mainnet waits for Julien's decision |
+| Anchoring the statement's SHA-256 (never the document) on the ledger: testnet, then **mainnet on Julien's decision** | `ancrer.mjs` → `sortie/ancrages.json` | done: testnet 8427D2E4…, mainnet 4C8F8BB7… (ledger 108020762) |
 | The real run on the Nano S Plus, three approvals, hashes and captures | section 5 | **done, 31/10 09:29 UTC**: the first attempt expired (`tefMAX_LEDGER`, nothing applied), the second went through |
 | The sealed payslip as an NFT in the employee's wallet, readable by the named administrations only | `sceller.mjs` → `sortie/bulletin_scelle.json`, `sortie/nft.json` | done, measured on testnet (section 6) |
 
@@ -193,8 +193,15 @@ node ancrer.mjs verifier --reseau testnet --tx <HASH>
 `tesSUCCESS`, ledger 21958530, fee 12 drops; `verifier` reads it back: `dareskro/sha256` = `268a8a78…` →
 MATCH, `dareskro/pdf-sha256` = `ec75f4ce…` → MATCH, `RESULT: OK`.
 
-**Mainnet, prepared, not executed.** It runs only on Julien's explicit decision, and the script enforces
-the shape of that decision:
+**Mainnet, executed on Julien's decision, 31/10/2026 09:50 UTC.** Key generated offline by Julien
+(`creer-cle --reseau mainnet`, file 0600), account `rNY2Vc9hBPBcbZZVqzLgzxtTp7e9wVGknb` funded by him
+with 11 XRP, then `ancrer --reseau mainnet --mainnet-je-confirme`:
+[4C8F8BB7…](https://livenet.xrpl.org/transactions/4C8F8BB70B9EB61A16FDB73729063981DE9A010F98257A55C362242424CAB284)
+`tesSUCCESS`, ledger 108020762, closed 09:50:52 UTC, fee 12 drops; memos `dareskro/sha256` =
+`268a8a78…`, `dareskro/pdf-sha256` = `ec75f4ce…`, `dareskro/doc` = `bulletin de paie stmt-ffff3dd0e216`.
+`verifier --reseau mainnet` reads it back: MATCH, MATCH, `RESULT: OK`. What is anchored is the
+demonstration statement (fictional employer and employee): the mechanism, on the public ledger, for
+the cost of a fee. The procedure the script enforces:
 
 1. `node ancrer.mjs creer-cle --reseau mainnet` generates the key **offline** into
    `paie/cles/ancre.mainnet.json` (0600) and prints the address only — or Julien writes

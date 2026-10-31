@@ -708,8 +708,11 @@ pharmacy, in `paie/` ([its README](paie/README.md) has every hash). What changed
 - **The fingerprint is anchored, never the document.** `paie/ancrer.mjs` writes the statement's and the
   PDF's SHA-256 in the memos of a fee-only `AccountSet`: testnet
   [8427D2E4…](https://testnet.xrpl.org/transactions/8427D2E4C94EDCA694486B6E980C397328C051787C9E1B2E08BE2A7D0427A2DB)
-  (ledger 21958530, `verifier`: MATCH, MATCH). Mainnet is prepared — offline key in a 0600 file written
-  by the owner, reserve checked, `--mainnet-je-confirme` written in full — and **not executed**.
+  (ledger 21958530, `verifier`: MATCH, MATCH), then **mainnet, on Julien's decision, 31/10 09:50 UTC**:
+  offline key in a 0600 file written by him, account funded by him, `--mainnet-je-confirme` written in
+  full — [4C8F8BB7…](https://livenet.xrpl.org/transactions/4C8F8BB70B9EB61A16FDB73729063981DE9A010F98257A55C362242424CAB284)
+  `tesSUCCESS`, ledger 108020762, read back MATCH, MATCH. The fingerprint of a fictional payslip, on the
+  public ledger, for 12 drops.
 - **The run on the Nano S Plus, three approvals, 31/10 09:29 UTC.** The first attempt expired
   (`tefMAX_LEDGER`: three reviews read screen by screen outlast a 150-ledger window; nothing applied),
   the window was widened to 600 ledgers, and the second attempt signed the three legs on the device:
