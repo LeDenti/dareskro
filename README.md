@@ -7,6 +7,7 @@
 **AI & Fintech XRP Ledger Hackathon, New York, 24–25 October 2026.**
 Demo video (3 min 49, English): [dareskro explainer v2 — La Linea, with the one-day contract, URSSAF, and the oracle's real loop typed on its card](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea2.mp4) · earlier cut with the terminal logs: [split screen](https://github.com/LeDenti/dareskro/releases/download/v0.1-hackathon-nyc/dareskro_final_EN_linea_split.mp4) · release [v0.1-hackathon-nyc](https://github.com/LeDenti/dareskro/releases/tag/v0.1-hackathon-nyc).
 The spoken pitch: [PITCH.md](PITCH.md) (full, with the Q&A) and [PITCH_3MIN.md](PITCH_3MIN.md) (the 3-minute track version).
+After the hackathon: the freelance case for real use — mission, two modes of proof, hardened verifier, client desk and freelancer link, measured 31/10/2026 — in [`freelance/`](freelance/README.md) and the section [« Le freelance, en vrai »](#le-freelance-en-vrai--the-freelancer-for-real) below.
 Track: Agentic Finance. Partner prizes targeted: Ledger (Agentic Finance), Mastercard.
 
 > The agent reads the evidence. The code computes the amount. A human signs on a
@@ -341,6 +342,145 @@ memo to add), one conditional handler for the three conditional shapes, and a
 registry that merges the entries a pass touched instead of overwriting the file —
 `/affiliate/confirm` and `/watch` write it while a finish is in flight. The payroll
 branch is the one measured on the real device, untouched.
+
+## Le freelance, en vrai — the freelancer, for real
+
+After New York the freelance case was taken from a demo to a product: a mission
+model with two modes of proof, a verifier that reads real URLs, a desk for the
+client, a link for the freelancer, and a run on testnet with the deliverable at
+a public URL. Everything lives in [`freelance/`](freelance/README.md); the oracle
+gained one shape (`acceptance`), one route (`POST /accept`) and the hardened
+verifier, nothing else changed in it.
+
+**What the ledger enforces.** One escrow per milestone: `Amount` to the
+freelancer's address, a `PREIMAGE-SHA-256` `Condition` whose secret the oracle
+holds, `CancelAfter` = the deadline. Paid on proof, or refunded at the deadline.
+Nobody holds the money in between.
+
+**Two modes of proof, and who decides.** *Agreed hash*: the client and the
+freelancer agree on a URL and the SHA-256 of the exact file; the oracle reads the
+URL by itself and reveals on match; a fact decides, no one can refuse a
+conforming file, nothing matching before the deadline is a refund. *Client's
+signed acceptance*: for work that cannot be hashed in advance; the client signs
+an `AccountSet` from the account that locked the money, with the escrow's
+reference in a memo `dareskro/accept`; the oracle verifies that transaction on
+the ledger (signed by the escrow's owner, validated, naming `owner#sequence`)
+and reveals; the finish carries the acceptance's hash. **No arbiter**, said on
+both screens before anything is signed: the client cannot take the money back
+before the deadline, the client's silence past it is a refund, and the
+freelancer keeps the on-chain proof of the lock and of the silence.
+
+**The verifier.** Streams the body (constant memory, 2 GiB cap, idle timeout),
+follows redirects by hand (GitHub releases answer 302 to a signed blob URL,
+masked in the evidence), retries network errors, 5xx, 429 and truncated bodies
+(3 attempts) and not answers (404 = not yet, 403 = not public, wrong hash =
+wrong file), refuses private hosts by default, and writes every observation and
+every decision of the oracle in a JSON-lines journal per delivery
+(`freelance/evidence/`, the run's copies in `freelance/run/`). 15 checks against
+a server that misbehaves on purpose: `node freelance/verifier.test.mjs`.
+
+**The screens.** `node freelance/service.mjs` (127.0.0.1:8781): the client's
+desk creates the mission, asks the oracle for the condition, shows the unsigned
+`EscrowCreate`, signs it with the client's own key kept in a 0600 file the
+client wrote itself — or takes back a blob signed anywhere else, after checking
+it carries the same amount, destination, condition and date — hands the escrow
+to the oracle, shows the explorer, what the ledger holds, what the oracle sees,
+the evidence, and the "Accept" button or "do nothing and be refunded at the
+date". The freelancer's link (`/m/<token>`) shows what to deliver, where,
+before when, "the money is locked" only when `ledger_entry` says so, what the
+address receives, a URL check and a file hasher. The freelancer needs an XRPL
+address, nothing else.
+
+### Measured on testnet, 31/10/2026, from the screens
+
+Client `r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo` (a testnet account the desk asked the
+faucet for; its key in `freelance/.client.json`, 0600), freelancer
+`rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB` (a fresh testnet address, nothing else),
+oracle [`rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW`](https://testnet.xrpl.org/accounts/rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW)
+(the hackathon's, unchanged identity, this branch's code), node
+`wss://testnet.xrpl-labs.com`, private hosts refused. The three missions were
+created, locked and accepted by clicking the desk (`freelance/public/client.html`),
+not by a script; the memos below were read back from the ledger.
+
+| Step | Proof |
+|---|---|
+| **Mission 1, agreed hash** — "Landing page copy, v1", 25 XRP (memo `27.85 EUR @ 1.11412 Kraken XRP/EUR`), proof `sha256:c7f52892…;url:https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/landing-copy-v1.md`, `CancelAfter` 01/11 08:41 UTC, memos `dareskro/case`, `/mission`, `/proof`, `/fiat`, `/oracle` | `EscrowCreate` `tesSUCCESS` #21958544 [F7D62742…](https://testnet.xrpl.org/transactions/F7D62742D54FE5FA8480A118683956D765FBE3998AFA47BE94A3282163B8C1A4), 08:44 UTC |
+| The oracle reads the agreed URL every few seconds | `HTTP 404: nothing published at the URL yet` — the asset does not exist; one journal line, then "unchanged" lines (`freelance/run/evidence-d77718f16ab8.jsonl`) |
+| A stranger submits `EscrowFinish` without the secret | `tecCRYPTOCONDITION_ERROR` [40351E63…](https://testnet.xrpl.org/transactions/40351E63709032CA71489C050EE833CFE4F70AEFF56015AE2A71F31F9CA2F2D3): the ledger refuses, 08:50 UTC |
+| The client tries `EscrowCancel` before the deadline | `tecNO_PERMISSION` [57099DA2…](https://testnet.xrpl.org/transactions/57099DA2453085E4F381EC6CD203C171D1FAED519CC1A87CD5A6AB2BF45C0280): the client cannot take the money back before the date, 08:50 UTC |
+| The file is published at the agreed URL (GitHub release asset, 302 to a signed blob URL) | **pending at the time of writing**: creating the public release was refused to the agent by its permission layer ("create public surface"), so the asset waits for Julien's own `gh release create … freelance/run/landing-copy-v1.md`. The escrow stays locked until 01/11 08:41 UTC and the oracle keeps reading the URL every 4 s; the moment the asset is there it streams it through the redirect, matches `c7f52892…` and reveals. The hash of that `EscrowFinish` goes here; if the asset never comes, the refund's does |
+| **Mission 2, agreed hash, never delivered** — 10 XRP, URL `…/never-delivered.pdf`, `CancelAfter` 08:56 UTC | `EscrowCreate` `tesSUCCESS` #21958545 [C4D11480…](https://testnet.xrpl.org/transactions/C4D11480DF0D9251E7B22646A66E3DD8044FC78AA035C0F860F298A05C2F7F87), 08:46 UTC; the oracle: `HTTP 404` until the deadline |
+| Deadline passed, nothing published: the oracle submits the refund | `EscrowCancel` `tesSUCCESS` [A01F1459…](https://testnet.xrpl.org/transactions/A01F14593424C4B0EF11920B12AAD76EB79BAAF53F8F1E6A4897EF5A3332D3A0), ledger 21958866 closed 08:56:12 UTC, six seconds after the deadline: 10 XRP back to the client; journal `evidence-a9ff66058dab.jsonl` ends with `decision: refund` |
+| **Mission 3, client's signed acceptance** — "Logo, three proposals", 15 XRP (memo `16.73 EUR @ 1.11563`), proof `acceptance-by:r9eDSQ2C…`, `CancelAfter` 09:20 UTC | `EscrowCreate` `tesSUCCESS` #21958546 [C52076F9…](https://testnet.xrpl.org/transactions/C52076F9DEF79846A33B92135971BAAC8F923207D3F31622BE4CFF65279A7842), 08:46 UTC; the oracle: `waiting for the client's signed acceptance` |
+| The client clicks "Accept the delivery": an `AccountSet` from its account, memo `dareskro/accept = r9eDSQ2C…#21958546`, signed with its key, submitted, hash given to `POST /accept` | `tesSUCCESS` [D1FE7ACB…](https://testnet.xrpl.org/transactions/D1FE7ACB3F47370743870A0991F5CB41B53A39C14A6A1B80E383082B1E2BE593), 08:48:49 UTC; the oracle verifies it on the ledger (owner, validated, memo) and answers 202 |
+| The oracle reveals the secret, memo `dareskro/accepted-by` = the client and the acceptance's hash | `EscrowFinish` + `Fulfillment` `tesSUCCESS` [9DD401BF…](https://testnet.xrpl.org/transactions/9DD401BF2CEC63B38942CA2E251B42CBCABA9072CC6D5111F9203A5B71EACDEC), 08:48:55 UTC: 15 XRP to the freelancer, six seconds after the signature |
+
+Rehearsal of the same three paths through the API only, a quarter of an hour
+earlier, with the file on a local server (`FREELANCE_ALLOW_PRIVATE=1`): wrong
+file published → `published sha256 543df89f… ≠ agreed 309ca8ea…`, pays nothing;
+right file → `match (48 bytes)` → [A87CCAE2…](https://testnet.xrpl.org/transactions/A87CCAE2D02DC8A4C0D5AF0C9357B6C22922D12B0A66C6FD7FFB0F0FC7585240);
+acceptance signed [E7F0520E…](https://testnet.xrpl.org/transactions/E7F0520E1F7010C35641FD61858941EC65A0C913844C9C2C02D66AFC112B20D7)
+→ released [89D7E4ED…](https://testnet.xrpl.org/transactions/89D7E4EDC41AF784392773DF178DF04FCAB39E14E02C4124A0E008929DC0A217);
+acceptance never signed → refunded at the deadline [722566A0…](https://testnet.xrpl.org/transactions/722566A09A4B088BF01D06690C52A02D1E5D6E09D6B94CD06234C17538BBFACC).
+`freelance/demo_freelance.mjs` replays the three missions through the desk's API.
+
+**Not done.** The dollar leg (RLUSD through Mastercard AP4M) is not wired to
+this desk: the sandbox was at 1/1000 of the amounts when the hackathon closed;
+`ap4m/payout.mjs` re-checks the `EscrowFinish` on the ledger before paying, so
+it plugs behind `paid` without touching the escrow. No advances, no arbiter:
+Du(e)ly's "Why Not" prize in New York went to client escrow plus advances
+financed by a vault; advancing money is a lending business, out of scope here.
+
+### What it would take for mainnet
+
+Nothing below is enabled; mainnet is a decision, not a flag. The code takes the
+node from `XRPL_WSS` and the explorer from `XRPL_EXPLORER`; the desk refuses to
+create keys outside testnet.
+
+- **Reserves and fees.** An escrow is an object owned by the client: the
+  client's account must hold the base reserve (1 XRP since December 2024) plus
+  one owner reserve per open escrow (0.2 XRP) on top of the amount locked, or
+  the lock is refused (`tecINSUFFICIENT_RESERVE`, `tecUNFUNDED_ESCROW`) — the
+  desk checks and says so before signing. Fees: 12 drops for `EscrowCreate`, 12
+  for the acceptance, about 450 drops for a conditional `EscrowFinish` (the
+  fulfillment is charged by size), paid by whoever submits: the client, then
+  the oracle. A mission costs the client about 0.00003 XRP in fees and 0.2 XRP
+  of reserve that comes back when the escrow closes.
+- **Minimum amount.** Technically one drop. Reasonably, an amount for which
+  the oracle's fee, the freelancer's exchange costs and the rate drift between
+  lock and release are noise: we would start at **20 XRP** per milestone and
+  say so on the desk. The fiat line in the memo is the rate at the lock; the
+  freelancer bears the drift until a stable coin can be escrowed.
+- **The currency.** XRP at the day's rate, written in the memo, as long as
+  RLUSD is not escrowable (its issuer has no `AllowTrustLineLocking`, measured
+  08/09 and 27/10/2026; neither has EURØP). The day it is, the escrow holds
+  dollars or euros with no change to the oracle, which never touches amounts.
+- **Keys.** On mainnet the desk never holds the client's key: the client signs
+  on its own device (the pay desk's Ledger path builds the same `EscrowCreate`)
+  or pastes a blob. The oracle's key signs only `EscrowFinish` and
+  `EscrowCancel`, both of which can only move money where the escrow already
+  says; it needs a few XRP for fees and nothing else.
+- **The oracle as a service.** One named account, its birth memo, its code
+  public, its registry public, its journals kept. What it cannot do is in the
+  escrow, not in a promise; what it can do — delay, or refuse to read — is
+  bounded by `CancelAfter`. A second oracle instance on another machine with
+  the same secrets would be the availability measure; it is not built.
+- **Terms of use, to be read by a lawyer before anything.** Who the parties
+  are (client, freelancer, dareskro as oracle operator, never as holder of
+  funds); what the oracle commits to (reading the agreed URL at least every N
+  minutes until the deadline, verifying an acceptance within N minutes) and
+  what it does not (judging the work, arbitrating); the no-arbiter sentence of
+  the acceptance mode as an express clause; the refund at the deadline as the
+  agreed consequence of silence; the public nature of memos (no personal data:
+  addresses, hashes, amounts, a mission id); the tax and invoicing duties that
+  remain the parties' (the escrow is a payment rail, not an invoice); the
+  jurisdictions where a crypto-asset payment between a client and a freelancer
+  is lawful, and the regulatory status of an operator that never holds funds
+  (MiCA: a service provider or not, to be qualified).
+- **The public URL.** For the agreed-hash mode the freelancer must be able to
+  publish at a URL the client agreed to in advance; GitHub releases, IPFS
+  gateways and plain web servers are measured; a URL behind a login is not a
+  proof. For the acceptance mode, nothing is needed but the client's signature.
 
 ## Privacy — invisible to the public, visible to the administration
 

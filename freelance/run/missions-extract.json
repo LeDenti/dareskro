@@ -1,0 +1,190 @@
+{
+  "missions": [
+    {
+      "id": "986bed59b83f",
+      "createdAt": "2026-10-31T08:42:03.206Z",
+      "title": "Landing page copy, v1",
+      "description": "A Markdown file: the landing page copy for dareskro's freelance product (headline, sub-headline, three lines for the client, three for the freelancer, a plain paragraph on the acceptance mode, a call to action). Published as an asset of the GitHub release freelance-run-2026-10-31.",
+      "client": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+      "freelancer": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+      "clientLabel": "",
+      "freelancerLabel": "freelancer (testnet address)",
+      "milestones": [
+        {
+          "id": "2a00e3",
+          "title": "Delivery",
+          "description": "",
+          "amountXrp": "25",
+          "deadline": "2026-11-01T08:41:00.000Z",
+          "cancelAfter": 846837660,
+          "proof": {
+            "mode": "hash",
+            "url": "https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/landing-copy-v1.md",
+            "sha256": "c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59"
+          },
+          "status": "locked",
+          "fiat": {
+            "amount": "27.85",
+            "currency": "EUR",
+            "rate": 1.11412,
+            "source": "Kraken XRP/EUR",
+            "at": "2026-10-31T08:42:03.352Z"
+          },
+          "condition": {
+            "deliveryId": "d77718f16ab8",
+            "condition": "A025802025A145E38C0868108A465157DB93CB78DE756A1B341B0994B871C4971E1FEB94810120",
+            "proof": {
+              "url": "https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/landing-copy-v1.md",
+              "sha256": "c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59"
+            },
+            "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+            "issuedAt": "2026-10-31T08:43:12.411Z"
+          },
+          "escrow": {
+            "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+            "sequence": 21958544,
+            "hash": "F7D62742D54FE5FA8480A118683956D765FBE3998AFA47BE94A3282163B8C1A4",
+            "result": "tesSUCCESS",
+            "destination": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+            "amountXrp": "25",
+            "cancelAfter": 846837660,
+            "ledgerIndex": 21958660,
+            "lockedAt": "2026-10-31T08:44:08.642Z",
+            "signedBy": "this desk's key"
+          },
+          "handed": {
+            "ok": true,
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "1c291be1fe21",
+      "createdAt": "2026-10-31T08:45:10.488Z",
+      "title": "Never delivered: refund test",
+      "description": "A PDF nobody will ever publish. The oracle must see 404 until the deadline, then the ledger refunds the client.",
+      "client": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+      "freelancer": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+      "clientLabel": "",
+      "freelancerLabel": "",
+      "milestones": [
+        {
+          "id": "6fe2f6",
+          "title": "Delivery",
+          "description": "",
+          "amountXrp": "10",
+          "deadline": "2026-10-31T08:56:00.000Z",
+          "cancelAfter": 846752160,
+          "proof": {
+            "mode": "hash",
+            "url": "https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/never-delivered.pdf",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "status": "locked",
+          "fiat": {
+            "amount": "11.14",
+            "currency": "EUR",
+            "rate": 1.11423,
+            "source": "Kraken XRP/EUR",
+            "at": "2026-10-31T08:45:10.616Z"
+          },
+          "condition": {
+            "deliveryId": "a9ff66058dab",
+            "condition": "A025802039E9958D480D5F458161E714E52D1EA5EF2906E262D83060624BBAAAEAF3E773810120",
+            "proof": {
+              "url": "https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/never-delivered.pdf",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000001"
+            },
+            "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+            "issuedAt": "2026-10-31T08:45:18.197Z"
+          },
+          "escrow": {
+            "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+            "sequence": 21958545,
+            "hash": "C4D11480DF0D9251E7B22646A66E3DD8044FC78AA035C0F860F298A05C2F7F87",
+            "result": "tesSUCCESS",
+            "destination": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+            "amountXrp": "10",
+            "cancelAfter": 846752160,
+            "ledgerIndex": 21958697,
+            "lockedAt": "2026-10-31T08:46:17.823Z",
+            "signedBy": "this desk's key"
+          },
+          "handed": {
+            "ok": true,
+            "status": 201
+          }
+        }
+      ]
+    },
+    {
+      "id": "b4aaef7fbaf9",
+      "createdAt": "2026-10-31T08:46:33.529Z",
+      "title": "Logo, three proposals",
+      "description": "Three PNG proposals for the dareskro freelance logo, sent by e-mail. The work cannot be hashed in advance: the client signs the acceptance when satisfied, or is refunded at the deadline.",
+      "client": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+      "freelancer": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+      "clientLabel": "",
+      "freelancerLabel": "",
+      "milestones": [
+        {
+          "id": "b82015",
+          "title": "Delivery",
+          "description": "",
+          "amountXrp": "15",
+          "deadline": "2026-10-31T09:20:00.000Z",
+          "cancelAfter": 846753600,
+          "proof": {
+            "mode": "acceptance"
+          },
+          "status": "locked",
+          "fiat": {
+            "amount": "16.73",
+            "currency": "EUR",
+            "rate": 1.11563,
+            "source": "Kraken XRP/EUR",
+            "at": "2026-10-31T08:46:33.677Z"
+          },
+          "condition": {
+            "deliveryId": "5dd89eec2188",
+            "condition": "A02580208CEBC6952A3F676DBE13AC6A77A90869D825C1CD8D225E68292F74D65A0666AE810120",
+            "proof": {
+              "acceptBy": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo"
+            },
+            "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+            "issuedAt": "2026-10-31T08:46:39.461Z"
+          },
+          "escrow": {
+            "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+            "sequence": 21958546,
+            "hash": "C52076F9DEF79846A33B92135971BAAC8F923207D3F31622BE4CFF65279A7842",
+            "result": "tesSUCCESS",
+            "destination": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+            "amountXrp": "15",
+            "cancelAfter": 846753600,
+            "ledgerIndex": 21958708,
+            "lockedAt": "2026-10-31T08:46:55.812Z",
+            "signedBy": "this desk's key"
+          },
+          "handed": {
+            "ok": true,
+            "status": 201
+          },
+          "acceptance": {
+            "hash": "D1FE7ACB3F47370743870A0991F5CB41B53A39C14A6A1B80E383082B1E2BE593",
+            "result": "tesSUCCESS",
+            "at": "2026-10-31T08:48:49.104Z",
+            "ledgerIndex": 21958740,
+            "ref": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo#21958546",
+            "oracle": {
+              "status": 202,
+              "ok": true,
+              "note": "release on the next tick; poll /escrows"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

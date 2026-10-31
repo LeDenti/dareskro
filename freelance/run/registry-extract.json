@@ -1,0 +1,74 @@
+{
+  "oracle_registry_entries": [
+    {
+      "kind": "delivery",
+      "deliveryId": "d77718f16ab8",
+      "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+      "sequence": 21958544,
+      "cancelAfter": 846837660,
+      "destination": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+      "amountXrp": "25",
+      "proof": {
+        "url": "https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/landing-copy-v1.md",
+        "sha256": "c7f528922ecbfdc2428a858475ec48402f4f9da60bb65a987ce8b341a8cefa59"
+      },
+      "createHash": "F7D62742D54FE5FA8480A118683956D765FBE3998AFA47BE94A3282163B8C1A4",
+      "status": "waiting",
+      "registered": "2026-10-31T08:44:08.646Z",
+      "lastCheck": "2026-10-31T08:56:28.051Z",
+      "checks": 179,
+      "lastWhy": "HTTP 404: nothing published at the URL yet"
+    },
+    {
+      "kind": "delivery",
+      "deliveryId": "a9ff66058dab",
+      "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+      "sequence": 21958545,
+      "cancelAfter": 846752160,
+      "destination": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+      "amountXrp": "10",
+      "proof": {
+        "url": "https://github.com/LeDenti/dareskro/releases/download/freelance-run-2026-10-31/never-delivered.pdf",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001"
+      },
+      "createHash": "C4D11480DF0D9251E7B22646A66E3DD8044FC78AA035C0F860F298A05C2F7F87",
+      "status": "expired-refunded",
+      "registered": "2026-10-31T08:46:17.824Z",
+      "lastCheck": "2026-10-31T08:56:05.975Z",
+      "checks": 143,
+      "lastWhy": "HTTP 404: nothing published at the URL yet",
+      "lastResult": "tesSUCCESS",
+      "lastHash": "A01F14593424C4B0EF11920B12AAD76EB79BAAF53F8F1E6A4897EF5A3332D3A0",
+      "lastTry": "2026-10-31T08:56:15.621Z",
+      "refundHash": "A01F14593424C4B0EF11920B12AAD76EB79BAAF53F8F1E6A4897EF5A3332D3A0"
+    },
+    {
+      "kind": "acceptance",
+      "deliveryId": "5dd89eec2188",
+      "owner": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo",
+      "sequence": 21958546,
+      "cancelAfter": 846753600,
+      "destination": "rJkHqKLcvZDkYpwbZWWr2oUWrhxiioV5bB",
+      "amountXrp": "15",
+      "proof": {
+        "acceptBy": "r9eDSQ2Cex3ahuMtwkqMyvrQBNfYEYqzWo"
+      },
+      "createHash": "C52076F9DEF79846A33B92135971BAAC8F923207D3F31622BE4CFF65279A7842",
+      "status": "finished",
+      "registered": "2026-10-31T08:46:55.817Z",
+      "lastWhy": "accepted by the client on the ledger, tx D1FE7ACB3F\u2026",
+      "accepted": {
+        "hash": "D1FE7ACB3F47370743870A0991F5CB41B53A39C14A6A1B80E383082B1E2BE593",
+        "at": "2026-10-31T08:48:49.157Z",
+        "ledgerIndex": 21958740
+      },
+      "attempts": 1,
+      "lastResult": "tesSUCCESS",
+      "lastHash": "9DD401BF2CEC63B38942CA2E251B42CBCABA9072CC6D5111F9203A5B71EACDEC",
+      "lastTry": "2026-10-31T08:48:55.998Z",
+      "finishedAt": "2026-10-31T08:48:55.998Z",
+      "finishHash": "9DD401BF2CEC63B38942CA2E251B42CBCABA9072CC6D5111F9203A5B71EACDEC",
+      "acceptHash": "D1FE7ACB3F47370743870A0991F5CB41B53A39C14A6A1B80E383082B1E2BE593"
+    }
+  ]
+}
