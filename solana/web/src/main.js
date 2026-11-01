@@ -49,13 +49,19 @@ $("btn-airdrop").onclick = async () => {
 };
 
 // ---------------------------------------------------------------- sending
-async function send(ix, label, { record = $("f-record").checked } = {}) {
-  const tx = new Transaction().add(ix);
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash; tx.feePayer = wallet.publicKey;
-  const signed = await wallet.signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: record });
-  const conf = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+/** A blockhash lives ~60 s: if the wallet's confirmation takes longer, the page asks for a fresh signature (twice at most). */
+async function send(ix, label, { record = $("f-record").checked, note } = {}) {
+  let signature, conf;
+  for (let attempt = 1; ; attempt++) {
+    const tx = new Transaction().add(ix);
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+    tx.recentBlockhash = blockhash; tx.feePayer = wallet.publicKey;
+    note?.(attempt === 1 ? "Confirm in your wallet within a minute…" : `The first signature expired (the wallet took more than a minute): asking again, attempt ${attempt}…`);
+    const signed = await wallet.signTransaction(tx);
+    signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: record });
+    try { conf = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed"); break; }
+    catch (e) { if (attempt >= 3 || !/expired|block height/i.test(e.message)) throw e; }
+  }
   const got = await connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
   const [code, message] = errorCode(got?.meta?.logMessages);
   const refused = !!conf.value.err;
@@ -73,6 +79,7 @@ let rate;
 (async () => { try { rate = await solPrice(); $("rate-line").textContent = `Rate: 1 SOL = ${rate.usdPerSol} USD (${rate.source}). On devnet the escrow holds SOL for the USD amount; on mainnet it would hold the USDC Aurora delivers.`; } catch { $("rate-line").textContent = "Rate unavailable: the amount will be locked as SOL at 1 SOL = 100 USD."; rate = { usdPerSol: 100, source: "fallback" }; } })();
 const inTwoMinutes = new Date(Date.now() + 2 * 60000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 $("f-date").value = inTwoMinutes;
+$("f-record").onchange = () => { lastKey = undefined; refreshList(); };
 $("f-cancellable").onchange = () => { $("f-cancel").disabled = !$("f-cancellable").checked; if ($("f-cancellable").checked && !$("f-cancel").value) $("f-cancel").value = new Date(Date.now() + 60 * 60000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
 for (const p of PAY_WITH) { const o = document.createElement("option"); o.value = p.id; o.textContent = p.label; $("f-pay").append(o); }
 let lastQuote;
@@ -102,8 +109,7 @@ $("btn-lock").onclick = async () => {
     if ($("f-memo").value.trim()) memos.push($("f-memo").value.trim().slice(0, 128));
     const id = Date.now();
     const { escrow, ix } = createIx({ owner: wallet.publicKey, destination, lamports, finishAfter, cancelAfter, condition: null, memos, id });
-    $("lock-status").textContent = `Signing… ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL for ${usd} USD, payable ${fmt(finishAfter)}`;
-    const r = await send(ix, `create ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL → ${short(destination.toBase58())}`);
+    const r = await send(ix, `create ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL → ${short(destination.toBase58())}`, { note: (m) => { $("lock-status").textContent = `${m} ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL for ${usd} USD, payable ${fmt(finishAfter)}`; } });
     if (r.refused) throw new Error(`${r.code ?? "refused"}: ${r.message ?? ""}`);
     $("lock-status").innerHTML = `<span class="ok">Locked.</span> Escrow <a href="${explorerAddr(escrow.toBase58())}" target="_blank" rel="noreferrer">${escrow.toBase58()}</a> · transaction <a href="${explorerTx(r.signature)}" target="_blank" rel="noreferrer">${short(r.signature, 8)}</a>`;
     lastKey = undefined; refreshBalance(); refreshList();
@@ -127,12 +133,13 @@ async function refreshList() {
       const canRelease = e.status === "locked"; const early = e.finishAfter != null && t < e.finishAfter;
       const canCancel = e.status === "locked" && e.cancelAfter != null; const cancelEarly = canCancel && t < e.cancelAfter;
       const canClose = e.status !== "locked" && e.owner === me;
+      const demo = $("f-record").checked;
       return `<tr><td><a href="${explorerAddr(e.address)}" target="_blank" rel="noreferrer">${short(e.address)}</a></td><td>${role}</td><td class="num">${e.sol.toFixed(4)}</td>
         <td class="${e.status === "locked" ? "pending" : e.status === "finished" ? "ok" : "muted"}">${e.status}${e.closedBy ? `<br><span class="muted">by ${short(e.closedBy)}</span>` : ""}</td>
         <td>${fmt(e.finishAfter)}${early ? `<br><span class="muted">in ${e.finishAfter - t} s</span>` : ""}</td><td>${e.cancelAfter == null ? "never" : fmt(e.cancelAfter)}</td>
         <td class="muted">${e.memos.map((m) => m.length > 40 ? m.slice(0, 40) + "…" : m).join("<br>")}</td>
-        <td><div class="acts">${canRelease ? `<button data-act="finish" data-e="${e.address}" title="${early ? "the program will answer TooEarly, recorded on chain" : "anyone may release now"}">Release${early ? " (early)" : ""}</button>` : ""}
-          ${canCancel ? `<button data-act="cancel" data-e="${e.address}" title="${cancelEarly ? "the program will answer CancelTooEarly" : "refund the payer"}">Cancel${cancelEarly ? " (early)" : ""}</button>` : e.status === "locked" ? `<button data-act="cancel" data-e="${e.address}" title="no cancel date was written: NotCancellable">Cancel (impossible)</button>` : ""}
+        <td><div class="acts">${canRelease ? `<button data-act="finish" data-e="${e.address}" ${early && !demo ? "disabled" : ""} title="${early ? (demo ? "the program will answer TooEarly, recorded on chain" : `payable in ${e.finishAfter - t} s`) : "anyone may release now"}">Release${early ? " (early)" : ""}</button>` : ""}
+          ${canCancel ? `<button data-act="cancel" data-e="${e.address}" ${cancelEarly && !demo ? "disabled" : ""} title="${cancelEarly ? (demo ? "the program will answer CancelTooEarly" : `refundable after ${fmt(e.cancelAfter)}`) : "refund the payer"}">Cancel${cancelEarly ? " (early)" : ""}</button>` : e.status === "locked" && demo ? `<button data-act="cancel" data-e="${e.address}" title="no cancel date was written: NotCancellable">Cancel (impossible)</button>` : ""}
           ${canClose ? `<button data-act="close" data-e="${e.address}">Close</button>` : ""}</div></td></tr>`;
     }).join("") + `</tbody></table>`;
     for (const b of $("list").querySelectorAll("button[data-act]")) b.onclick = () => act(b.dataset.act, es.find((x) => x.address === b.dataset.e));

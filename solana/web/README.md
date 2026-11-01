@@ -9,5 +9,5 @@ npm run build                                     # static files in dist/, host 
 
 - **Phantom**: the page asks Phantom to sign; set Phantom to devnet. **Burner key**: a throwaway keypair kept in the browser's localStorage, for devnet only; the Airdrop button asks the devnet faucet (often rate-limited: faucet.solana.com works).
 - The program is called directly from the browser (`src/program.js` encodes `create`, `finish`, `cancel`, `close` and decodes the `Escrow` account by hand, so the page ships with `@solana/web3.js` alone).
-- "Send without preflight" is on by default: a forbidden action is sent anyway and the ledger keeps the refusal (`TooEarly`, `NotCancellable`, `WrongDestination`…), which the log then shows with its explorer link.
+- Before the date, **Release** is greyed out. The **demo mode** checkbox enables the forbidden actions and sends them without preflight: the ledger keeps the refusal (`TooEarly`, `NotCancellable`…), the log shows it with its explorer link, and the wallet warns that the simulation fails — which is the point.
 - Aurora's key in `src/config.js` is documented by Aurora as non-confidential (it is meant for public websites). The quote is `dry`: no deposit address is issued, no funds move.

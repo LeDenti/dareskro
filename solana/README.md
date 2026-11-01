@@ -288,8 +288,10 @@ the employer who will not open a terminal: connect **Phantom** or use a devnet
 pays with — **SOL** from the wallet, **XRP** or **NEAR** through an Aurora Intents
 quote — and lock. The list below is read from the chain: **Release** (anyone, after
 the date), **Cancel** (only if a cancel date was written, only after it), **Close**
-(the payer deletes a finished record and gets the rent back). Every action is sent
-without preflight, so a refusal is recorded and linked. `cd solana/web && npm install && npm run dev`.
+(the payer deletes a finished record and gets the rent back). Before the date the
+buttons are greyed out; a **demo mode** checkbox enables the forbidden actions and
+sends them without preflight, so the program's refusal is recorded and linked
+(the wallet then warns that the simulation fails, which is the point). `cd solana/web && npm install && npm run dev`.
 
 **Run from the page on 1 November 2026, 09:48–09:52 Paris, devnet, burner key `BCkzP6Qn…`:**
 
