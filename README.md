@@ -694,6 +694,25 @@ employer `r9qWKQMe…`, pension fund `rwxybaKR…`, both testnet accounts create
 | — the fund accepts (`NFTokenAcceptOffer`): its `account_nfts` lists the token with the URI; **OwnerCount 0 → 1, 0.2 XRP of reserve locked on the fund's account** | [8678A995…](https://testnet.xrpl.org/transactions/8678A99529EC9F70C744A9012BF66B3CB13847C7A7A8AC3051387304D60AE9B8) |
 | — the employer burns it (`NFTokenBurn`, `Owner` = the fund) **without the fund's signature**: the fund's `account_nfts` no longer lists it | [F1CB0BFA…](https://testnet.xrpl.org/transactions/F1CB0BFA1C8ACDD4B620536CD366FE4F175567F4159594A3C354D4EBC333102E) |
 
+**Signed as an institution** (01/11/2026 22:08 UTC, `demo_transmission_retraite.mjs multisig`,
+`transmission_multisig.log`). A pension fund does not sign with one key in one person's drawer. The
+fund's account received a **signer list of three** (director, accounting officer, head of career
+records), quorum 2, by `SignerListSet`
+[8D38AF0F…](https://testnet.xrpl.org/transactions/8D38AF0F2045CD01EF3301FF15B139850AB931BD5BAD27E6AC58C611CDA8CC13),
+then its master key was **disabled** (`AccountSet asfDisableMaster`
+[25E8A1BF…](https://testnet.xrpl.org/transactions/25E8A1BF71305F91D129BEF6827ADCBE37DA28A2C2523BC71FAD70510C990D24)).
+The same acknowledgement was then sent three ways: signed by the master key alone, **refused,
+`tefMASTER_DISABLED`**; signed by one of the three, **refused, `tefBAD_QUORUM`**; signed by two,
+**accepted**, fee 36 drops (12 × (1 + 2 signers)), `Signers` array of two in the transaction
+[7FA4F980…](https://testnet.xrpl.org/transactions/7FA4F9800923328506D67995717521F00A664E755B8C6BAA65AA9C65679373FC),
+same three memos. `account_info` shows anyone `lsfDisableMaster` and the list, quorum 2 of 3:
+who may sign for the fund is public, nobody can sign alone. From then on the script multisigns every
+acknowledgement by itself. The employer's side works the same (pharmacist + accountant, 2 of 2): a
+Payment is a Payment, whoever signs it. The three signer seeds are in `agent/cles/` (0600, gitignored)
+because the script plays the three people; in reality each keeps their own key, on their own device.
+The two refusals took about 70 s each to be reported: a `tef` result is not applied, so the client
+waits for the transaction's last ledger to pass before giving up — the cost of being sure.
+
 Said as it happened: the first run (09:36 UTC, `transmission_retraite_v1_escrow1F1F.log`) bound the
 seal to the escrow of 25/10 19:46 ([1F1FE2C7…](https://testnet.xrpl.org/transactions/1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D)),
 which cites the same statement hash but whose fiat and gross memos say `paid=440.36` — the net
@@ -888,6 +907,7 @@ node oracle/demo_confidentialite.mjs              # the whole layer end to end o
 node agent/demo_transmission_retraite.mjs seal && git add agent/depots && git commit -m "deposit" && git push
 node agent/demo_transmission_retraite.mjs transmit    # Payment + memos, NFT variant, the fund opens, the public fails, ack
 node agent/demo_transmission_retraite.mjs revocation  # a revoked key opens nothing sealed afterwards
+node agent/demo_transmission_retraite.mjs multisig    # the fund signs 2 of 3, master key disabled; one signature refused, two accepted
 ```
 
 On the page: validate the statement with your name → connect the Ledger (USB)

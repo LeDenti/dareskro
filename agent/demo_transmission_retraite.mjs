@@ -18,6 +18,7 @@
  *   node agent/demo_transmission_retraite.mjs transmit    on-chain transmission, NFT variant, acknowledgement, the fund opens, the public fails
  *   node agent/demo_transmission_retraite.mjs all         both, without waiting for the deposit to be pushed (the URI is then reported as not live)
  *   node agent/demo_transmission_retraite.mjs revocation  the fund's key revoked: later statements closed to it, earlier ones not
+ *   node agent/demo_transmission_retraite.mjs multisig    the fund signs as an institution: signer list 2 of 3, master key disabled, one signature refused, two accepted
  * ENV  XRPL_WSS (wss://testnet.xrpl-labs.com)  SEALED_URI_BASE (raw.githubusercontent.com on this branch)
  *      PAY_ESCROW (the shipped escrow citing the statement; "none" to seal unbound)  NFT=0 to skip the NFT variant
  * Keys: agent/cles/ (X25519 readers, XRPL seeds of the two testnet accounts), 0600, gitignored, created here.
@@ -32,7 +33,7 @@ import { join } from "node:path";
 import { CHIFFRE, CLES, LECTEURS, ROOT, SORTIE, rel, sha256hex } from "./confidentiel.mjs";
 
 const require = createRequire(join(ROOT, "oracle", "package.json"));
-const { Client, Wallet, convertStringToHex } = require("xrpl");
+const { Client, Wallet, convertStringToHex, multisign } = require("xrpl");
 
 const WSS = process.env.XRPL_WSS || "wss://testnet.xrpl-labs.com";
 const FAUCET = { faucetHost: "faucet.altnet.rippletest.net", faucetPath: "/accounts" };
@@ -169,13 +170,24 @@ async function walletFor(c, name) {
   return w;
 }
 
-async function submit(c, wallet, tx, label) {
+// An account signed by several people: cles/xrpl_<name>_signers.json keeps the signers' seeds (demo), the
+// ledger keeps the SignerList. Once it exists, every transaction of that account is multisigned with the
+// first `quorum` signers; the master key is disabled on the ledger, so there is no other way (measured below).
+const signersPath = (name) => join(CLES, `xrpl_${name}_signers.json`);
+const loadSigners = (name) => (existsSync(signersPath(name)) ? JSON.parse(readFileSync(signersPath(name), "utf8")) : null);
+async function submit(c, wallet, tx, label, signWith) {
   const t0 = performance.now();
-  const r = await c.submitAndWait(tx, { autofill: true, wallet });
+  let r;
+  if (signWith) {
+    const prepared = await c.autofill(tx, signWith.length); // fee = base × (1 + signers)
+    const blobs = signWith.map((w) => w.sign(prepared, true).tx_blob);
+    r = await c.submitAndWait(multisign(blobs));
+  } else r = await c.submitAndWait(tx, { autofill: true, wallet });
   const res = r.result;
   const code = res.meta?.TransactionResult;
   const ms = Math.round(performance.now() - t0);
-  log(`${label}: ${code} in ${ms} ms, fee ${drops(res.tx_json?.Fee ?? res.Fee)}, ledger ${res.ledger_index}, ${res.close_time_iso ?? ""}`);
+  const signers = (res.tx_json?.Signers ?? res.Signers ?? []).map((x) => x.Signer.Account);
+  log(`${label}: ${code} in ${ms} ms, fee ${drops(res.tx_json?.Fee ?? res.Fee)}, ledger ${res.ledger_index}, ${res.close_time_iso ?? ""}${signers.length ? `, signed by ${signers.length}: ${signers.map((a) => a.slice(0, 8) + "…").join(", ")}` : ""}`);
   log(`  ${explorer(res.hash)}`);
   if (code !== "tesSUCCESS") throw new Error(`${label}: ${code}`);
   return res;
@@ -286,6 +298,9 @@ async function transmit() {
 
   // 5. the acknowledgement: the fund pays 1 drop back with the hash it received
   log("— acknowledgement: the fund pays 1 drop to the employer, memo dareskro/ack = the hash received —");
+  const fundSigners = loadSigners("caisse");
+  const quorumSigners = fundSigners ? fundSigners.signers.slice(0, fundSigners.quorum).map((x) => Wallet.fromSeed(x.seed)) : undefined;
+  if (quorumSigners) log(`  the fund's account carries a signer list (${fundSigners.quorum} of ${fundSigners.signers.length}, master key disabled): the acknowledgement is multisigned`);
   const tx2 = await submit(c, caisse, {
     TransactionType: "Payment",
     Account: caisse.classicAddress,
@@ -297,9 +312,9 @@ async function transmit() {
       memo("dareskro/ack-sealed", receivedSha),
       memo("dareskro/ack-of", tx1.hash),
     ],
-  }, "Payment (acknowledgement)");
+  }, "Payment (acknowledgement)", quorumSigners);
   for (const [t, d] of readMemos(tx2.tx_json ?? tx2)) log(`  memo ${t.padEnd(24)} ${d}`);
-  out.acknowledgement = { hash: tx2.hash, ledger: tx2.ledger_index, at: tx2.close_time_iso, fee_drops: tx2.tx_json?.Fee, memos: Object.fromEntries(readMemos(tx2.tx_json ?? tx2)) };
+  out.acknowledgement = { hash: tx2.hash, ledger: tx2.ledger_index, at: tx2.close_time_iso, fee_drops: tx2.tx_json?.Fee, memos: Object.fromEntries(readMemos(tx2.tx_json ?? tx2)), signers: (tx2.tx_json?.Signers ?? []).map((x) => x.Signer.Account) };
 
   // 6. what the fund's history shows anyone: transmitted on…, acknowledged on…
   log("— the fund's account history, as anyone reads it (account_tx) —");
@@ -352,13 +367,74 @@ async function revocation() {
   process.exit(ok ? 0 : 1);
 }
 
+// ------------------------------------------------------------------ multisig
+
+// The fund is an institution: its account is signed by a list of people (2 of 3 here), not by one key.
+// Measured: SignerListSet, master key disabled, an acknowledgement signed by the master key alone is
+// refused, by one signer alone is refused, by two signers accepted. From then on `transmit` multisigns.
+async function multisigFund() {
+  const record = readRecord();
+  if (!record?.transmission) { log(`${rel(RECORD)} has no transmission yet: run \`seal\` then \`transmit\` first`); process.exit(2); }
+  const c = new Client(WSS);
+  await c.connect();
+  const employer = await walletFor(c, "employeur");
+  const caisse = await walletFor(c, "caisse");
+  let signers = loadSigners("caisse");
+  const out = { ...record };
+  if (!signers) {
+    const people = ["directeur", "agent comptable", "responsable des carrières"].map((role) => ({ role, ...(() => { const w = Wallet.generate(); return { address: w.classicAddress, seed: w.seed }; })() }));
+    signers = { quorum: 2, signers: people, note: "testnet demo: three signers of the pension fund's account, kept here because the script plays them; in reality each person keeps their own key" };
+    log("— the fund's account becomes an institution's: a signer list of 3, quorum 2 (SignerListSet, signed by the master key for the last time) —");
+    const sls = await submit(c, caisse, {
+      TransactionType: "SignerListSet", Account: caisse.classicAddress, SignerQuorum: 2,
+      SignerEntries: people.map((p) => ({ SignerEntry: { Account: p.address, SignerWeight: 1 } })),
+    }, "SignerListSet (2 of 3)");
+    for (const p of people) log(`  signer ${p.address} (${p.role}), weight 1`);
+    log("— the master key is disabled (AccountSet asfDisableMaster): from now on only the list can sign —");
+    const dis = await submit(c, caisse, { TransactionType: "AccountSet", Account: caisse.classicAddress, SetFlag: 4 }, "AccountSet asfDisableMaster");
+    signers.set_by = { signer_list_set: sls.hash, disable_master: dis.hash };
+    writeFileSync(signersPath("caisse"), JSON.stringify(signers, null, 2) + "\n", { mode: 0o600 });
+    chmodSync(signersPath("caisse"), 0o600);
+    log(`  signers kept in ${rel(signersPath("caisse"))} (0600, gitignored)`);
+  } else log(`the fund's account already carries its signer list (${signers.quorum} of ${signers.signers.length})`);
+  const wallets = signers.signers.map((x) => Wallet.fromSeed(x.seed));
+  const ackTx = () => ({
+    TransactionType: "Payment", Account: caisse.classicAddress, Destination: employer.classicAddress, Amount: "1",
+    InvoiceID: record.statement.sha256.toUpperCase(),
+    Memos: [memo("dareskro/ack", record.statement.sha256), memo("dareskro/ack-sealed", record.sealed.sha256), memo("dareskro/ack-of", record.transmission.hash)],
+  });
+  const refused = async (label, fn) => {
+    try { await fn(); log(`  ${label}: ACCEPTED (unexpected)`); return "accepted"; }
+    catch (e) { const code = /te[cfm][A-Z_]+/.exec(e.message)?.[0] ?? e.message; log(`  ${label}: refused, ${code}`); return code; }
+  };
+  const measures = {};
+  log("— the same acknowledgement, three ways —");
+  measures.master_alone = await refused("signed by the master key alone", () => submit(c, caisse, ackTx(), "Payment (ack, master key)"));
+  measures.one_signer = await refused("signed by one signer of the list (quorum 2)", () => submit(c, caisse, ackTx(), "Payment (ack, 1 of 3)", wallets.slice(0, 1)));
+  const ok = await submit(c, caisse, ackTx(), "Payment (ack, 2 of 3)", wallets.slice(0, 2));
+  for (const [t, d] of readMemos(ok.tx_json ?? ok)) log(`  memo ${t.padEnd(24)} ${d}`);
+  const { result } = await c.request({ command: "account_info", account: caisse.classicAddress, ledger_index: "validated", signer_lists: true });
+  const flags = result.account_data.Flags;
+  const lsfDisableMaster = 0x00100000;
+  log(`  the fund's account on the ledger: lsfDisableMaster ${(flags & lsfDisableMaster) ? "set" : "NOT set"}, signer list quorum ${result.account_data.signer_lists?.[0]?.SignerQuorum ?? result.signer_lists?.[0]?.SignerQuorum} of ${(result.account_data.signer_lists?.[0] ?? result.signer_lists?.[0])?.SignerEntries?.length}; anyone can read who may sign for it, nobody can sign alone`);
+  out.acknowledgement_multisig = {
+    hash: ok.hash, at: ok.close_time_iso, fee_drops: ok.tx_json?.Fee, signers: (ok.tx_json?.Signers ?? []).map((x) => x.Signer.Account),
+    signer_list_set: signers.set_by?.signer_list_set, disable_master: signers.set_by?.disable_master, refused: measures, quorum: signers.quorum, signers_total: signers.signers.length,
+  };
+  writeRecord(out);
+  log(`record -> ${rel(RECORD)} (acknowledgement_multisig)`);
+  log("the same works on the employer's side (pharmacist + accountant, 2 of 2): a Payment is a Payment, whoever signs it.");
+  await c.disconnect();
+}
+
 const cmd = process.argv[2] ?? "all";
 try {
   if (cmd === "seal") await seal();
   else if (cmd === "transmit") await transmit();
   else if (cmd === "all") { await seal(); await transmit(); }
   else if (cmd === "revocation") await revocation();
-  else { console.error("usage: node agent/demo_transmission_retraite.mjs seal|transmit|all|revocation"); process.exit(2); }
+  else if (cmd === "multisig") await multisigFund();
+  else { console.error("usage: node agent/demo_transmission_retraite.mjs seal|transmit|all|revocation|multisig"); process.exit(2); }
 } catch (e) {
   log(`stopped: ${e.message}`);
   process.exit(1);

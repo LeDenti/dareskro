@@ -98,5 +98,22 @@
   "timeline": {
     "transmitted": "2026-10-31T09:39:32Z",
     "acknowledged": "2026-10-31T09:39:52Z"
+  },
+  "acknowledgement_multisig": {
+    "hash": "7FA4F9800923328506D67995717521F00A664E755B8C6BAA65AA9C65679373FC",
+    "at": "2026-11-01T22:10:40Z",
+    "fee_drops": "36",
+    "signers": [
+      "rwpwkhFCHDAh33S3ZKe2xhGNw9f61rKTx9",
+      "rPWF68bU16w5XuCLojGwiSLwxzfz76A7NQ"
+    ],
+    "signer_list_set": "8D38AF0F2045CD01EF3301FF15B139850AB931BD5BAD27E6AC58C611CDA8CC13",
+    "disable_master": "25E8A1BF71305F91D129BEF6827ADCBE37DA28A2C2523BC71FAD70510C990D24",
+    "refused": {
+      "master_alone": "tefMASTER_DISABLED",
+      "one_signer": "tefBAD_QUORUM"
+    },
+    "quorum": 2,
+    "signers_total": 3
   }
 }
