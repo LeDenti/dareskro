@@ -1,0 +1,147 @@
+{
+  "name": "final_part2",
+  "_note": "Part two of the Solana final film: real screens of 1 November 2026 (Aurora Intents on mainnet, the pay desk on devnet). Rendered by part2.html, assembled after dareskro_la_linea_solana.mp4 by make_final.mjs.",
+  "voice": "Daniel",
+  "rate": 190,
+  "dur": 116,
+  "slides": [
+    {
+      "t0": 0,
+      "t1": 7,
+      "kind": "title",
+      "big": "Part two — for real",
+      "small": "1 November 2026 · Aurora Intents on mainnet · the pay desk on Solana devnet",
+      "say": "Part two. What you just saw drawn, run for real on the first of November 2026.",
+      "sub": "Part two: the same story, run for real on 1 November 2026."
+    },
+    {
+      "t0": 7,
+      "t1": 24,
+      "kind": "terminal",
+      "title": "Aurora Intents — dareskro's XRP Ledger account funds the Solana desk · mainnet",
+      "lines": [
+        "$ node aurora_paye_xrp.mjs --go",
+        "07:44:56 payer rNY2Vc9hBPBcbZZVqzLgzxtTp7e9wVGknb : 10.999998 XRP on mainnet",
+        "=== REAL AURORA QUOTE ===",
+        "deliver         : 3.0 USDC on Solana to 4ypF64RBg6GUszSwcp8d46tUvDkjDdUXDTZbziVRSF2J",
+        "pay             : 2.627332 XRP  (≈ 3.28 $) from rNY2Vc9h…wVGknb",
+        "deposit address : rMYEgFREZcNUt3viG3L7NkbefYta6Yb3NU   valid until 07:59:56Z",
+        "07:45:00 sending the XRPL Payment…",
+        "07:45:02 XRPL tesSUCCESS — livenet.xrpl.org/transactions/56205926…",
+        "07:45:02 Aurora: PENDING_DEPOSIT",
+        "07:45:13 Aurora: PENDING_DEPOSIT",
+        "07:45:23 Aurora: PROCESSING",
+        "07:45:33 Aurora: SUCCESS",
+        "=== RESULT ===",
+        "USDC of the recipient : 0 → 3   (37 s after the quote, 0 refunded)"
+      ],
+      "say": "First, the money arrives from another chain. dareskro's own XRP Ledger account pays two point six three XRP. Aurora Intents delivers exactly three USDC on Solana, in thirty-seven seconds. Mainnet, real funds, nothing mocked.",
+      "sub": "Aurora Intents, mainnet: 2.63 XRP leave dareskro's XRPL account, 3 USDC land on Solana in 37 s."
+    },
+    {
+      "t0": 24,
+      "t1": 30,
+      "kind": "image",
+      "img": "aurora_xrpl.png",
+      "crop": [
+        490,
+        330,
+        940,
+        420
+      ],
+      "title": "livenet.xrpl.org — the payment, ledger 108 040 855",
+      "say": "The payment on the XRP Ledger, validated in ledger one hundred and eight million.",
+      "sub": "The XRPL half: 2.627332 XRP to Aurora's deposit address, tesSUCCESS, fee 12 drops."
+    },
+    {
+      "t0": 30,
+      "t1": 36.5,
+      "kind": "image",
+      "img": "aurora_solana_explorer.png",
+      "crop": [
+        460,
+        100,
+        1000,
+        670
+      ],
+      "title": "explorer.solana.com — the settlement, slot 464 012 735",
+      "say": "The USDC landing on Solana, slot four hundred sixty-four million, status success.",
+      "sub": "The Solana half: the settlement that credits 3.000000 USDC to the desk's address."
+    },
+    {
+      "t0": 36.5,
+      "t1": 47,
+      "kind": "image",
+      "img": "desk_00_tab.png",
+      "title": "The pay desk — a new tab: Solana · same desk",
+      "say": "Then the pay desk. The same application as on XRPL, with a new tab: the Solana rail. Employer, employee, oracle, and the rate from Aurora's own list.",
+      "sub": "The pay desk gains a tab. Same application, same statement, another ledger."
+    },
+    {
+      "t0": 47,
+      "t1": 55,
+      "kind": "image",
+      "img": "desk_02_statement.png",
+      "title": "Step 2 — the statement, computed by code, validated by a human",
+      "say": "The statement, computed by code line by line, validated by a human. Four hundred and forty dollars thirty-six.",
+      "sub": "Computed by code, replayable to the cent; validated by a human. Net to pay: 440.36 USD."
+    },
+    {
+      "t0": 55,
+      "t1": 63.5,
+      "kind": "image",
+      "img": "desk_03_funding.png",
+      "title": "Step 3 — funding from any chain",
+      "say": "A quote for exactly that amount in USDC, paid in XRP, twenty-four seconds. The live run sits right below it.",
+      "sub": "A real quote for 440.36 USDC paid in XRP, 24 s; the mainnet run is shown under it."
+    },
+    {
+      "t0": 63.5,
+      "t1": 76,
+      "kind": "image",
+      "img": "desk_04_locked.png",
+      "title": "Step 4 — the lock: create(finish_after), signed by the employer",
+      "say": "The lock. Four point six SOL in a program-derived account. Three memos: the statement's hash, the fiat line, the oracle's address. Payable in seventy-five seconds.",
+      "sub": "4.6 SOL locked in a program-derived account. Memos: statement hash, fiat line, oracle. Payable in 75 s."
+    },
+    {
+      "t0": 76,
+      "t1": 91,
+      "kind": "image",
+      "img": "desk_05_refusal3.png",
+      "title": "Step 5 — three forbidden actions, refused on chain",
+      "say": "Three forbidden actions, each a real transaction the ledger keeps with its refusal. A passer-by releases early: too early. The employer takes it back: not cancellable. A passer-by pays himself: wrong destination.",
+      "sub": "Early release: TooEarly. Employer takes it back: NotCancellable. Pay yourself: WrongDestination. All recorded."
+    },
+    {
+      "t0": 91,
+      "t1": 99,
+      "kind": "image",
+      "img": "desk_06_finished.png",
+      "title": "The date passes — the oracle calls finish",
+      "say": "At the date, the oracle calls finish. Nobody clicked. The money goes where it was written.",
+      "sub": "7 s after the date the oracle calls finish. Nobody clicked. 4.616 SOL now with the employee."
+    },
+    {
+      "t0": 99,
+      "t1": 106.5,
+      "kind": "image",
+      "img": "desk_07_registry.png",
+      "title": "Step 6 — the registry is the chain itself",
+      "say": "And the registry is the chain itself: every escrow of this employer, with the oracle's word next to it.",
+      "sub": "The registry is the chain: every escrow of this employer, and the oracle's word beside it."
+    },
+    {
+      "t0": 106.5,
+      "t1": 116,
+      "kind": "end",
+      "card": [
+        "evidence  ·  code  ·  validation",
+        "github.com/LeDenti/dareskro  ·  folder solana/",
+        "Encode Solana Hackathon 2026  ·  Aurora Intents track  ·  Best Consumer App"
+      ],
+      "say": "dareskro. Evidence, code, validation. The padlock is on the line itself.",
+      "sub": ""
+    }
+  ]
+}
