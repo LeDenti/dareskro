@@ -62,8 +62,30 @@
     <p id="list-error" class="ko" hidden></p>
   </section>
 
+  <section class="card disabled" id="card-vault">
+    <h2><span class="step">4</span> Shared vault — a deposit several people decide on, 2 of 3</h2>
+    <p class="hint">The rental-deposit shape: the tenant funds it, the landlord is the beneficiary, a mediator is the third voice. Each party votes <em>how much goes to the beneficiary</em> (all, nothing, or a split; the rest returns to the owner). When two votes agree, that very vote pays. Past the deadline with no decision, anyone may return the deposit to the owner.</p>
+    <div class="row">
+      <label class="grow">Beneficiary (the landlord)<input id="v-ben" placeholder="Solana address" /></label>
+      <label>Amount (USD)<input id="v-usd" type="number" min="0.01" step="0.01" value="20" /></label>
+    </div>
+    <div class="row">
+      <label class="grow">Second party (the mediator)<input id="v-p3" placeholder="Solana address" /></label>
+      <label>Votes needed<select id="v-thr"><option value="2">2 of 3</option><option value="3">3 of 3</option></select></label>
+      <label>Deadline (optional)<input id="v-deadline" type="datetime-local" /></label>
+    </div>
+    <p class="muted">Parties: you (owner), the beneficiary, the second party. <span id="v-rate"></span></p>
+    <div class="row">
+      <label class="grow">Memo (optional)<input id="v-memo" placeholder="lease reference, flat address…" maxlength="128" /></label>
+      <button id="btn-vault" class="primary">Fund the shared vault</button>
+    </div>
+    <p id="vault-status" class="muted"></p>
+    <p id="vault-error" class="ko" hidden></p>
+    <div id="vlist"></div>
+  </section>
+
   <section class="card" id="card-log">
-    <h2><span class="step">4</span> What this page sent</h2>
+    <h2><span class="step">5</span> What this page sent</h2>
     <ul id="log"></ul>
   </section>
 </main>

@@ -42,6 +42,12 @@ function newId() {
   return new BN(nextId++);
 }
 
+function sharedPda(owner: PublicKey, id: BN) {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("shared"), owner.toBuffer(), id.toArrayLike(Buffer, "le", 8)],
+    program.programId
+  )[0];
+}
 function escrowPda(owner: PublicKey, id: BN) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("escrow"), owner.toBuffer(), id.toArrayLike(Buffer, "le", 8)],
@@ -422,5 +428,89 @@ describe("dareskro escrow on Solana", () => {
         .accountsPartial({ owner: employer.publicKey, escrow: e2, statement: statementPda(e2) }).signers([employer]).rpc(),
       "NoContent"
     );
+  });
+
+  // ------------------------------------------------------------ the shared vault
+
+  async function vaultCreate(owner: Keypair, beneficiary: PublicKey, parties: PublicKey[], threshold: number, lamports: number, deadline: number | null, memos: string[] = []) {
+    const id = newId();
+    const vault = sharedPda(owner.publicKey, id);
+    await program.methods
+      .vaultCreate(id, beneficiary, new BN(lamports), parties, threshold, deadline === null ? null : new BN(deadline), memos)
+      .accountsPartial({ owner: owner.publicKey, vault })
+      .signers([owner])
+      .rpc();
+    return vault;
+  }
+  const vaultVote = (party: Keypair, vault: PublicKey, beneficiary: PublicKey, owner: PublicKey, lamports: number) =>
+    program.methods.vaultVote(new BN(lamports)).accountsPartial({ party: party.publicKey, vault, beneficiary, ownerAccount: owner }).signers([party]).rpc();
+
+  it("shared vault 2-of-3: one vote decides nothing, two votes on the same amount pay, a stranger cannot vote", async () => {
+    const tenant = employer, landlord = Keypair.generate(), mediator = Keypair.generate();
+    await fund(mediator, 1);
+    await fund(landlord, 1);
+    const deposit = 1 * LAMPORTS_PER_SOL;
+    const vault = await vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey, mediator.publicKey], 2, deposit, null, ["rental deposit · lease 12 rue X", "art. 22 loi 1989"]);
+    let v = await program.account.sharedVault.fetch(vault);
+    assert.deepEqual(v.status, { locked: {} });
+    assert.equal(v.parties.length, 3);
+
+    // a stranger has no say
+    await refused(vaultVote(passerby, vault, landlord.publicKey, tenant.publicKey, deposit), "NotAParty");
+    // more than the vault holds
+    await refused(vaultVote(landlord, vault, landlord.publicKey, tenant.publicKey, deposit + 1), "AmountExceeds");
+    // the beneficiary cannot be swapped in the payout accounts
+    await refused(vaultVote(landlord, vault, passerby.publicKey, tenant.publicKey, deposit), "WrongDestination");
+
+    // landlord wants it all: 1 vote of 2, nothing moves
+    await vaultVote(landlord, vault, landlord.publicKey, tenant.publicKey, deposit);
+    v = await program.account.sharedVault.fetch(vault);
+    assert.deepEqual(v.status, { locked: {} });
+    assert.equal(v.votes.length, 1);
+    // tenant wants a full refund: still no two votes alike
+    await vaultVote(tenant, vault, landlord.publicKey, tenant.publicKey, 0);
+    v = await program.account.sharedVault.fetch(vault);
+    assert.deepEqual(v.status, { locked: {} });
+    assert.equal(v.votes.length, 2);
+    // the mediator settles on a split: 0.3 to the landlord; the tenant agrees — 2 of 3, paid
+    const split = 0.3 * LAMPORTS_PER_SOL;
+    await vaultVote(mediator, vault, landlord.publicKey, tenant.publicKey, split);
+    const lBefore = await connection.getBalance(landlord.publicKey);
+    const tBefore = await connection.getBalance(tenant.publicKey);
+    await vaultVote(tenant, vault, landlord.publicKey, tenant.publicKey, split); // changes the tenant's vote
+    const lAfter = await connection.getBalance(landlord.publicKey);
+    const tAfter = await connection.getBalance(tenant.publicKey);
+    assert.equal(lAfter - lBefore, split);
+    assert.isAtLeast(tAfter - tBefore, deposit - split - 10_000); // minus the fee of the vote
+    v = await program.account.sharedVault.fetch(vault);
+    assert.deepEqual(v.status, { finished: {} });
+    assert.equal(v.paidToBeneficiary.toNumber(), split);
+    assert.equal(v.closedBy!.toBase58(), tenant.publicKey.toBase58());
+    // and not twice
+    await refused(vaultVote(mediator, vault, landlord.publicKey, tenant.publicKey, split), "AlreadyClosed");
+    // the owner closes the record and gets the rent back
+    await program.methods.vaultClose().accountsPartial({ owner: tenant.publicKey, vault }).signers([tenant]).rpc();
+    assert.isNull(await program.account.sharedVault.fetchNullable(vault));
+  });
+
+  it("shared vault: past the deadline with no decision, anyone returns the deposit to the owner; before it, nobody", async () => {
+    const tenant = employer, landlord = Keypair.generate(), mediator = Keypair.generate();
+    const now = await chainNow();
+    const deposit = 0.4 * LAMPORTS_PER_SOL;
+    const vault = await vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey, mediator.publicKey], 2, deposit, now + 6);
+    const timeout = (who: Keypair) => program.methods.vaultTimeout().accountsPartial({ caller: who.publicKey, vault, ownerAccount: tenant.publicKey }).signers([who]).rpc();
+    await refused(timeout(passerby), "DeadlineNotReached");
+    await sleep(7000);
+    const before = await connection.getBalance(tenant.publicKey);
+    await timeout(passerby);
+    const after = await connection.getBalance(tenant.publicKey);
+    assert.equal(after - before, deposit);
+    const v = await program.account.sharedVault.fetch(vault);
+    assert.deepEqual(v.status, { cancelled: {} });
+    // shape refusals at creation
+    await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey], 1, deposit, null), "BadParties");
+    await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey], 3, deposit, null), "BadThreshold");
+    await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, tenant.publicKey], 1, deposit, null), "DuplicateParty");
+    await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey], 2, deposit, now - 100), "DeadlinePassed");
   });
 });

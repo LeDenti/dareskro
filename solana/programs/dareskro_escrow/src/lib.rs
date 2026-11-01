@@ -48,6 +48,10 @@ pub const STATEMENT_SEED: &[u8] = b"statement";
 pub const MAX_CIPHERTEXT: u16 = 8192;
 #[constant]
 pub const MAX_READERS: u8 = 6;
+#[constant]
+pub const SHARED_SEED: &[u8] = b"shared";
+#[constant]
+pub const MAX_PARTIES: u8 = 5;
 
 #[program]
 pub mod dareskro_escrow {
@@ -243,6 +247,152 @@ pub mod dareskro_escrow {
     /// chain (status, who closed it, the revealed secret). The owner may delete
     /// it and take the rent back; a Locked escrow cannot be deleted.
     pub fn close(_ctx: Context<Close>) -> Result<()> {
+        Ok(())
+    }
+
+    // ------------------------------------------------------- the shared vault
+
+    /// A deposit several parties decide on together — a rental deposit: tenant
+    /// (owner), landlord (beneficiary), a mediator; 2 of 3. The owner funds it.
+    /// Each party votes an amount for the beneficiary, the rest returns to the
+    /// owner; when `threshold` parties have voted the same amount, that call
+    /// pays. After `deadline`, with no decision, anyone may return everything to
+    /// the owner (the rule of a deposit nobody claimed).
+    #[allow(clippy::too_many_arguments)]
+    pub fn vault_create(
+        ctx: Context<VaultCreate>,
+        id: u64,
+        beneficiary: Pubkey,
+        amount: u64,
+        parties: Vec<Pubkey>,
+        threshold: u8,
+        deadline: Option<i64>,
+        memos: Vec<String>,
+    ) -> Result<()> {
+        require!(amount > 0, EscrowError::ZeroAmount);
+        require!(beneficiary != Pubkey::default(), EscrowError::NoDestination);
+        require!(
+            parties.len() >= 2 && parties.len() <= MAX_PARTIES as usize,
+            EscrowError::BadParties
+        );
+        require!(
+            threshold >= 1 && (threshold as usize) <= parties.len(),
+            EscrowError::BadThreshold
+        );
+        for (i, p) in parties.iter().enumerate() {
+            require!(!parties[..i].contains(p), EscrowError::DuplicateParty);
+        }
+        require!(memos.len() <= MAX_MEMOS as usize, EscrowError::TooManyMemos);
+        require!(
+            memos.iter().all(|m| m.len() <= MAX_MEMO_LEN as usize),
+            EscrowError::MemoTooLong
+        );
+        let now = Clock::get()?.unix_timestamp;
+        if let Some(d) = deadline {
+            require!(d > now, EscrowError::DeadlinePassed);
+        }
+        let v = &mut ctx.accounts.vault;
+        v.owner = ctx.accounts.owner.key();
+        v.beneficiary = beneficiary;
+        v.amount = amount;
+        v.threshold = threshold;
+        v.parties = parties;
+        v.votes = Vec::new();
+        v.deadline = deadline;
+        v.memos = memos;
+        v.status = Status::Locked;
+        v.paid_to_beneficiary = 0;
+        v.created_at = now;
+        v.closed_at = None;
+        v.closed_by = None;
+        v.id = id;
+        v.bump = ctx.bumps.vault;
+        anchor_lang::system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.key(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.owner.to_account_info(),
+                    to: v.to_account_info(),
+                },
+            ),
+            amount,
+        )?;
+        emit!(VaultCreated {
+            vault: v.key(),
+            owner: v.owner,
+            beneficiary,
+            amount,
+            threshold,
+            parties: v.parties.clone(),
+            deadline,
+            id,
+        });
+        Ok(())
+    }
+
+    /// One party's vote: `to_beneficiary` lamports for the beneficiary, the rest
+    /// back to the owner. A party may change its vote while the vault is Locked.
+    /// The vote that reaches the threshold pays, in the same call.
+    pub fn vault_vote(ctx: Context<VaultVote>, to_beneficiary: u64) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let party = ctx.accounts.party.key();
+        let v = &mut ctx.accounts.vault;
+        require!(v.status == Status::Locked, EscrowError::AlreadyClosed);
+        require!(v.parties.contains(&party), EscrowError::NotAParty);
+        require!(to_beneficiary <= v.amount, EscrowError::AmountExceeds);
+        v.votes.retain(|x| x.party != party);
+        v.votes.push(Vote { party, to_beneficiary });
+        let agree = v.votes.iter().filter(|x| x.to_beneficiary == to_beneficiary).count();
+        if agree >= v.threshold as usize {
+            let amount = v.amount;
+            let to_owner = amount - to_beneficiary;
+            v.status = Status::Finished;
+            v.closed_at = Some(now);
+            v.closed_by = Some(party);
+            v.paid_to_beneficiary = to_beneficiary;
+            v.sub_lamports(amount)?;
+            ctx.accounts.beneficiary.add_lamports(to_beneficiary)?;
+            ctx.accounts.owner_account.add_lamports(to_owner)?;
+            emit!(VaultDecided {
+                vault: v.key(),
+                by: party,
+                to_beneficiary,
+                to_owner,
+                votes: agree as u8,
+                timeout: false,
+            });
+        }
+        Ok(())
+    }
+
+    /// Past the deadline with no decision: anyone may return the whole deposit to the owner.
+    pub fn vault_timeout(ctx: Context<VaultTimeout>) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let caller = ctx.accounts.caller.key();
+        let v = &mut ctx.accounts.vault;
+        require!(v.status == Status::Locked, EscrowError::AlreadyClosed);
+        let d = v.deadline.ok_or(EscrowError::NoDeadline)?;
+        require!(now >= d, EscrowError::DeadlineNotReached);
+        let amount = v.amount;
+        v.status = Status::Cancelled;
+        v.closed_at = Some(now);
+        v.closed_by = Some(caller);
+        v.paid_to_beneficiary = 0;
+        v.sub_lamports(amount)?;
+        ctx.accounts.owner_account.add_lamports(amount)?;
+        emit!(VaultDecided {
+            vault: v.key(),
+            by: caller,
+            to_beneficiary: 0,
+            to_owner: amount,
+            votes: 0,
+            timeout: true,
+        });
+        Ok(())
+    }
+
+    /// The owner deletes a decided vault and takes the rent back; a Locked one stays.
+    pub fn vault_close(_ctx: Context<VaultClose>) -> Result<()> {
         Ok(())
     }
 
@@ -629,6 +779,100 @@ impl Escrow {
     }
 }
 
+#[derive(Accounts)]
+#[instruction(id: u64)]
+pub struct VaultCreate<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + SharedVault::INIT_SPACE,
+        seeds = [SHARED_SEED, owner.key().as_ref(), &id.to_le_bytes()],
+        bump
+    )]
+    pub vault: Account<'info, SharedVault>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct VaultVote<'info> {
+    pub party: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [SHARED_SEED, vault.owner.as_ref(), &vault.id.to_le_bytes()],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, SharedVault>,
+    /// CHECK: the beneficiary written at creation, nothing else is accepted
+    #[account(mut, address = vault.beneficiary @ EscrowError::WrongDestination)]
+    pub beneficiary: UncheckedAccount<'info>,
+    /// CHECK: the owner written at creation, the only possible refund address
+    #[account(mut, address = vault.owner @ EscrowError::WrongOwner)]
+    pub owner_account: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct VaultTimeout<'info> {
+    pub caller: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [SHARED_SEED, vault.owner.as_ref(), &vault.id.to_le_bytes()],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, SharedVault>,
+    /// CHECK: the owner written at creation
+    #[account(mut, address = vault.owner @ EscrowError::WrongOwner)]
+    pub owner_account: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct VaultClose<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(
+        mut,
+        close = owner,
+        has_one = owner @ EscrowError::WrongOwner,
+        seeds = [SHARED_SEED, vault.owner.as_ref(), &vault.id.to_le_bytes()],
+        bump = vault.bump,
+        constraint = vault.status != Status::Locked @ EscrowError::StillLocked,
+    )]
+    pub vault: Account<'info, SharedVault>,
+}
+
+/// One party's word on a shared vault: how much goes to the beneficiary.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, InitSpace)]
+pub struct Vote {
+    pub party: Pubkey,
+    pub to_beneficiary: u64,
+}
+
+/// A deposit decided by `threshold` of `parties`: lamports held by this account.
+#[account]
+#[derive(InitSpace)]
+pub struct SharedVault {
+    pub owner: Pubkey,
+    pub beneficiary: Pubkey,
+    pub amount: u64,
+    pub threshold: u8,
+    #[max_len(5)]
+    pub parties: Vec<Pubkey>,
+    #[max_len(5)]
+    pub votes: Vec<Vote>,
+    /// after it, with no decision, anyone may return the deposit to the owner
+    pub deadline: Option<i64>,
+    #[max_len(3, 128)]
+    pub memos: Vec<String>,
+    pub status: Status,
+    pub paid_to_beneficiary: u64,
+    pub created_at: i64,
+    pub closed_at: Option<i64>,
+    pub closed_by: Option<Pubkey>,
+    pub id: u64,
+    pub bump: u8,
+}
+
 /// Who may read the sealed statement: their X25519 public key and the content
 /// key wrapped for them (ephemeral public key, GCM nonce, 32 bytes + 16-byte tag).
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
@@ -777,6 +1021,28 @@ pub struct StatementSealed {
 }
 
 #[event]
+pub struct VaultCreated {
+    pub vault: Pubkey,
+    pub owner: Pubkey,
+    pub beneficiary: Pubkey,
+    pub amount: u64,
+    pub threshold: u8,
+    pub parties: Vec<Pubkey>,
+    pub deadline: Option<i64>,
+    pub id: u64,
+}
+
+#[event]
+pub struct VaultDecided {
+    pub vault: Pubkey,
+    pub by: Pubkey,
+    pub to_beneficiary: u64,
+    pub to_owner: u64,
+    pub votes: u8,
+    pub timeout: bool,
+}
+
+#[event]
 pub struct Cancelled {
     pub escrow: Pubkey,
     pub by: Pubkey,
@@ -848,4 +1114,20 @@ pub enum EscrowError {
     ReaderExists,
     #[msg("the vault holds less than the escrow's amount")]
     VaultShort,
+    #[msg("a shared vault needs between 2 and 5 parties")]
+    BadParties,
+    #[msg("threshold must be between 1 and the number of parties")]
+    BadThreshold,
+    #[msg("the same party twice")]
+    DuplicateParty,
+    #[msg("the signer is not one of the vault's parties")]
+    NotAParty,
+    #[msg("more than the vault holds")]
+    AmountExceeds,
+    #[msg("the deadline must be in the future")]
+    DeadlinePassed,
+    #[msg("this vault has no deadline: only the parties decide")]
+    NoDeadline,
+    #[msg("the deadline is not reached")]
+    DeadlineNotReached,
 }

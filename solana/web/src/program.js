@@ -57,3 +57,44 @@ export async function listEscrows(connection, who) {
 }
 /** Anchor's error name in the logs of a failed transaction. */
 export const errorCode = (logs = []) => (logs.join("\n").match(/Error Code: (\w+)\. Error Number: \d+\. Error Message: ([^\n]*)/) || []).slice(1);
+
+// ---------------------------------------------------------------- the shared vault (2-of-3 deposit)
+const VDISC = { create: [109, 191, 172, 125, 83, 225, 56, 122], vote: [238, 243, 209, 135, 30, 54, 178, 226], timeout: [164, 9, 35, 26, 139, 45, 36, 141], close: [81, 73, 155, 182, 37, 130, 252, 91], account: [195, 36, 66, 128, 41, 62, 161, 142] };
+export const sharedAddress = (owner, id) => { const le = Buffer.alloc(8); le.writeBigUInt64LE(BigInt(id)); return PublicKey.findProgramAddressSync([Buffer.from("shared"), new PublicKey(owner).toBuffer(), le], PROGRAM)[0]; };
+
+/** vault_create(id, beneficiary, lamports, parties[], threshold, deadline?, memos[]) */
+export function vaultCreateIx({ owner, beneficiary, lamports, parties, threshold, deadline, memos = [], id }) {
+  const w = new W().bytes(VDISC.create).u64(id).pk(beneficiary).u64(lamports).u32(parties.length);
+  for (const p of parties) w.pk(p);
+  w.u8(threshold); w.opt(deadline, (v) => w.i64(v)); w.u32(memos.length);
+  for (const m of memos) w.str(m);
+  const vault = sharedAddress(owner, id);
+  return { vault, ix: new TransactionInstruction({ programId: PROGRAM, data: w.out(), keys: [
+    { pubkey: new PublicKey(owner), isSigner: true, isWritable: true }, { pubkey: vault, isSigner: false, isWritable: true }, { pubkey: SystemProgram.programId, isSigner: false, isWritable: false } ] }) };
+}
+export const vaultVoteIx = ({ party, vault, beneficiary, owner, toBeneficiary }) => new TransactionInstruction({ programId: PROGRAM, data: new W().bytes(VDISC.vote).u64(toBeneficiary).out(), keys: [
+  { pubkey: new PublicKey(party), isSigner: true, isWritable: false }, { pubkey: new PublicKey(vault), isSigner: false, isWritable: true }, { pubkey: new PublicKey(beneficiary), isSigner: false, isWritable: true }, { pubkey: new PublicKey(owner), isSigner: false, isWritable: true } ] });
+export const vaultTimeoutIx = ({ caller, vault, owner }) => new TransactionInstruction({ programId: PROGRAM, data: Buffer.from(VDISC.timeout), keys: [
+  { pubkey: new PublicKey(caller), isSigner: true, isWritable: false }, { pubkey: new PublicKey(vault), isSigner: false, isWritable: true }, { pubkey: new PublicKey(owner), isSigner: false, isWritable: true } ] });
+export const vaultCloseIx = ({ owner, vault }) => new TransactionInstruction({ programId: PROGRAM, data: Buffer.from(VDISC.close), keys: [
+  { pubkey: new PublicKey(owner), isSigner: true, isWritable: true }, { pubkey: new PublicKey(vault), isSigner: false, isWritable: true } ] });
+
+export function decodeVault(address, data) {
+  const b = Buffer.from(data); let o = 8;
+  const pk = () => { const v = new PublicKey(b.subarray(o, o + 32)).toBase58(); o += 32; return v; };
+  const u64 = () => { const v = b.readBigUInt64LE(o); o += 8; return v; }; const i64 = () => { const v = Number(b.readBigInt64LE(o)); o += 8; return v; };
+  const opt = (f) => { const t = b[o++]; return t ? f() : null; };
+  const owner = pk(), beneficiary = pk(), amount = u64(), threshold = b[o++];
+  let n = b.readUInt32LE(o); o += 4; const parties = []; for (let i = 0; i < n; i++) parties.push(pk());
+  n = b.readUInt32LE(o); o += 4; const votes = []; for (let i = 0; i < n; i++) { const party = pk(); const toBeneficiary = u64().toString(); votes.push({ party, toBeneficiary }); }
+  const deadline = opt(i64);
+  n = b.readUInt32LE(o); o += 4; const memos = []; for (let i = 0; i < n; i++) { const l = b.readUInt32LE(o); o += 4; memos.push(b.subarray(o, o + l).toString("utf8")); o += l; }
+  const status = ["locked", "finished", "cancelled"][b[o++]]; const paidToBeneficiary = u64().toString(); const createdAt = i64(); const closedAt = opt(i64); const closedBy = opt(pk); const id = u64().toString();
+  return { address: address.toBase58(), owner, beneficiary, amount: amount.toString(), sol: Number(amount) / 1e9, threshold, parties, votes, deadline, memos, status, paidToBeneficiary, createdAt, closedAt, closedBy, id };
+}
+/** Every shared vault where `who` is a party, the owner or the beneficiary (the parties live at variable offsets: fetch all vaults, filter here — fine on devnet). */
+export async function listVaults(connection, who) {
+  const all = await connection.getProgramAccounts(PROGRAM, { filters: [{ memcmp: { offset: 0, bytes: Buffer.from(VDISC.account).toString("base64"), encoding: "base64" } }] });
+  const me = new PublicKey(who).toBase58();
+  return all.map((a) => decodeVault(a.pubkey, a.account.data)).filter((v) => v.owner === me || v.beneficiary === me || v.parties.includes(me)).sort((a, b) => b.createdAt - a.createdAt);
+}

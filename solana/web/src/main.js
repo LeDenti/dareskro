@@ -3,7 +3,7 @@ import { Buffer } from "buffer";
 window.Buffer = Buffer;
 import { Connection, Keypair, PublicKey, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { CLUSTER, RPC, PROGRAM_ID, PAY_WITH, explorerTx, explorerAddr } from "./config.js";
-import { createIx, finishIx, cancelIx, closeIx, listEscrows, errorCode } from "./program.js";
+import { createIx, finishIx, cancelIx, closeIx, listEscrows, errorCode, vaultCreateIx, vaultVoteIx, vaultTimeoutIx, vaultCloseIx, listVaults } from "./program.js";
 import { solPrice, quote as auroraQuote } from "./aurora.js";
 
 const $ = (id) => document.getElementById(id);
@@ -19,9 +19,9 @@ const BURNER_KEY = "dareskro.burner.devnet";
 function setWallet(w) {
   wallet = w;
   $("btn-phantom").hidden = !!w; $("btn-burner").hidden = !!w; $("btn-disconnect").hidden = !w; $("btn-airdrop").hidden = !(w && w.kind === "burner");
-  $("card-create").classList.toggle("disabled", !w); $("card-list").classList.toggle("disabled", !w);
+  $("card-create").classList.toggle("disabled", !w); $("card-list").classList.toggle("disabled", !w); $("card-vault").classList.toggle("disabled", !w);
   if (!w) { $("wallet-info").textContent = "No wallet."; return; }
-  refreshBalance(); refreshList();
+  refreshBalance(); refreshList(); refreshVaults();
 }
 async function refreshBalance() {
   if (!wallet) return;
@@ -162,4 +162,79 @@ async function act(what, e) {
   } catch (err) { $("list-error").hidden = true; $("list-error").className = "ko"; log(`${what} ${short(e.address)}: ${err.message.split("\n")[0]}`, "", true); }
   finally { busy = false; lastKey = undefined; refreshBalance(); refreshList(); }
 }
-setInterval(() => { refreshList(); refreshBalance(); }, 8000);
+setInterval(() => { refreshList(); refreshVaults(); refreshBalance(); }, 8000);
+
+
+// ---------------------------------------------------------------- the shared vault
+let vaultKey;
+$("btn-vault").onclick = async () => {
+  $("vault-error").hidden = true; $("vault-status").textContent = "";
+  try {
+    const beneficiary = new PublicKey($("v-ben").value.trim());
+    const third = new PublicKey($("v-p3").value.trim());
+    const usd = Number($("v-usd").value); if (!(usd > 0)) throw new Error("amount must be > 0");
+    const lamports = Math.round((usd / rate.usdPerSol) * LAMPORTS_PER_SOL);
+    const threshold = Number($("v-thr").value);
+    const deadline = $("v-deadline").value ? Math.floor(new Date($("v-deadline").value).getTime() / 1000) : null;
+    const memos = [`${usd.toFixed(2)} USD @ ${rate.usdPerSol} USD/SOL`];
+    if ($("v-memo").value.trim()) memos.push($("v-memo").value.trim().slice(0, 128));
+    const id = Date.now();
+    const { vault, ix } = vaultCreateIx({ owner: wallet.publicKey, beneficiary, lamports, parties: [wallet.publicKey, beneficiary, third], threshold, deadline, memos, id });
+    const r = await send(ix, `vault ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL, ${threshold} of 3`, { note: (m) => { $("vault-status").textContent = m; } });
+    if (r.refused) throw new Error(`${r.code ?? "refused"}: ${r.message ?? ""}`);
+    $("vault-status").innerHTML = `<span class="ok">Funded.</span> Vault <a href="${explorerAddr(vault.toBase58())}" target="_blank" rel="noreferrer">${vault.toBase58()}</a> · <a href="${explorerTx(r.signature)}" target="_blank" rel="noreferrer">${short(r.signature, 8)}</a>`;
+    vaultKey = undefined; refreshBalance(); refreshVaults();
+  } catch (e) { $("vault-error").textContent = e.message; $("vault-error").hidden = false; }
+};
+async function refreshVaults() {
+  if (!wallet) return;
+  try {
+    const vs = await listVaults(connection, wallet.publicKey);
+    const key = JSON.stringify(vs) + Math.floor(Date.now() / 30000);
+    if (key === vaultKey) return; vaultKey = key;
+    const me = wallet.publicKey.toBase58(); const t = now();
+    if (!vs.length) { $("vlist").innerHTML = `<p class="muted">No shared vault yet where ${short(me)} is a party.</p>`; return; }
+    $("vlist").innerHTML = `<table><thead><tr><th>vault</th><th>me</th><th class="num">SOL</th><th>status</th><th>votes</th><th>deadline</th><th>actions</th></tr></thead><tbody>` + vs.map((v) => {
+      const roles = [v.owner === me && "owner", v.beneficiary === me && "beneficiary", v.parties.includes(me) && "party"].filter(Boolean).join(" · ");
+      const votes = v.votes.map((x) => `${short(x.party)} → ${(Number(x.toBeneficiary) / 1e9).toFixed(4)} SOL to beneficiary`).join("<br>") || "<span class='muted'>none yet</span>";
+      const amParty = v.parties.includes(me), locked = v.status === "locked";
+      const late = v.deadline != null && t >= v.deadline;
+      const acts = [];
+      if (locked && amParty) {
+        // rally to a vote already cast by another party: one click, no amount to retype
+        for (const x of v.votes.filter((x) => x.party !== me)) {
+          const alreadyMine = v.votes.some((y) => y.party === me && y.toBeneficiary === x.toBeneficiary);
+          if (!alreadyMine) acts.push(`<button class="primary" data-vact="vote" data-v="${v.address}" data-amt="${x.toBeneficiary}" title="agree with ${short(x.party)}: ${(Number(x.toBeneficiary) / 1e9).toFixed(4)} SOL to the beneficiary, the rest back to the owner">Agree with ${short(x.party, 4)}: ${(Number(x.toBeneficiary) / 1e9).toFixed(3)} SOL</button>`);
+        }
+        acts.push(`<button data-vact="vote" data-v="${v.address}" data-amt="${v.amount}" title="all of it to the beneficiary">Pay beneficiary</button>`);
+        acts.push(`<button data-vact="vote" data-v="${v.address}" data-amt="0" title="all of it back to the owner">Refund owner</button>`);
+        acts.push(`<button data-vact="split" data-v="${v.address}" title="a split: X SOL to the beneficiary, the rest to the owner">Split…</button>`);
+      }
+      if (locked && v.deadline != null) acts.push(`<button data-vact="timeout" data-v="${v.address}" ${late ? "" : "disabled"} title="${late ? "deadline passed: anyone may return the deposit to the owner" : `after ${fmt(v.deadline)}`}">Deadline refund</button>`);
+      if (!locked && v.owner === me) acts.push(`<button data-vact="close" data-v="${v.address}">Close</button>`);
+      const outcome = v.status === "finished" ? `${(Number(v.paidToBeneficiary) / 1e9).toFixed(4)} SOL to beneficiary, ${((Number(v.amount) - Number(v.paidToBeneficiary)) / 1e9).toFixed(4)} back` : v.status === "cancelled" ? "returned to the owner (deadline)" : `${v.threshold} of ${v.parties.length} needed`;
+      return `<tr><td><a href="${explorerAddr(v.address)}" target="_blank" rel="noreferrer">${short(v.address)}</a><br><span class="muted">${v.memos[1] ?? v.memos[0] ?? ""}</span></td><td>${roles}</td><td class="num">${v.sol.toFixed(4)}</td>
+        <td class="${locked ? "pending" : v.status === "finished" ? "ok" : "muted"}">${v.status}<br><span class="muted">${outcome}</span></td><td>${votes}</td><td class="muted">${v.deadline == null ? "none" : fmt(v.deadline)}</td><td><div class="acts">${acts.join("")}</div></td></tr>`;
+    }).join("") + `</tbody></table>`;
+    for (const b of $("vlist").querySelectorAll("button[data-vact]")) b.onclick = () => vaultAct(b.dataset.vact, vs.find((x) => x.address === b.dataset.v), b.dataset.amt);
+  } catch (e) { $("vault-error").textContent = e.message; $("vault-error").hidden = false; }
+}
+async function vaultAct(what, v, amt) {
+  if (busy) return;
+  let toBeneficiary = amt == null ? null : BigInt(amt);
+  if (what === "split") {
+    const sol = prompt(`How many SOL to the beneficiary (out of ${v.sol})? The rest goes back to the owner.`);
+    if (sol == null) return; toBeneficiary = BigInt(Math.round(Number(sol) * 1e9)); what = "vote";
+  }
+  busy = true;
+  try {
+    const me = wallet.publicKey;
+    const ix = what === "vote" ? vaultVoteIx({ party: me, vault: v.address, beneficiary: v.beneficiary, owner: v.owner, toBeneficiary })
+      : what === "timeout" ? vaultTimeoutIx({ caller: me, vault: v.address, owner: v.owner })
+      : vaultCloseIx({ owner: me, vault: v.address });
+    const label = what === "vote" ? `vote ${short(v.address)}: ${(Number(toBeneficiary) / 1e9).toFixed(4)} SOL to the beneficiary` : `${what} ${short(v.address)}`;
+    await send(ix, label, { note: (m) => { $("vault-status").textContent = m; } });
+    $("vault-status").textContent = "";
+  } catch (err) { log(`${what} ${short(v.address)}: ${err.message.split("\n")[0]}`, "", true); }
+  finally { busy = false; vaultKey = undefined; refreshBalance(); refreshVaults(); }
+}

@@ -3,7 +3,7 @@
 **The employer pays with what they hold, on the chain they hold it on; the employee receives USDC locked on Solana that nobody can take back or redirect.** The bridge is not the product. The padlock on the pay line is.
 
 **Encode Club Solana Hackathon 2026** (12 October → 8 November, online). Tracks: Aurora Intents, Best Consumer App.
-**Final demo video (3 min 56, English, subtitled): [dareskro_la_linea_solana_final.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.3-solana-final/dareskro_la_linea_solana_final.mp4)** — the drawn story (2 min), then the real screens of 1 November: Aurora on mainnet, the pay desk on devnet · release [v0.3-solana-final](https://github.com/LeDenti/dareskro/releases/tag/v0.3-solana-final) (mid-point: [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint)) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **a one-page app, no terminal** (`web/`: Phantom or burner key, lock, release, cancel, XRP/SOL/NEAR) · **the pay desk has a Solana tab** (`app/`, services in `desk/`, run measured 1 Nov) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
+**Final demo video (3 min 56, English, subtitled): [dareskro_la_linea_solana_final.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.3-solana-final/dareskro_la_linea_solana_final.mp4)** — the drawn story (2 min), then the real screens of 1 November: Aurora on mainnet, the pay desk on devnet · release [v0.3-solana-final](https://github.com/LeDenti/dareskro/releases/tag/v0.3-solana-final) (mid-point: [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint)) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **a shared vault, 2 of 3** (the rental deposit: vote an amount, the agreeing vote pays; run with Phantom 1 Nov) · **a one-page app, no terminal** (`web/`: Phantom or burner key, lock, release, cancel, XRP/SOL/NEAR) · **the pay desk has a Solana tab** (`app/`, services in `desk/`, run measured 1 Nov) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
 
 > The agent reads the evidence. The code computes the amount. A human validates.
 > A Solana program pays at the date, or when the proof is public. Nobody holds the
@@ -320,6 +320,44 @@ minute, and a person confirming in Phantom often takes longer, so the page now a
 fresh signature when the first one expires (three tries); and a consumer must never meet
 the wallet's red warning by accident, so before the date the buttons are greyed out unless
 **demo mode** is on. Phantom must be set to Devnet (Settings → Developer settings → Testnet mode).
+
+## The shared vault — a deposit several people decide on (2 of 3)
+
+The rental-deposit shape of dareskro, as a program account: the tenant (owner)
+funds it, the landlord is the beneficiary, a mediator is the third voice. Each
+party votes **how much goes to the beneficiary**, the rest returns to the owner;
+a party may change its vote while nothing is decided; the vote that makes
+`threshold` identical votes pays, in that same call. Past an optional deadline
+with no decision, anyone may return the whole deposit to the owner. Nobody holds
+the money in between, and nobody can route it anywhere but to the two addresses
+written at creation.
+
+| Instruction | Who | What the program checks |
+|---|---|---|
+| `vault_create(id, beneficiary, amount, parties, threshold, deadline?, memos)` | the owner | 2–5 distinct parties, 1 ≤ threshold ≤ parties, amount > 0, deadline in the future; the lamports move into the vault account |
+| `vault_vote(to_beneficiary)` | one of the parties | `NotAParty` otherwise; ≤ amount; beneficiary and owner accounts must be the ones written (`WrongDestination`, `WrongOwner`); when `threshold` votes agree, pays beneficiary + owner and marks Finished |
+| `vault_timeout()` | anyone | `NoDeadline` / `DeadlineNotReached` otherwise; returns everything to the owner, marks Cancelled |
+| `vault_close()` | the owner | only a decided vault (`StillLocked`), rent back |
+
+Two tests cover it (13 pass in all): the full story with a split, the stranger, the
+swapped beneficiary, the double payment; and the deadline refund with the shape refusals.
+
+**Run from the page on 1 November 2026, 22:39–22:45 Paris, devnet, Julien's Phantom as tenant:**
+
+| Click | Result | Proof |
+|---|---|---|
+| Fund the shared vault, 20 USD → 0.212 SOL, 2 of 3 (tenant `3Q4rQktX…`, landlord `9SnQCNbh…`, mediator `5k8j3SXM…`) | vault `B8GFUQKm…` | [`2cyqvZoQ…`](https://explorer.solana.com/tx/2cyqvZoQDG3JSf2MZ4uLLYPxyEVrXpzKVvY6jdhzrTRRn1vnjpjsEWFmBM3zFWb41mnU8u2aMH9zD47paV64Nqn3?cluster=devnet) |
+| Landlord votes: all 0.212 SOL to me (`client/coffre.mjs`) | 1 vote, nothing moves | [`3xgkXtxY…`](https://explorer.solana.com/tx/3xgkXtxYvNRnB3ycaXgk82BrU8bYj3aybEccsUSgGXj6Vc4i8AffaW8fxZ89AGi6f3YKmcjfYxHc7pmrN7r226x7?cluster=devnet) |
+| Mediator votes: 0.08 SOL to the landlord, the rest back | 2 votes, none alike, nothing moves | [`43qF93KQ…`](https://explorer.solana.com/tx/43qF93KQpf2sDt6mKfT6eUS22EB7oL35psGmke7XnXZRLQSHno8y9Dz1RSV41PzhcnEzm5V4qtWyNVDMSFdAduXz?cluster=devnet) |
+| Tenant clicks "Agree with the mediator: 0.080 SOL" in Phantom | **2 of 3 — paid in that call**: 0.08 SOL to the landlord, 0.132 SOL back to the tenant, status Finished | [`5y9EGV42…`](https://explorer.solana.com/tx/5y9EGV42HyGG3QLKhcVF72fi3ay9k5Sf1DoyY2zJT5puLnTJcmUr7DQ7GhwMnNKAJ86ZVoMaPY2ynTkNH5Bb581K?cluster=devnet) |
+| Close | at the owner's convenience: the decided record stays readable until then (rent ≈ 0.006 SOL) | — |
+
+The page lists every vault where the wallet is owner, beneficiary or party, with
+the votes cast, one-click "Agree with…" buttons for the amounts already on the
+table, the free choices (pay all, refund all, split), the deadline refund once it
+is due, and Close. Honest note: the on-chain IDL account could not be re-created
+after this deployment (devnet RPC refusals); the page encodes the instructions
+itself and does not need it, explorers decode the new calls less prettily until it is back.
 
 ## Honest limits
 
