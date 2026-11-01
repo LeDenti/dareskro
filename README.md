@@ -1,6 +1,6 @@
 # dareskro — agentic payroll escrow on the XRP Ledger, signed on a Ledger device
 
-> **Encode Solana Hackathon 2026 (12 Oct – 8 Nov) — the Solana rail lives in [`solana/`](solana/README.md):** an escrow program with no owner, the sealed payslip, measured on devnet; [demo video](https://github.com/LeDenti/dareskro/releases/download/v0.2-solana-midpoint/dareskro_la_linea_solana.mp4). Only that folder is this hackathon's work.
+> **Encode Solana Hackathon 2026 (12 Oct – 8 Nov) — the Solana rail lives in [`solana/`](solana/README.md):** an escrow program with no owner, the sealed payslip, measured on devnet; [final demo video, 3 min 56](https://github.com/LeDenti/dareskro/releases/download/v0.3-solana-final/dareskro_la_linea_solana_final.mp4). Only that folder is this hackathon's work.
 >
 > **NEAR Hackathon, 1–14 November 2026 — the NEAR integration lives in [`near/`](near/README.md).** Only that folder is built in
 > the NEAR window; the rest of this repository is the XRPL product of the New York hackathon below, baseline for NEAR judging
