@@ -58,9 +58,14 @@ async function send(ix, label, { record = $("f-record").checked, note } = {}) {
     tx.recentBlockhash = blockhash; tx.feePayer = wallet.publicKey;
     note?.(attempt === 1 ? "Confirm in your wallet within a minute…" : `The first signature expired (the wallet took more than a minute): asking again, attempt ${attempt}…`);
     const signed = await wallet.signTransaction(tx);
-    signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: record });
-    try { conf = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed"); break; }
-    catch (e) { if (attempt >= 3 || !/expired|block height/i.test(e.message)) throw e; }
+    try {
+      signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: record });
+      conf = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+      break;
+    } catch (e) {
+      // the wallet took longer than the blockhash lives: ask for a fresh signature
+      if (attempt >= 3 || !/expired|block height|Blockhash not found/i.test(e.message)) throw e;
+    }
   }
   const got = await connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
   const [code, message] = errorCode(got?.meta?.logMessages);
@@ -152,8 +157,9 @@ async function act(what, e) {
     const ix = what === "finish" ? finishIx({ caller: me, escrow: e.address, destination: e.destination, fulfillment: null })
       : what === "cancel" ? cancelIx({ caller: me, escrow: e.address, owner: e.owner })
       : closeIx({ owner: me, escrow: e.address });
-    await send(ix, `${what} ${short(e.address)}`);
-  } catch (err) { log(`${what} ${short(e.address)}: ${err.message}`, "", true); }
+    await send(ix, `${what} ${short(e.address)}`, { note: (m) => { $("list-error").textContent = m; $("list-error").hidden = false; $("list-error").className = "pending"; } });
+    $("list-error").hidden = true; $("list-error").className = "ko";
+  } catch (err) { $("list-error").hidden = true; $("list-error").className = "ko"; log(`${what} ${short(e.address)}: ${err.message.split("\n")[0]}`, "", true); }
   finally { busy = false; lastKey = undefined; refreshBalance(); refreshList(); }
 }
 setInterval(() => { refreshList(); refreshBalance(); }, 8000);

@@ -306,6 +306,21 @@ sends them without preflight, so the program's refusal is recorded and linked
 | Lock 5 USD → 0.0523 SOL, payable 09:58 | escrow `FNe5fU…` | [`2AmDMo6T…`](https://explorer.solana.com/tx/2AmDMo6TJkRSZmiPxoE73pThBNSAodsGHJja9vGy9TyJb7oM4VpVK1UK6KZXmTndWzxYhWBBNiTft7PxfX7ZdxeG?cluster=devnet) |
 | Release, before the date | **refused `TooEarly`**, recorded | [`3Lye6E6v…`](https://explorer.solana.com/tx/3Lye6E6vexBdn5Z3smDjcc4HRHvaRuWVeCUaRz6iNvTRE6E9hYEQPLh3U9t5BXgKQUPuWwWA93ovNXP5mYjqWv9x?cluster=devnet) |
 
+**And with a real wallet — Phantom, 1 November 2026, 10:20–10:34 Paris, devnet, Julien's own address `3Q4rQktX…`, every signature confirmed on his screen:**
+
+| Click | Result | Proof |
+|---|---|---|
+| Lock 5 USD → 0.0523 SOL, payable 10:30 | escrow `3YKUNVWj…` | [`5goJHuro…`](https://explorer.solana.com/tx/5goJHuro3BBk6Qaah1kpv749WDY5bPYRcaNFsxFaiunERTtd8AQS252b55q1wmy2JxRVkYvotyMw3im1A6i5qr19?cluster=devnet) |
+| Release, before the date (demo mode) | **refused `TooEarly`**, recorded; Phantom warned that the simulation fails, which is the point | [`AdKHTtCZ…`](https://explorer.solana.com/tx/AdKHTtCZCG5Jf584Vh3mTN5YRz2E1sD5oQu64wPubqQBgC2ms9PQmKs8hx4kryatto5NsohgE3cJm8Zd9B2whMc?cluster=devnet) |
+| Release, at 10:30 | paid to the recipient, no wallet warning | [`5BQPRfTi…`](https://explorer.solana.com/tx/5BQPRfTiYhKWVR5YxEdYKwTJkD1bhbNxMz4WdwVnm2fAKbJY64D2T8xmgAqNSR9cJj7egiQ9v4QUa3n3ATitVFDm?cluster=devnet) |
+| Close | record deleted, rent back | [`4NJTjqNv…`](https://explorer.solana.com/tx/4NJTjqNvgczfRiwkpFxf74N9eLb2iocX3r71LfJ4xACZz8GvzWJuRWBAH3zq81r42ZNxnrVRhqS4f2JGuvj6RDff?cluster=devnet) |
+
+What the wallet run taught, and what changed because of it: a Solana blockhash lives about a
+minute, and a person confirming in Phantom often takes longer, so the page now asks for a
+fresh signature when the first one expires (three tries); and a consumer must never meet
+the wallet's red warning by accident, so before the date the buttons are greyed out unless
+**demo mode** is on. Phantom must be set to Devnet (Settings → Developer settings → Testnet mode).
+
 ## Honest limits
 
 - The record costs ~0.005 SOL of rent until the owner closes it.
