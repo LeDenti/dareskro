@@ -1,0 +1,2 @@
+FACTURE P-2026-002 — Fournisseur : Atelier Nord (test) — Client : Pharmacie du Port (test)
+Montant : 10 XRP (tient lieu d'euros sur testnet). Émise le 2026-11-01. Pièce de test créée par le pupitre.

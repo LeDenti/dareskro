@@ -1,0 +1,704 @@
+{
+  "network": "wss://s.devnet.rippletest.net:51233",
+  "date": "2026-11-01T21:16:31.202Z",
+  "steps": [
+    {
+      "label": "VaultCreate (XRP, public, fermé : souscription 40 s puis investissement 420 s, Data = empreinte de la charte du pool)",
+      "result": "tesSUCCESS",
+      "hash": "56773F9FF49D35AB8E39876AE6321E1104BCACE01C72ACD3D0D8699D58D6D328",
+      "ledger": 6602071,
+      "close": "2026-11-01T21:17:11Z",
+      "explorer": "https://devnet.xrpl.org/transactions/56773F9FF49D35AB8E39876AE6321E1104BCACE01C72ACD3D0D8699D58D6D328",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Asset": {
+          "currency": "XRP"
+        },
+        "Data": "64617265736B726F2F706F6F6C2D636861727465722D7368613235363A34633766373131663031646137326434653662326130396336613661363233336437323238386335376431343636616362323563623530323535353231656536",
+        "Fee": "200000",
+        "Flags": 0,
+        "LastLedgerSequence": 6602089,
+        "Memos": [
+          {
+            "Memo": {
+              "MemoData": "636F6666726520584C532D3635203A206176616E636573207375722066616374757265",
+              "MemoType": "64617265736B726F2F706F6F6C"
+            }
+          }
+        ],
+        "RedemptionDate": 846883488,
+        "Sequence": 6602061,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "SubscriptionDate": 846883068,
+        "TransactionType": "VaultCreate",
+        "TxnSignature": "154473ED54E210012CA06DC6421A0B9B958F805F8FFD5D4B0C3DEFA94D621350A2212CF50EB33CD8EF9E29D783F4DE1572CEF845F71DD5948EC0D154531D0306",
+        "VaultKind": 1,
+        "WithdrawalPolicy": 1,
+        "ctid": "C064BD5700090002",
+        "date": 846883031,
+        "ledger_index": 6602071
+      }
+    },
+    {
+      "label": "prêteur A dépose 80 XRP dans le coffre (VaultDeposit)",
+      "result": "tesSUCCESS",
+      "hash": "426D7FD78AADD25AC7754D85A38D706C739050E062C0AF397EA68029A69133EB",
+      "ledger": 6602073,
+      "close": "2026-11-01T21:17:20Z",
+      "explorer": "https://devnet.xrpl.org/transactions/426D7FD78AADD25AC7754D85A38D706C739050E062C0AF397EA68029A69133EB",
+      "tx": {
+        "Account": "rp9DVk4rr8PrVkAp8UTUJv7famFH6kmccA",
+        "Amount": "80000000",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602091,
+        "Sequence": 6602063,
+        "SigningPubKey": "EDD362265693F1573DFB71BDAD8A4393AFC2622F596CCF65C1F008DD23CC7D87F7",
+        "TransactionType": "VaultDeposit",
+        "TxnSignature": "33A541C96605EFB36FAD359547E8B066B564E9F789E87B537484FA67EEC1F4BC87C63013D87C815E64033CE8A45650CC7206ADE02AA47C5F6AB2F349E2AF0001",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BD5900090002",
+        "date": 846883040,
+        "ledger_index": 6602073
+      }
+    },
+    {
+      "label": "prêteur B dépose 80 XRP dans le coffre (VaultDeposit)",
+      "result": "tesSUCCESS",
+      "hash": "C6A14BF069ECBA764DCBD976A3B1833428B578894E6C2851F982B5A4B8F09A1A",
+      "ledger": 6602075,
+      "close": "2026-11-01T21:17:22Z",
+      "explorer": "https://devnet.xrpl.org/transactions/C6A14BF069ECBA764DCBD976A3B1833428B578894E6C2851F982B5A4B8F09A1A",
+      "tx": {
+        "Account": "r3rFM5T7GTdpwuHqaY9ETHcZAkPVC8TC3V",
+        "Amount": "80000000",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602093,
+        "Sequence": 6602065,
+        "SigningPubKey": "EDB98F0F10560A199DE5800DE96B4B4580A77384E0AA9C6A0359A12F236C522C45",
+        "TransactionType": "VaultDeposit",
+        "TxnSignature": "F8DF750B90A6903F22F53BB012C8D79EAA879251942A6ABDE515286D596735FC3737F0356AFC353F18594B97D098E55E282D2BD841481C841A0DF1B30334EF00",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BD5B000A0002",
+        "date": 846883042,
+        "ledger_index": 6602075
+      }
+    },
+    {
+      "label": "LoanBrokerSet : dareskro courtier, DebtMaximum 48 XRP imposé par le registre",
+      "result": "tesSUCCESS",
+      "hash": "3565AE94E489965970B34993B7299E56F58BB5E870C8315DFC6D54F106CEA736",
+      "ledger": 6602077,
+      "close": "2026-11-01T21:17:31Z",
+      "explorer": "https://devnet.xrpl.org/transactions/3565AE94E489965970B34993B7299E56F58BB5E870C8315DFC6D54F106CEA736",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "CoverRateLiquidation": 500,
+        "CoverRateMinimum": 1000,
+        "Data": "64617265736B726F2F706F6F6C2D636861727465722D7368613235363A34633766373131663031646137326434653662326130396336613661363233336437323238386335376431343636616362323563623530323535353231656536",
+        "DebtMaximum": "48000000",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602095,
+        "ManagementFeeRate": 200,
+        "Sequence": 6602062,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanBrokerSet",
+        "TxnSignature": "20B97F4B982DE6714712E35420E5F15A11AA3D8389B419DAC095028A4CA5D52B6856C2496750816910F7A756BBED15D16206A3245AA604BF063C295DD4D8DD0B",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BD5D00060002",
+        "date": 846883051,
+        "ledger_index": 6602077
+      }
+    },
+    {
+      "label": "LoanBrokerCoverDeposit : 10 XRP de couverture première perte, apportés par dareskro",
+      "result": "tesSUCCESS",
+      "hash": "4DE29CF36EAA32784B911B20C337750CB8D5BB7CBE66643907DA149A8AEE9182",
+      "ledger": 6602079,
+      "close": "2026-11-01T21:17:41Z",
+      "explorer": "https://devnet.xrpl.org/transactions/4DE29CF36EAA32784B911B20C337750CB8D5BB7CBE66643907DA149A8AEE9182",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Amount": "10000000",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602097,
+        "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+        "Sequence": 6602063,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanBrokerCoverDeposit",
+        "TxnSignature": "439336B3BDD666A65841D68A96EAF8D1D9760675D7144D964E4B1768C5B12382F4EA670FACB5FFD874AE984923AE92FC1617AC7D4406BFAD4132C10274D1DD01",
+        "ctid": "C064BD5F00070002",
+        "date": 846883061,
+        "ledger_index": 6602079
+      }
+    },
+    {
+      "label": "prêteur B tente un dépôt pendant la phase d'investissement",
+      "result": "tecEXPIRED",
+      "hash": "FFEA78AA1F18815F207786C0F1FEB60C9C0B9F44489ECC4324A4C1DB3B751728",
+      "ledger": 6602084,
+      "close": "2026-11-01T21:18:00Z",
+      "explorer": "https://devnet.xrpl.org/transactions/FFEA78AA1F18815F207786C0F1FEB60C9C0B9F44489ECC4324A4C1DB3B751728",
+      "tx": {
+        "Account": "r3rFM5T7GTdpwuHqaY9ETHcZAkPVC8TC3V",
+        "Amount": "10000000",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602102,
+        "Sequence": 6602066,
+        "SigningPubKey": "EDB98F0F10560A199DE5800DE96B4B4580A77384E0AA9C6A0359A12F236C522C45",
+        "TransactionType": "VaultDeposit",
+        "TxnSignature": "3E69700679FB169E2EDCC85C2C75A202C6EE9BBC82E8D33A1400703AF37882F1ECA0A9372A60290EC41498F21F1741A6F930401D60E93E06400CDD0188BC390F",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BD6400100002",
+        "date": 846883080,
+        "ledger_index": 6602084
+      }
+    },
+    {
+      "label": "F-2026-001 LoanSet 45 XRP, signé courtier + contresigné fournisseur",
+      "result": "tesSUCCESS",
+      "hash": "BEFF1D007381D28D61EF7B061F80EFEBC0D297071C69802CBE8F7E384BAD8681",
+      "ledger": 6602086,
+      "close": "2026-11-01T21:18:10Z",
+      "explorer": "https://devnet.xrpl.org/transactions/BEFF1D007381D28D61EF7B061F80EFEBC0D297071C69802CBE8F7E384BAD8681",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Counterparty": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "CounterpartySignature": {
+          "SigningPubKey": "ED33CFFE866CD422E7E7B4106D582923D5AC334820CA0E8A5B7CD8975F664C6D4E",
+          "TxnSignature": "AC1D823EA1AC5D6864BDBD0F7E4A263E0F3D62A5375661FD43FF8B552CE68B9314767DC44BBB11E4FE4C1DF9BF6209C451531A27CF3F0B7D88FF1B5F12E3960B"
+        },
+        "Data": "64617265736B726F2F666163747572652D7368613235363A38343232323033656632613962336161653465353033346332626131303930636365343364353064393939333232663062356339313235613666336366336238",
+        "Fee": "2",
+        "Flags": 0,
+        "GracePeriod": 60,
+        "InterestRate": 200,
+        "LastLedgerSequence": 6602104,
+        "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+        "Memos": [
+          {
+            "Memo": {
+              "MemoData": "6176616E63652D66616374757265",
+              "MemoType": "64617265736B726F2F63617365"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "38343232323033656632613962336161653465353033346332626131303930636365343364353064393939333232663062356339313235613666336366336238",
+              "MemoType": "64617265736B726F2F666163747572652D736861323536"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "6661637475726520462D323032362D303031",
+              "MemoType": "64617265736B726F2F646F63"
+            }
+          }
+        ],
+        "PaymentInterval": 90,
+        "PaymentTotal": 1,
+        "PrincipalRequested": "45000000",
+        "Sequence": 6602064,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanSet",
+        "TxnSignature": "895BE796EC9861D993B010D54430C0C785AE47677D9F374D64BD7324AE4DD4A32C9E956D7492B7F05E4EBAB8155DE4F389C8E8DED87ED8EFE5FFD448C280AD02",
+        "ctid": "C064BD6600090002",
+        "date": 846883090,
+        "ledger_index": 6602086
+      },
+      "loanId": "58053D8BC2AC85C861022CF1706BCB090C9EE26B9C3B8D7AF023CBCCE8DDDF76",
+      "loan": {
+        "Borrower": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "GracePeriod": 60,
+        "InterestRate": 200,
+        "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+        "LoanSequence": 1,
+        "NextPaymentDueDate": 846883181,
+        "PaymentInterval": 90,
+        "PaymentRemaining": 1,
+        "PeriodicPayment": "45000000.25746131506",
+        "PrincipalOutstanding": "45000000",
+        "StartDate": 846883091,
+        "TotalValueOutstanding": "45000001"
+      }
+    },
+    {
+      "label": "un étranger tente LoanPay sur le prêt 1",
+      "result": "tecNO_PERMISSION",
+      "hash": "0BF26A3CD9B5DC5A52CC3048A250639F74F406E3C3D6A887B2E0F234BD9E6CDC",
+      "ledger": 6602088,
+      "close": "2026-11-01T21:18:12Z",
+      "explorer": "https://devnet.xrpl.org/transactions/0BF26A3CD9B5DC5A52CC3048A250639F74F406E3C3D6A887B2E0F234BD9E6CDC",
+      "tx": {
+        "Account": "rJc1nuzeGSDZcXHejpsYZ5uv7CqEeSnk6D",
+        "Amount": "45000001",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602106,
+        "LoanID": "58053D8BC2AC85C861022CF1706BCB090C9EE26B9C3B8D7AF023CBCCE8DDDF76",
+        "Sequence": 6602069,
+        "SigningPubKey": "ED2A7885662BBFF7B1BBD50C0ABF89F7D1D682B675EF7E84941F4BBE701543BB24",
+        "TransactionType": "LoanPay",
+        "TxnSignature": "19AAF9BBCCC19121BC6EFE8393F6EC9D9C5EB94D21A7D7011B7A923ADF9D504FE1CADDD4AED1918000E96ED068258887CB9BBB9C8CF69725DA291FAF3D26DC0E",
+        "ctid": "C064BD68000A0002",
+        "date": 846883092,
+        "ledger_index": 6602088
+      }
+    },
+    {
+      "label": "F-2026-002 LoanSet 9 XRP : 45 + 9 = 54 > DebtMaximum 48",
+      "result": "tecLIMIT_EXCEEDED",
+      "hash": "A1C24C3EBDB76A9C43DAC52B6CC7EC83AE8DE0FEB857137C4BF3B700F950D859",
+      "ledger": 6602090,
+      "close": "2026-11-01T21:18:21Z",
+      "explorer": "https://devnet.xrpl.org/transactions/A1C24C3EBDB76A9C43DAC52B6CC7EC83AE8DE0FEB857137C4BF3B700F950D859",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Counterparty": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "CounterpartySignature": {
+          "SigningPubKey": "ED33CFFE866CD422E7E7B4106D582923D5AC334820CA0E8A5B7CD8975F664C6D4E",
+          "TxnSignature": "56ACED00979CFAAE707CD03D58D094F200A68F666D84EFD440FF265C0F95B371741BF4605CCF43FD57C8675A7FBFF06946B564940E6B061F98387F122FB83308"
+        },
+        "Data": "64617265736B726F2F666163747572652D7368613235363A66623262353630316435613534356132643432396636346230613733666330323433386463373539366663393933393631313065396439316461663039623730",
+        "Fee": "2",
+        "Flags": 0,
+        "GracePeriod": 60,
+        "InterestRate": 200,
+        "LastLedgerSequence": 6602108,
+        "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+        "Memos": [
+          {
+            "Memo": {
+              "MemoData": "6176616E63652D66616374757265",
+              "MemoType": "64617265736B726F2F63617365"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "66623262353630316435613534356132643432396636346230613733666330323433386463373539366663393933393631313065396439316461663039623730",
+              "MemoType": "64617265736B726F2F666163747572652D736861323536"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "6661637475726520462D323032362D303032",
+              "MemoType": "64617265736B726F2F646F63"
+            }
+          }
+        ],
+        "PaymentInterval": 90,
+        "PaymentTotal": 1,
+        "PrincipalRequested": "9000000",
+        "Sequence": 6602065,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanSet",
+        "TxnSignature": "96FE454234F2873505CAD1FE895FD67167D8FA02E3FE2D160F6E7CB12F00FBEA1CA14EFADDF55146A0A01DF6717774CC8656AED01606431FB6FCD4933C098B0F",
+        "ctid": "C064BD6A000B0002",
+        "date": 846883101,
+        "ledger_index": 6602090
+      }
+    },
+    {
+      "label": "F-2026-001 LoanPay avec tfLoanFullPayment sur un prêt à une seule échéance",
+      "result": "tecKILLED",
+      "hash": "97CEB75839699043C50D95105D89E8E71FDDCAF6D317D8AA0D7B155FBC719507",
+      "ledger": 6602092,
+      "close": "2026-11-01T21:18:30Z",
+      "explorer": "https://devnet.xrpl.org/transactions/97CEB75839699043C50D95105D89E8E71FDDCAF6D317D8AA0D7B155FBC719507",
+      "tx": {
+        "Account": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "Amount": "45000001",
+        "Fee": "1",
+        "Flags": 131072,
+        "LastLedgerSequence": 6602110,
+        "LoanID": "58053D8BC2AC85C861022CF1706BCB090C9EE26B9C3B8D7AF023CBCCE8DDDF76",
+        "Sequence": 6602067,
+        "SigningPubKey": "ED33CFFE866CD422E7E7B4106D582923D5AC334820CA0E8A5B7CD8975F664C6D4E",
+        "TransactionType": "LoanPay",
+        "TxnSignature": "32A778FBCB5C02987051F2192D01F6912371B32313C41A500A4ED8F87B5706A73A15F28D52D44F5FD3B42122593F8EDD31D1129CB2129613215E7F2695DDD007",
+        "ctid": "C064BD6C00020002",
+        "date": 846883110,
+        "ledger_index": 6602092
+      }
+    },
+    {
+      "label": "F-2026-001 LoanPay régulier 45.000001 XRP (échéance unique, dû 45000000.25746131506 drops)",
+      "result": "tesSUCCESS",
+      "hash": "E77468AF83879D69D27CBF3F34007AFEED2FA12BACFB21BC6A55BEA491E86597",
+      "ledger": 6602094,
+      "close": "2026-11-01T21:18:32Z",
+      "explorer": "https://devnet.xrpl.org/transactions/E77468AF83879D69D27CBF3F34007AFEED2FA12BACFB21BC6A55BEA491E86597",
+      "tx": {
+        "Account": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "Amount": "45000001",
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602112,
+        "LoanID": "58053D8BC2AC85C861022CF1706BCB090C9EE26B9C3B8D7AF023CBCCE8DDDF76",
+        "Memos": [
+          {
+            "Memo": {
+              "MemoData": "6661637475726520462D323032362D30303120706179C3A965203A206C6520666F75726E69737365757220736F6C6465206C65207072C3AA74",
+              "MemoType": "64617265736B726F2F72656D626F757273656D656E74"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "38343232323033656632613962336161653465353033346332626131303930636365343364353064393939333232663062356339313235613666336366336238",
+              "MemoType": "64617265736B726F2F666163747572652D736861323536"
+            }
+          }
+        ],
+        "Sequence": 6602068,
+        "SigningPubKey": "ED33CFFE866CD422E7E7B4106D582923D5AC334820CA0E8A5B7CD8975F664C6D4E",
+        "TransactionType": "LoanPay",
+        "TxnSignature": "3BDA5622A75E23AD89BE9ECF48D53E3B8D60EBBA03A256C47096B792F236103A5C7BDA77DF7795C71249727819F6F7B516C5F565FE0B0F0BB4BDB792F61F4705",
+        "ctid": "C064BD6E00080002",
+        "date": 846883112,
+        "ledger_index": 6602094
+      }
+    },
+    {
+      "label": "F-2026-003 LoanSet 36 XRP, signé courtier + contresigné fournisseur",
+      "result": "tesSUCCESS",
+      "hash": "CB36CDEB026405B1985EDD803147E2A700A9AB19983CDB3FC66336DA6EAD53DB",
+      "ledger": 6602096,
+      "close": "2026-11-01T21:18:41Z",
+      "explorer": "https://devnet.xrpl.org/transactions/CB36CDEB026405B1985EDD803147E2A700A9AB19983CDB3FC66336DA6EAD53DB",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Counterparty": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "CounterpartySignature": {
+          "SigningPubKey": "ED33CFFE866CD422E7E7B4106D582923D5AC334820CA0E8A5B7CD8975F664C6D4E",
+          "TxnSignature": "62493F8E1C469721EAAFE1F8E233155FB5FB2F4605E94240E74304CDA6721B4084494164D2C5210C06E2F20CAA39C61BD3685D1F3001D9D6A4478EB8B7CFCD08"
+        },
+        "Data": "64617265736B726F2F666163747572652D7368613235363A61633537343965393139376564343733323331626539613562353831343136376366356638343332313831656134343963353165366661383830383764363139",
+        "Fee": "2",
+        "Flags": 0,
+        "GracePeriod": 60,
+        "InterestRate": 200,
+        "LastLedgerSequence": 6602114,
+        "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+        "Memos": [
+          {
+            "Memo": {
+              "MemoData": "6176616E63652D66616374757265",
+              "MemoType": "64617265736B726F2F63617365"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "61633537343965393139376564343733323331626539613562353831343136376366356638343332313831656134343963353165366661383830383764363139",
+              "MemoType": "64617265736B726F2F666163747572652D736861323536"
+            }
+          },
+          {
+            "Memo": {
+              "MemoData": "6661637475726520462D323032362D303033",
+              "MemoType": "64617265736B726F2F646F63"
+            }
+          }
+        ],
+        "PaymentInterval": 90,
+        "PaymentTotal": 1,
+        "PrincipalRequested": "36000000",
+        "Sequence": 6602066,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanSet",
+        "TxnSignature": "8F99280D31C7920AD37F9670C8D1D797E443471A8112A4B9FFF2F27FDA3ED16AC9DC99DB036716DAB74E4BDB0AF75C28BEC4A9377091A1C6ED1AA81F91188E0E",
+        "ctid": "C064BD70000D0002",
+        "date": 846883121,
+        "ledger_index": 6602096
+      },
+      "loanId": "C4EED6F7F559EB432E352D9FAB534120206AEB96F612C34DEAEE5629266454CE",
+      "loan": {
+        "Borrower": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+        "GracePeriod": 60,
+        "InterestRate": 200,
+        "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+        "LoanSequence": 2,
+        "NextPaymentDueDate": 846883220,
+        "PaymentInterval": 90,
+        "PaymentRemaining": 1,
+        "PeriodicPayment": "36000000.20596905205",
+        "PrincipalOutstanding": "36000000",
+        "StartDate": 846883130,
+        "TotalValueOutstanding": "36000001"
+      }
+    },
+    {
+      "label": "LoanManage défaut AVANT l'échéance",
+      "result": "tecTOO_SOON",
+      "hash": "28405135794DFDF0A281580F5F713CD65B729464A31C4BB241B89BF600FA9300",
+      "ledger": 6602098,
+      "close": "2026-11-01T21:18:50Z",
+      "explorer": "https://devnet.xrpl.org/transactions/28405135794DFDF0A281580F5F713CD65B729464A31C4BB241B89BF600FA9300",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Fee": "1",
+        "Flags": 65536,
+        "LastLedgerSequence": 6602116,
+        "LoanID": "C4EED6F7F559EB432E352D9FAB534120206AEB96F612C34DEAEE5629266454CE",
+        "Sequence": 6602067,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanManage",
+        "TxnSignature": "8742ACDFE94EBCDD72CA3936CC153957BF25417217144FEF25C549EFF5BF28DFB1ACC55039840DF56C8A49DAC312F1AD0582EC1166B36436A6B315D333B5770D",
+        "ctid": "C064BD7200100002",
+        "date": 846883130,
+        "ledger_index": 6602098
+      }
+    },
+    {
+      "label": "LoanManage tfLoanDefault après échéance + grâce",
+      "result": "tesSUCCESS",
+      "hash": "68D2D637FE5389BAA36EBD56D096D486A44992592EE27B52E7776DDA61EAC357",
+      "ledger": 6602146,
+      "close": "2026-11-01T21:21:40Z",
+      "explorer": "https://devnet.xrpl.org/transactions/68D2D637FE5389BAA36EBD56D096D486A44992592EE27B52E7776DDA61EAC357",
+      "tx": {
+        "Account": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+        "Fee": "1",
+        "Flags": 65536,
+        "LastLedgerSequence": 6602164,
+        "LoanID": "C4EED6F7F559EB432E352D9FAB534120206AEB96F612C34DEAEE5629266454CE",
+        "Memos": [
+          {
+            "Memo": {
+              "MemoData": "6661637475726520462D323032362D303033203A207269656E207265C3A77520C3A0206C27C3A96368C3A9616E6365202B206772C3A26365",
+              "MemoType": "64617265736B726F2F646566617574"
+            }
+          }
+        ],
+        "Sequence": 6602068,
+        "SigningPubKey": "ED93E4313C39D258BDB4B2A0530AB3C166F508FEE9FF6D92D45D6800814924E249",
+        "TransactionType": "LoanManage",
+        "TxnSignature": "D83AD06A746266328F7E2FCCE64645BC21B8B002F15A593D79E31A613F71456F99CD2D3CB808E4B8FA1EDB312A196D7E75CE8E0DE87D12D27ACA6212A07E1A01",
+        "ctid": "C064BDA200020002",
+        "date": 846883300,
+        "ledger_index": 6602146
+      }
+    },
+    {
+      "label": "prêteur A tente un retrait pendant la phase d'investissement",
+      "result": "tecTOO_SOON",
+      "hash": "A40271061577C17DF00BF18C8D34BE517F6BD492FDF47780A035BBB6B25D236F",
+      "ledger": 6602148,
+      "close": "2026-11-01T21:21:42Z",
+      "explorer": "https://devnet.xrpl.org/transactions/A40271061577C17DF00BF18C8D34BE517F6BD492FDF47780A035BBB6B25D236F",
+      "tx": {
+        "Account": "rp9DVk4rr8PrVkAp8UTUJv7famFH6kmccA",
+        "Amount": {
+          "mpt_issuance_id": "000000012C7C538205486E4D8B61EFC577A1CE6099E2FAB3",
+          "value": "80000000"
+        },
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602166,
+        "Sequence": 6602064,
+        "SigningPubKey": "EDD362265693F1573DFB71BDAD8A4393AFC2622F596CCF65C1F008DD23CC7D87F7",
+        "TransactionType": "VaultWithdraw",
+        "TxnSignature": "82310ABDD7743427D6E9819A51E7CBCF37F584187567DC9984505C971928AAA918AA37FF54DC7BB5C60891B1872759900BC7133B451A8569C3073DB6A1E2C005",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BDA4000D0002",
+        "date": 846883302,
+        "ledger_index": 6602148
+      }
+    },
+    {
+      "label": "prêteur A retire ses 80000000 parts (VaultWithdraw, phase de rachat)",
+      "result": "tesSUCCESS",
+      "hash": "7AFE1B7241B7E4C6EBB72F7D82D9BAC7738CACA41D060F1FDEBD4C6D32FF0A21",
+      "ledger": 6602205,
+      "close": "2026-11-01T21:25:00Z",
+      "explorer": "https://devnet.xrpl.org/transactions/7AFE1B7241B7E4C6EBB72F7D82D9BAC7738CACA41D060F1FDEBD4C6D32FF0A21",
+      "tx": {
+        "Account": "rp9DVk4rr8PrVkAp8UTUJv7famFH6kmccA",
+        "Amount": {
+          "mpt_issuance_id": "000000012C7C538205486E4D8B61EFC577A1CE6099E2FAB3",
+          "value": "80000000"
+        },
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602223,
+        "Sequence": 6602065,
+        "SigningPubKey": "EDD362265693F1573DFB71BDAD8A4393AFC2622F596CCF65C1F008DD23CC7D87F7",
+        "TransactionType": "VaultWithdraw",
+        "TxnSignature": "5F54653194F8AEDFDF92C44CC4A4042263DE79E62F078AC8773C4F710BE4186DB0C7FAF1D980DF674B7EBEFFD241A02E895A7EDEBA27900191410C0933762F04",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BDDD00000002",
+        "date": 846883500,
+        "ledger_index": 6602205
+      }
+    },
+    {
+      "label": "prêteur B retire ses 80000000 parts (VaultWithdraw, phase de rachat)",
+      "result": "tesSUCCESS",
+      "hash": "F20CEAEE498E3AF45730D70F986437836ACD550F6C02C63ACCE8B78F8091B248",
+      "ledger": 6602207,
+      "close": "2026-11-01T21:25:02Z",
+      "explorer": "https://devnet.xrpl.org/transactions/F20CEAEE498E3AF45730D70F986437836ACD550F6C02C63ACCE8B78F8091B248",
+      "tx": {
+        "Account": "r3rFM5T7GTdpwuHqaY9ETHcZAkPVC8TC3V",
+        "Amount": {
+          "mpt_issuance_id": "000000012C7C538205486E4D8B61EFC577A1CE6099E2FAB3",
+          "value": "80000000"
+        },
+        "Fee": "1",
+        "Flags": 0,
+        "LastLedgerSequence": 6602225,
+        "Sequence": 6602067,
+        "SigningPubKey": "EDB98F0F10560A199DE5800DE96B4B4580A77384E0AA9C6A0359A12F236C522C45",
+        "TransactionType": "VaultWithdraw",
+        "TxnSignature": "5F7DA3D1670E21CF389EDF4BDE4471DE14B55E7241C3A756F066DBAA9FCA0B97A226264E59D5CE14454AF136C204F999287F20C55814F1A9692C4990F001A30D",
+        "VaultID": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+        "ctid": "C064BDDF00020002",
+        "date": 846883502,
+        "ledger_index": 6602207
+      }
+    }
+  ],
+  "refusals": [
+    {
+      "what": "VaultDeposit in investment phase",
+      "code": "tecEXPIRED"
+    },
+    {
+      "what": "stranger LoanPay",
+      "code": "tecNO_PERMISSION"
+    },
+    {
+      "what": "LoanSet over DebtMaximum",
+      "code": "tecLIMIT_EXCEEDED"
+    },
+    {
+      "what": "LoanPay tfLoanFullPayment on a one-payment loan",
+      "code": "tecKILLED"
+    },
+    {
+      "what": "LoanPay regular (the single scheduled payment) by borrower",
+      "code": "tesSUCCESS"
+    },
+    {
+      "what": "LoanManage default before due",
+      "code": "tecTOO_SOON"
+    },
+    {
+      "what": "LoanManage default after due+grace",
+      "code": "tesSUCCESS"
+    },
+    {
+      "what": "VaultWithdraw in investment phase",
+      "code": "tecTOO_SOON"
+    }
+  ],
+  "node": {
+    "url": "wss://s.devnet.rippletest.net:51233",
+    "build": "3.4.1",
+    "ledger": 6602059,
+    "SingleAssetVault": true,
+    "LendingProtocol": true
+  },
+  "accounts": {
+    "dareskro": "rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s",
+    "preteurA": "rp9DVk4rr8PrVkAp8UTUJv7famFH6kmccA",
+    "preteurB": "r3rFM5T7GTdpwuHqaY9ETHcZAkPVC8TC3V",
+    "fournisseur": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+    "etranger": "rJc1nuzeGSDZcXHejpsYZ5uv7CqEeSnk6D"
+  },
+  "phases": {
+    "subscriptionDate": 846883068,
+    "redemptionDate": 846883488,
+    "subscriptionIso": "2026-11-01T21:17:48.000Z",
+    "redemptionIso": "2026-11-01T21:24:48.000Z"
+  },
+  "vault": {
+    "id": "E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828",
+    "pseudoAccount": "rnhDC8sHFH41gJbuQWruMoSSPYrYBEvuTV",
+    "shareMPTID": "000000012C7C538205486E4D8B61EFC577A1CE6099E2FAB3",
+    "charteSha256": "4c7f711f01da72d4e6b2a09c6a6a6233d72288c57d1466acb25cb50255521ee6",
+    "apres_depots": {
+      "AssetsTotal": "160000000",
+      "AssetsAvailable": "160000000"
+    },
+    "final": {}
+  },
+  "broker": {
+    "id": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+    "pseudoAccount": "rfETWb4A6eBL9dgXqtvUgJemoVgirEXXP9",
+    "DebtMaximum": "48000000"
+  },
+  "factures": {
+    "F-2026-001": "8422203ef2a9b3aae4e5034c2ba1090cce43d50d999322f0b5c9125a6f3cf3b8",
+    "F-2026-002": "fb2b5601d5a545a2d429f64b0a73fc02438dc7596fc99396110e9d91daf09b70",
+    "F-2026-003": "ac5749e9197ed473231be9a5b5814167cf5f8432181ea449c51e6fa88087d619"
+  },
+  "apres_pret1": {
+    "vault": {
+      "AssetsTotal": "160000000",
+      "AssetsAvailable": "115000000"
+    },
+    "broker": {
+      "DebtTotal": "45000000",
+      "DebtMaximum": "48000000"
+    },
+    "loan": {
+      "Borrower": "rNnLveSHhFunq7brY11ePcz1i6WVrP45rr",
+      "GracePeriod": 60,
+      "InterestRate": 200,
+      "LoanBrokerID": "3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E",
+      "LoanSequence": 1,
+      "NextPaymentDueDate": 846883181,
+      "PaymentInterval": 90,
+      "PaymentRemaining": 1,
+      "PeriodicPayment": "45000000.25746131506",
+      "PrincipalOutstanding": "45000000",
+      "StartDate": 846883091,
+      "TotalValueOutstanding": "45000001"
+    }
+  },
+  "apres_remboursement1": {
+    "vault": {
+      "AssetsTotal": "160000001",
+      "AssetsAvailable": "160000001"
+    },
+    "broker": {},
+    "loan1": {
+      "Flags": 0
+    }
+  },
+  "apres_defaut": {
+    "vault": {
+      "AssetsTotal": "124001801",
+      "AssetsAvailable": "124001801"
+    },
+    "broker": {
+      "CoverAvailable": "9998200",
+      "coverBefore": "10000000"
+    },
+    "loan3": {
+      "Flags": 65536
+    }
+  },
+  "parts": {
+    "A": "80000000",
+    "B": "80000000"
+  },
+  "retraits": {
+    "A": {
+      "code": "tesSUCCESS",
+      "avant": 19.999998,
+      "apres": 82.000897,
+      "hash": "7AFE1B7241B7E4C6EBB72F7D82D9BAC7738CACA41D060F1FDEBD4C6D32FF0A21"
+    },
+    "B": {
+      "code": "tesSUCCESS",
+      "avant": 19.999998,
+      "apres": 82.000898,
+      "hash": "F20CEAEE498E3AF45730D70F986437836ACD550F6C02C63ACCE8B78F8091B248"
+    }
+  }
+}

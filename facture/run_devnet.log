@@ -1,0 +1,49 @@
+21:16:33 devnet wss://s.devnet.rippletest.net:51233 — rippled 3.4.1, ledger 6602059
+21:16:33 SingleAssetVault enabled: true — LendingProtocol enabled: true
+21:16:33 1. quatre comptes du robinet devnet : dareskro (coffre + courtier), prêteur A, prêteur B, fournisseur, un étranger…
+21:17:08 dareskro     rfRbPyHRFr7hL3UHRZNhaEiVMEFzqnJ97s
+21:17:08 preteurA     rp9DVk4rr8PrVkAp8UTUJv7famFH6kmccA
+21:17:08 preteurB     r3rFM5T7GTdpwuHqaY9ETHcZAkPVC8TC3V
+21:17:08 fournisseur  rNnLveSHhFunq7brY11ePcz1i6WVrP45rr
+21:17:08 etranger     rJc1nuzeGSDZcXHejpsYZ5uv7CqEeSnk6D
+21:17:14 VaultCreate (XRP, public, fermé : souscription 40 s puis investissement 420 s, Data = empreinte de la charte du pool): tesSUCCESS  https://devnet.xrpl.org/transactions/56773F9FF49D35AB8E39876AE6321E1104BCACE01C72ACD3D0D8699D58D6D328
+21:17:14 phases : souscription jusqu'à 2026-11-01T21:17:48.000Z, investissement jusqu'à 2026-11-01T21:24:48.000Z, puis rachat
+21:17:14 coffre E98C01AC2396CD4100AB6D0DFBC50C3A0F2C864E4C2F3A13FA2D0E6F4CB15828 — pseudo-compte rnhDC8sHFH41gJbuQWruMoSSPYrYBEvuTV — parts MPT 000000012C7C538205486E4D8B61EFC577A1CE6099E2FAB3
+21:17:20 prêteur A dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/426D7FD78AADD25AC7754D85A38D706C739050E062C0AF397EA68029A69133EB
+21:17:29 prêteur B dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/C6A14BF069ECBA764DCBD976A3B1833428B578894E6C2851F982B5A4B8F09A1A
+21:17:30 coffre : AssetsTotal 160 XRP, AssetsAvailable 160 XRP
+21:17:36 LoanBrokerSet : dareskro courtier, DebtMaximum 48 XRP imposé par le registre: tesSUCCESS  https://devnet.xrpl.org/transactions/3565AE94E489965970B34993B7299E56F58BB5E870C8315DFC6D54F106CEA736
+21:17:36 courtier 3E339382C9A3177A108FAA025F7FD7E2B18EA16028C02B0BD532A5B0BC79973E — DebtMaximum 48000000 drops
+21:17:45 LoanBrokerCoverDeposit : 10 XRP de couverture première perte, apportés par dareskro: tesSUCCESS  https://devnet.xrpl.org/transactions/4DE29CF36EAA32784B911B20C337750CB8D5BB7CBE66643907DA149A8AEE9182
+21:17:45 attente : fin de la phase de souscription (9 s)…
+21:18:03 prêteur B tente un dépôt pendant la phase d'investissement: tecEXPIRED  https://devnet.xrpl.org/transactions/FFEA78AA1F18815F207786C0F1FEB60C9C0B9F44489ECC4324A4C1DB3B751728
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:18:09 F-2026-001 LoanSet 45 XRP, signé courtier + contresigné fournisseur: tesSUCCESS  https://devnet.xrpl.org/transactions/BEFF1D007381D28D61EF7B061F80EFEBC0D297071C69802CBE8F7E384BAD8681
+21:18:09 prêt 58053D8BC2AC85C861022CF1706BCB090C9EE26B9C3B8D7AF023CBCCE8DDDF76 — fournisseur 100 → 145 XRP ; échéance 846883181 (ripple time), remboursement périodique 45000000.25746131506
+21:18:10 coffre AssetsAvailable 115 XRP ; courtier DebtTotal 45000000 / DebtMaximum 48000000
+21:18:16 un étranger tente LoanPay sur le prêt 1: tecNO_PERMISSION  https://devnet.xrpl.org/transactions/0BF26A3CD9B5DC5A52CC3048A250639F74F406E3C3D6A887B2E0F234BD9E6CDC
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:18:22 F-2026-002 LoanSet 9 XRP : 45 + 9 = 54 > DebtMaximum 48: tecLIMIT_EXCEEDED  https://devnet.xrpl.org/transactions/A1C24C3EBDB76A9C43DAC52B6CC7EC83AE8DE0FEB857137C4BF3B700F950D859
+21:18:22 → tecLIMIT_EXCEEDED: le registre refuse lui-même ; aucune seconde signature ne peut passer outre
+21:18:32 F-2026-001 LoanPay avec tfLoanFullPayment sur un prêt à une seule échéance: tecKILLED  https://devnet.xrpl.org/transactions/97CEB75839699043C50D95105D89E8E71FDDCAF6D317D8AA0D7B155FBC719507
+21:18:38 F-2026-001 LoanPay régulier 45.000001 XRP (échéance unique, dû 45000000.25746131506 drops): tesSUCCESS  https://devnet.xrpl.org/transactions/E77468AF83879D69D27CBF3F34007AFEED2FA12BACFB21BC6A55BEA491E86597
+21:18:38 après remboursement : coffre AssetsTotal 160.000001 / disponible 160.000001 XRP ; courtier DebtTotal 0 ; prêt 1 PaymentRemaining undefined, PrincipalOutstanding undefined
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:18:45 F-2026-003 LoanSet 36 XRP, signé courtier + contresigné fournisseur: tesSUCCESS  https://devnet.xrpl.org/transactions/CB36CDEB026405B1985EDD803147E2A700A9AB19983CDB3FC66336DA6EAD53DB
+21:18:45 prêt 3 C4EED6F7F559EB432E352D9FAB534120206AEB96F612C34DEAEE5629266454CE, échéance 2026-11-01T21:20:20.000Z + grâce 60 s
+21:18:52 LoanManage défaut AVANT l'échéance: tecTOO_SOON  https://devnet.xrpl.org/transactions/28405135794DFDF0A281580F5F713CD65B729464A31C4BB241B89BF600FA9300
+21:18:52 attente de l'échéance + grâce (160 s)…
+21:21:38 LoanManage tfLoanDefault après échéance + grâce: tesSUCCESS  https://devnet.xrpl.org/transactions/68D2D637FE5389BAA36EBD56D096D486A44992592EE27B52E7776DDA61EAC357
+21:21:38 après défaut : coffre AssetsTotal 124.001801 / disponible 124.001801 XRP, LossUnrealized 0 ; courtier DebtTotal 0, couverture 10000000 → 9998200
+21:21:39 prêteur A : 80000000 parts du coffre
+21:21:39 prêteur B : 80000000 parts du coffre
+21:21:45 prêteur A tente un retrait pendant la phase d'investissement: tecTOO_SOON  https://devnet.xrpl.org/transactions/A40271061577C17DF00BF18C8D34BE517F6BD492FDF47780A035BBB6B25D236F
+21:21:45 attente : début de la phase de rachat (189 s)…
+21:25:00 prêteur A retire ses 80000000 parts (VaultWithdraw, phase de rachat): tesSUCCESS  https://devnet.xrpl.org/transactions/7AFE1B7241B7E4C6EBB72F7D82D9BAC7738CACA41D060F1FDEBD4C6D32FF0A21
+21:25:00 prêteur A : 19.999998 → 82.000897 XRP (avait déposé 80)
+21:25:07 prêteur B retire ses 80000000 parts (VaultWithdraw, phase de rachat): tesSUCCESS  https://devnet.xrpl.org/transactions/F20CEAEE498E3AF45730D70F986437836ACD550F6C02C63ACCE8B78F8091B248
+21:25:07 prêteur B : 19.999998 → 82.000898 XRP (avait déposé 80)
+21:25:07 coffre après rachats : AssetsTotal 0 XRP, LossUnrealized 0
+21:25:07 qui détient quoi : les prêteurs détenaient des parts du coffre et reprennent l'actif au prorata, perte comprise ; le coffre est un pseudo-compte sans clé ; dareskro détient sa couverture et son rôle de courtier, jamais l'argent des prêteurs
+21:25:07 compte rendu : /Users/jul/dareskro-facture/facture/compte_rendu_devnet.json
+EXIT 0

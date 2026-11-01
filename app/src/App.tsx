@@ -37,6 +37,7 @@ import type { EscrowCancel, EscrowCreate, SubmittableTransaction, Transaction, W
 import { ContractDesk, type ContractKind } from "./ContractDesk";
 import { PlacementDesk } from "./PlacementDesk";
 import { SolanaDesk } from "./SolanaDesk";
+import { FactureDesk } from "./FactureDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
 import * as privacy from "./privacy";
@@ -103,7 +104,7 @@ const transports: { id: Mode; label: string }[] = [
 ];
 
 /** Who pays whom. The employee case is the payroll escrow; the other three are conditional escrows on the same oracle. */
-type CaseMode = "employee" | ContractKind | "placement" | "solana";
+type CaseMode = "employee" | ContractKind | "placement" | "solana" | "facture";
 
 const cases: { id: CaseMode; label: string }[] = [
   { id: "employee", label: "Employee" },
@@ -114,6 +115,8 @@ const cases: { id: CaseMode; label: string }[] = [
   { id: "placement", label: "Placement · BottomRadar" },
   // the same payroll escrow on Solana (Encode Solana Hackathon 2026): solana/
   { id: "solana", label: "Solana · same desk" },
+  // the seventh case: a supplier paid before the due date by a 2-of-3 pool (AI, risk policy, operator): facture/
+  { id: "facture", label: "Invoice advance · pool 2/3" },
 ];
 
 const speculosModels: { id: DeviceModelId; label: string }[] = [
@@ -169,6 +172,7 @@ function Desk(props: {
   const [caseMode, setCaseMode] = useState<CaseMode>("employee");
   const contract = caseMode !== "employee";
   const onSolana = caseMode === "solana";
+  const onFacture = caseMode === "facture";
   const payerWord = contract ? "payer" : "employer";
 
   // ---- 1. the statement
@@ -980,7 +984,7 @@ function Desk(props: {
       </Card>
       )}
 
-      {!onSolana && (
+      {!onSolana && !onFacture && (
         <Card n={contract ? "1" : "2"} title={`The ${payerWord}'s Ledger`} disabled={contract ? false : !validation}>
           <div className="segmented">
             {transports.map((t) => (
@@ -1059,6 +1063,7 @@ function Desk(props: {
       )}
 
       {onSolana && <SolanaDesk />}
+      {onFacture && <FactureDesk />}
 
       {contract && caseMode === "placement" && (
         <PlacementDesk
@@ -1073,7 +1078,7 @@ function Desk(props: {
         />
       )}
 
-      {contract && caseMode !== "placement" && !onSolana && (
+      {contract && caseMode !== "placement" && !onSolana && !onFacture && (
         <ContractDesk
           // a new desk per case and per payer address: a prepared escrow never outlives the address it was built for
           key={`${caseMode}-${employer?.address ?? ""}`}
@@ -1381,7 +1386,7 @@ function Desk(props: {
       </>
       )}
 
-      {!onSolana && (
+      {!onSolana && !onFacture && (
         <Card title="Registry — everything the oracle watches, every kind" disabled={!oracleId}>
           <p className="hint">
             {oracleId

@@ -1,0 +1,16 @@
+{
+  "name": "dareskro-facture",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Invoice advance on the XRP Ledger: today a 2-of-3 pool account (AI proposer, deterministic risk policy, human operator) on testnet; tomorrow a Single Asset Vault + Lending Protocol (XLS-65/66) measured on devnet.",
+  "scripts": {
+    "rules": "node politique.mjs",
+    "demo": "node demo_avance_facture.mjs",
+    "devnet": "node devnet_xls65_66.mjs",
+    "service": "node service.mjs"
+  },
+  "dependencies": {
+    "xrpl": "^5.3.0"
+  }
+}

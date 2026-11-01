@@ -434,6 +434,89 @@ the next step, and the BottomRadar button goes live only then.
 and the desk; `node demo_bottomradar.mjs --url <public URL> --must bottomradar.com --period 900 --grace 600`
 for a measurement of your own.
 
+## L'avance sur facture — the invoice advance, in two versions
+
+The seventh case, and the first that is a **lending** business: a supplier holds an
+invoice on a final client due in 30–90 days and wants the money now; a pool advances
+90 %; at the due date the client pays the pool, which keeps a fee and hands the balance
+to the supplier. Everything lives in [`facture/`](facture/README.md) (French). Two versions
+were built and measured on 01/11/2026, because the ledger's own lending objects
+(XLS-65 Single Asset Vault, XLS-66 Lending Protocol) are enabled on devnet but not on
+mainnet (21 / 35 and 19 / 35 validators, threshold 28, no date — `feature` command and
+xrpscan, same day).
+
+**Version 1, usable today (testnet).** The pool is an account under a **2-of-3 signer
+list** on the model of the rental deposit: the **AI proposer** (reads the supplier's and
+the client's history on the ledger, checks the documents by hash, writes an analysis memo,
+hashes it and **anchors the hash** in an `AccountSet` before anything is signed — a
+deterministic stand-in writes the memo here, no language model is called), the **risk
+policy** (deterministic code: 30 % of the pool's capital per debtor, 100 XRP absolute,
+advance ≤ 90 %, due ≤ 90 days, an anchored analysis required; it signs only when it says
+yes; 14 self-checks), and the **human operator**. The invoice is a one-unit MPT (XLS-33)
+issued by the supplier with the dossier's SHA-256 in its metadata, handed to the pool when
+the advance is paid (the receivable assigned) and returned to its issuer when extinguished.
+The advance and the repayment are ordinary `Payment`s; the repayment can be locked in an
+escrow **in XRP only** (no euro token is escrowable, measured 08/09 and 27/10). Caps are
+held by **a signer, not the ledger** — and the run proves it: the policy refused the second
+invoice (54 / 160 = 33.8 % > 30 %), the AI alone got `tefBAD_QUORUM`, and AI + operator
+overrode the policy with a `tesSUCCESS`. Nothing in the ledger knows the cap.
+
+| Step (UTC, 01/11/2026, script `facture/demo_avance_facture.mjs`, node xrpl-labs) | Proof |
+|---|---|
+| 20:57 — pool `r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L`: funded, `SignerListSet` quorum 2 (AI, policy, operator), master disabled; two lenders bring 80 + 80 XRP | [E42DFD11…](https://testnet.xrpl.org/transactions/E42DFD117AC2FC6856918596E9DA4EBF5311E85E80CA9073CCC79EBE6F4B4F05) `tesSUCCESS`, [93BB5DF3…](https://testnet.xrpl.org/transactions/93BB5DF35EC9FDDB291481315E4DE05B896538EFBC67AA17D72CECE25F0F3F73) |
+| F-001 (client 1, 50 XRP): invoice token issued by the supplier (`MPTokenIssuanceCreate`, metadata = id + dossier SHA-256 + amount + due date) | [D8719C22…](https://testnet.xrpl.org/transactions/D8719C227BE4AF273C12AEF22BB722229DF72D24ECAF91A9282E23F2DFE13F30) |
+| The AI's analysis anchored (`AccountSet`, memo `dareskro/analyse-sha256`), recommends *avancer*; the policy says yes | [511B7764…](https://testnet.xrpl.org/transactions/511B7764E185B1F5A82E6C3D6F0B22B3B9510BADC4A34F6B8B7473A8D8C4EC53) |
+| The pool accepts the token (2/3), the supplier assigns it, the **advance of 45 XRP** is paid, signed AI + policy | [1A46D683…](https://testnet.xrpl.org/transactions/1A46D683C6534E5CD9FDB191B16F86CD69584DA1453D9FA8EEFC10E45E6D33F5) `tesSUCCESS` |
+| The client locks the repayment: `EscrowCreate` 50 XRP to the pool, `FinishAfter` = due date; the operator tries to cash it early | [1C750D3D…](https://testnet.xrpl.org/transactions/1C750D3D7D3BEFAC4AFA2F6D144BF7AB7260B66D5DD69F63D90D8E28898C5653); `EscrowFinish` **`tecNO_PERMISSION`** [FFED265B…](https://testnet.xrpl.org/transactions/FFED265B46B31CC12542E3E308FFB602D932ECB7E2DEF705A0A5D623E49D35E0) |
+| F-002 (client 1 again, 10 XRP): analysis anchored; **the risk policy refuses** (concentration 33.8 % > 30 %); the AI alone submits | `tefBAD_QUORUM` (refused at the door, no ledger) |
+| Counter-proof: AI + operator override the policy | **`tesSUCCESS`** [3622B6D3…](https://testnet.xrpl.org/transactions/3622B6D3A0436875BCFFED1709F05AE56EF19ED493C45653A736F772E6E7C231) — a signer's refusal, not the ledger's |
+| F-003 (client 2, 40 XRP, advance 36): accepted, nothing locked | [3DF1D98A…](https://testnet.xrpl.org/transactions/3DF1D98AD89342A8401AB52B646A345458A8AC45669B517F3BA2456867AFCA41) |
+| 21:00 — due dates. F-001: `EscrowFinish` by the operator → 50 XRP reach the pool; 4 XRP balance to the supplier (policy + operator); token back to the issuer | [4A32AD5A…](https://testnet.xrpl.org/transactions/4A32AD5AFBD35D3F5EB70692531DD3C7A7698D3683E28B2E0D70EF8ACFDFCC0D), [A76664E6…](https://testnet.xrpl.org/transactions/A76664E6A2238C6E5D81DAD3F7265D8DCD3E0025DD274DC10918DF38041C4EC9) |
+| F-002: the client pays by an ordinary `Payment` (nothing forced it) | [B99BE239…](https://testnet.xrpl.org/transactions/B99BE239CD01E5FBE17620A191BBE11375477DC9E91BD65C071888D2D0C3C3DF) |
+| F-003: nothing received. **Default** written by the pool (`AccountSet` 2/3, memo); the ledger lets it do nothing else against the client; recourse: the supplier buys the receivable back | [DAF3A7F0…](https://testnet.xrpl.org/transactions/DAF3A7F0FBF9DD08036750D5EA96EF9DFAB5BB208C11C721C62B91BF6571C995), [710F169F…](https://testnet.xrpl.org/transactions/710F169F80FEB974CA046C9172C33A76F007A250DC67FB2C53FF42A9C5F9122C) |
+| From the **desk** (`app/`, case *Invoice advance · pool 2/3*, service `facture/service.mjs`): pool `rhc7g7H7c1UzSxdnJxjzcRM5rHWqRG9ERN`, P-001 analysed, accepted, advanced 2/3, locked, cashed early → refused, cashed at the date, settled; P-002 refused by the policy, 1 signature → `tefBAD_QUORUM`, overridden 2/3 | advance [1BD70410…](https://testnet.xrpl.org/transactions/1BD70410BC6820EEDA005FA7C54DD931B6E7F3E8680F1D98008F1FA404FB7F86), early finish [816828A8…](https://testnet.xrpl.org/transactions/816828A891E82DC6C6F95A471578207C74DF8AFF87A6687EFA57F9C494E0E4C4) `tecNO_PERMISSION`, finish [8712573B…](https://testnet.xrpl.org/transactions/8712573BB61F3FC8F21AB58BEF744474417E9A8EC6FF180C364604CDA690D21C), override [D0568DB1…](https://testnet.xrpl.org/transactions/D0568DB1562494CE3FB2D537EE66AF237B318990204DBFB2E924FD615CD5A68F); screens in `facture/sortie/captures/` |
+
+**Version 2, the ledger's own objects (devnet only).** The pool is a **closed-ended
+Vault** (with `LendingProtocolV1_1` a broker only attaches to a vault that has a
+subscription, an investment and a redemption phase — measured: an open-ended vault answers
+`tecNO_PERMISSION`); the lenders deposit and receive shares; dareskro is the **Loan Broker**
+with `DebtMaximum` = the concentration cap, **held by the ledger**; an advance is a `LoanSet`
+signed by the broker and counter-signed by the borrower (xrpl.js 5.3.0
+`signLoanSetByCounterparty`), with the invoice's hash as `Data`.
+
+| Step (UTC, 01/11/2026, `facture/devnet_xls65_66.mjs`, devnet rippled 3.4.1) | Proof |
+|---|---|
+| 21:17:11 — VaultCreate — XRP, public, closed-ended (subscription 40 s, investment 420 s), `Data` = the pool charter's SHA-256; vault `E98C01AC…`, shares MPT `000000012C7C…` | `tesSUCCESS` [56773F9F…](https://devnet.xrpl.org/transactions/56773F9FF49D35AB8E39876AE6321E1104BCACE01C72ACD3D0D8699D58D6D328) |
+| 21:17:22 — Lender A and lender B deposit 80 XRP each (`VaultDeposit`, subscription phase): AssetsTotal 160 | `tesSUCCESS` [C6A14BF0…](https://devnet.xrpl.org/transactions/C6A14BF069ECBA764DCBD976A3B1833428B578894E6C2851F982B5A4B8F09A1A) |
+| 21:17:31 — `LoanBrokerSet`: dareskro broker, **`DebtMaximum` 48 XRP** (30 % of 160) held by the ledger; `LoanBrokerCoverDeposit` 10 XRP first-loss cover | `tesSUCCESS` [3565AE94…](https://devnet.xrpl.org/transactions/3565AE94E489965970B34993B7299E56F58BB5E870C8315DFC6D54F106CEA736) |
+| 21:18:00 — Lender B tries to deposit during the investment phase | `tecEXPIRED` [FFEA78AA…](https://devnet.xrpl.org/transactions/FFEA78AA1F18815F207786C0F1FEB60C9C0B9F44489ECC4324A4C1DB3B751728) |
+| 21:18:10 — **Loan 1** — `LoanSet` 45 XRP to the supplier, `Data` = invoice F-001's hash, one payment, signed broker + counter-signed borrower; supplier 100 → 145 XRP, broker DebtTotal 45 / 48 | `tesSUCCESS` [BEFF1D00…](https://devnet.xrpl.org/transactions/BEFF1D007381D28D61EF7B061F80EFEBC0D297071C69802CBE8F7E384BAD8681) |
+| 21:18:12 — A stranger tries `LoanPay` on loan 1 | `tecNO_PERMISSION` [0BF26A3C…](https://devnet.xrpl.org/transactions/0BF26A3CD9B5DC5A52CC3048A250639F74F406E3C3D6A887B2E0F234BD9E6CDC) |
+| 21:18:21 — **Loan 2** — `LoanSet` 9 XRP: 45 + 9 = 54 > `DebtMaximum` 48 | `tecLIMIT_EXCEEDED` [A1C24C3E…](https://devnet.xrpl.org/transactions/A1C24C3EBDB76A9C43DAC52B6CC7EC83AE8DE0FEB857137C4BF3B700F950D859) |
+| 21:18:30 — Loan 1 — `LoanPay` with `tfLoanFullPayment` on a one-payment loan (the last payment must be regular) | `tecKILLED` [97CEB758…](https://devnet.xrpl.org/transactions/97CEB75839699043C50D95105D89E8E71FDDCAF6D317D8AA0D7B155FBC719507) |
+| 21:18:32 — Loan 1 — regular `LoanPay` of the scheduled 45.000001 XRP: vault whole again, DebtTotal 0 | `tesSUCCESS` [E77468AF…](https://devnet.xrpl.org/transactions/E77468AF83879D69D27CBF3F34007AFEED2FA12BACFB21BC6A55BEA491E86597) |
+| 21:18:41 — **Loan 3** — `LoanSet` 36 XRP, nothing will be paid; `LoanManage tfLoanDefault` before due + grace | `tesSUCCESS` [CB36CDEB…](https://devnet.xrpl.org/transactions/CB36CDEB026405B1985EDD803147E2A700A9AB19983CDB3FC66336DA6EAD53DB) |
+| 21:18:50 — Default attempt before the date | `tecTOO_SOON` [28405135…](https://devnet.xrpl.org/transactions/28405135794DFDF0A281580F5F713CD65B729464A31C4BB241B89BF600FA9300) |
+| 21:21:40 — After due + grace: `LoanManage tfLoanDefault` — the ledger realises the loss: vault 160.000001 → 124.001801 XRP, broker cover 10 → 9.9982 XRP | `tesSUCCESS` [68D2D637…](https://devnet.xrpl.org/transactions/68D2D637FE5389BAA36EBD56D096D486A44992592EE27B52E7776DDA61EAC357) |
+| 21:21:42 — Lender A tries `VaultWithdraw` during the investment phase | `tecTOO_SOON` [A4027106…](https://devnet.xrpl.org/transactions/A40271061577C17DF00BF18C8D34BE517F6BD492FDF47780A035BBB6B25D236F) |
+| 21:25:02 — Redemption phase: both lenders withdraw their 80 000 000 shares, each gets 62.0009 XRP back of 80 (the 36 XRP loss pro rata); vault AssetsTotal 0 | `tesSUCCESS` [F20CEAEE…](https://devnet.xrpl.org/transactions/F20CEAEE498E3AF45730D70F986437836ACD550F6C02C63ACCE8B78F8091B248) |
+
+What a signer refused in version 1, the ledger refuses in version 2
+(`tecLIMIT_EXCEEDED`, no second signature can override); what the ledger could not do in
+version 1 (hold the date without an escrow, write off a loss) it does in version 2
+(`tecTOO_SOON` before due + grace, then the loss realised on the broker's cover and the
+shares). What version 2 does not have: the final client — the borrower is the supplier, and
+only the borrower may `LoanPay` (a stranger: `tecNO_PERMISSION`).
+
+**Not done, said plainly.** This is lending: in France advancing an invoice against its
+assignment is factoring, a credit operation reserved to licensed institutions save narrow
+exceptions; the licence question is **not settled** and nothing here is an opinion. The
+assignment of the receivable is a legal act the token only traces. No KYC. Amounts are XRP
+standing for euros; the AI is a script; the three seats' keys are test keys held by one
+machine (on mainnet: one seat, one machine, the operator on a Ledger — multisigning from
+the XRP app was not tried). Mainnet: never here; version 2 cannot run there before the
+amendments are enabled.
+
 ## Privacy — invisible to the public, visible to the administration
 
 The founder's rule for a salary: nobody in the street may read it, every administration

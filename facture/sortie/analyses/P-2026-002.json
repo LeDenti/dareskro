@@ -1,0 +1,57 @@
+{
+  "version": "dareskro/analyse/1",
+  "role": "proposeur (siège IA du pool) — stand-in déterministe, aucun modèle de langage appelé dans ce prototype",
+  "facture_id": "P-2026-002",
+  "facture_sha256": "2f45809b43c23770cb61116ecb4232bfc98dd0395c9059b80582c3ccc7cd42f9",
+  "pool": "rhc7g7H7c1UzSxdnJxjzcRM5rHWqRG9ERN",
+  "date": "2026-11-01T21:10:25.623Z",
+  "preuves": {
+    "pieces": [
+      {
+        "nom": "P-2026-002.txt",
+        "sha256": "98b0836efbc8aaa7f6c64a985a865f86da8879a23fe9b56de471cdb8853a7245",
+        "fichier": "P-2026-002.txt",
+        "conforme": true
+      }
+    ],
+    "fournisseur": {
+      "adresse": "rKihCLGZoPCGNPQrWGJEJgmBQYXLMjuQLh",
+      "source": "account_info + account_tx sur wss://testnet.xrpl-labs.com",
+      "solde_xrp": 144.999964,
+      "sequence": 21995969,
+      "transactions": 6,
+      "premier_registre": 21995966,
+      "premiere_date": "2026-11-01T21:03:41Z",
+      "remboursements_a_ce_pool": 0
+    },
+    "client": {
+      "adresse": "rJxat3VFE2rRq3V3oXDcLNo1VGbUDVNW4f",
+      "source": "account_info + account_tx sur wss://testnet.xrpl-labs.com",
+      "solde_xrp": 49.999988,
+      "sequence": 21995969,
+      "transactions": 2,
+      "premier_registre": 21995968,
+      "premiere_date": "2026-11-01T21:03:51Z",
+      "remboursements_a_ce_pool": 1
+    }
+  },
+  "faits": [
+    "facture P-2026-002 : 10 XRP, émise le 2026-11-01, due le 2026-11-01T21:14:55Z",
+    "avance demandée 9 (90 %), frais 0.2, solde au fournisseur après encaissement 0.8",
+    "1 pièce(s) conforme(s) à leur empreinte",
+    "client rJxat3VFE2rRq3V3oXDcLNo1VGbUDVNW4f : 2 transaction(s) depuis 2026-11-01T21:03:51Z, solde 49.999988 XRP, 1 remboursement(s) antérieur(s) à ce pool",
+    "fournisseur rKihCLGZoPCGNPQrWGJEJgmBQYXLMjuQLh : 6 transaction(s), solde 144.999964 XRP",
+    "encours actuel de ce client auprès du pool : 45 XRP sur un capital de 160"
+  ],
+  "reserves": [],
+  "recommandation": "avancer",
+  "proposition": {
+    "avance": "9",
+    "unite": "XRP",
+    "a": "rKihCLGZoPCGNPQrWGJEJgmBQYXLMjuQLh",
+    "echeance": "2026-11-01T21:14:55Z"
+  },
+  "note": "La politique de risque (politique.mjs) et l'opérateur humain sont les deux autres signataires : cette analyse ne paie rien seule.",
+  "sha256": "6420bd64dde455e7a74f67cd4c3a3843fbb8371bc90142030cfce6bcb8e202ba",
+  "ancrage": "7AB2609A02FC12D01408324C31F62D088432014CF49E664D081422C201454D13"
+}

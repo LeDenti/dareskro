@@ -1,0 +1,41 @@
+21:00:42 devnet wss://s.devnet.rippletest.net:51233 — rippled 3.4.1, ledger 6601764
+21:00:42 SingleAssetVault enabled: true — LendingProtocol enabled: true
+21:00:42 1. quatre comptes du robinet devnet : dareskro (coffre + courtier), prêteur A, prêteur B, fournisseur, un étranger…
+21:01:12 dareskro     rp2u4mfhdTBBuFQwYL85Y23prTyyD753mP
+21:01:12 preteurA     rMDYqNUYUF1yZ7TE4T4BUF1ELYEa7N7sws
+21:01:12 preteurB     ro678Z2ECNTAHBpNJkfCYtXp6iFhkaFhd
+21:01:12 fournisseur  rHQTcT2mxSPt88yfVfcFDADATzNQJB5XnN
+21:01:12 etranger     rfZGqgs2aJRr4eGfaQxMWhkwCyFNE7cLxt
+21:01:16 VaultCreate (XRP, public, fermé : souscription 40 s puis investissement 420 s, Data = empreinte de la charte du pool): tesSUCCESS  https://devnet.xrpl.org/transactions/74CEC367D1314C3E855D8CC2B96D2EAD9C613104FF6753C63DA47C194FFEC3EE
+21:01:16 phases : souscription jusqu'à 2026-11-01T21:01:52.000Z, investissement jusqu'à 2026-11-01T21:08:52.000Z, puis rachat
+21:01:16 coffre 20AA79ADF649D2D013216DC42B93DA57C3ACFC9BE86C2B872A561572B5B372ED — pseudo-compte rHQfUgNMSXvEaEkbBLddgzKi5ZFcHq1hGT — parts MPT 00000001B3E0C19A4644CD8E8B28997D9D8E48F4DAB72F35
+21:01:19 prêteur A dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/91A92430CC12556901A9FD40FB646DF740E250CE23B492A713895D65CAEF97AB
+21:01:29 prêteur B dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/6C115DAAB81C624097BB405EDAAD838EC307A38ACDC53363AF164B3D7D120CB3
+21:01:29 coffre : AssetsTotal 160 XRP, AssetsAvailable 160 XRP
+21:01:32 LoanBrokerSet : dareskro courtier, DebtMaximum 48 XRP imposé par le registre: tesSUCCESS  https://devnet.xrpl.org/transactions/EA34C9D1562B7A2352F4FE6C3D30B0659DEEC718E38FC611D6D1D412E4A77E10
+21:01:32 courtier 6A40234F2A399587397933C78C79D437250BF74F927C3310D1C012A388899CCC — DebtMaximum 48000000 drops
+21:01:35 LoanBrokerCoverDeposit : 10 XRP de couverture première perte, apportés par dareskro: tesSUCCESS  https://devnet.xrpl.org/transactions/7EAAAEFE2467B3775F73D01B3EE5E9605FE5E6E89644A8BF01E0F24995E9DA1B
+21:01:35 attente : fin de la phase de souscription (23 s)…
+21:02:04 prêteur B tente un dépôt pendant la phase d'investissement: tecEXPIRED  https://devnet.xrpl.org/transactions/60655AF6643FCE3A4C9ECCC525C094AC164BD19AD4A8558F83EC2BE9484BDD4C
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:02:10 F-2026-001 LoanSet 45 XRP, signé courtier + contresigné fournisseur: tesSUCCESS  https://devnet.xrpl.org/transactions/FC262EB138923B4453FEC7873A52868D38E677CBC1899882C23A1305105F9D4D
+21:02:10 prêt 422C53634F3B32CC4DFF868C54ACA5738DBD0196638DE108C5B2A60A64B8EC95 — fournisseur 100 → 145 XRP ; échéance 846882222 (ripple time), remboursement périodique 45000000.25746131506
+21:02:11 coffre AssetsAvailable 115 XRP ; courtier DebtTotal 45000000 / DebtMaximum 48000000
+/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/types/amount.js:205
+            throw new Error(`${amount.toString()} is an illegal amount`);
+                  ^
+
+Error: 45000000.25746132 is an illegal amount
+    at Amount.assertXrpIsValid (/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/types/amount.js:205:19)
+    at Amount.from (/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/types/amount.js:71:20)
+    at /Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/types/st-object.js:127:48
+    at Array.forEach (<anonymous>)
+    at STObject.from (/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/types/st-object.js:120:16)
+    at serializeObject (/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/binary.js:64:10)
+    at signingData (/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/binary.js:81:12)
+    at encodeForSigning (/Users/jul/dareskro-facture/facture/node_modules/ripple-binary-codec/dist/index.js:58:36)
+    at Object.single (/Users/jul/dareskro-facture/facture/node_modules/xrpl/dist/npm/Wallet/utils.js:39:68)
+    at computeSignature (/Users/jul/dareskro-facture/facture/node_modules/xrpl/dist/npm/Wallet/utils.js:59:49)
+
+Node.js v26.12.1
+EXIT 1

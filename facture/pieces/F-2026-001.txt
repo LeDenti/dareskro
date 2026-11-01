@@ -1,0 +1,3 @@
+FACTURE F-2026-001 — Fournisseur : Atelier Nord (test) — Client : Pharmacie du Port (test)
+Prestation : maintenance du système de froid, octobre 2026. Montant : 50 XRP (tient lieu d'euros sur testnet).
+Émise le 2026-11-01, payable à l'échéance indiquée dans le dossier. Pièce de test, aucune donnée réelle.

@@ -1,0 +1,57 @@
+21:07:34 devnet wss://s.devnet.rippletest.net:51233 — rippled 3.4.1, ledger 6601899
+21:07:34 SingleAssetVault enabled: true — LendingProtocol enabled: true
+21:07:34 1. quatre comptes du robinet devnet : dareskro (coffre + courtier), prêteur A, prêteur B, fournisseur, un étranger…
+21:08:05 dareskro     rNFjkqgUwdpJcygqDXewiTo4kEfMsz1bgn
+21:08:05 preteurA     rhzW7DR9N2YVv6vSTNi1AUkNqGU8jVve4F
+21:08:05 preteurB     ruoa4RvbNCUWSVuJYxa7nicRzHTb7zbrB
+21:08:05 fournisseur  rQBz8Py2sKkEPDF4opLXmQE227mqremHaW
+21:08:05 etranger     rHtkWqLW72BrmpxoWDnS2UTZrUK5VEbQPu
+21:08:11 VaultCreate (XRP, public, fermé : souscription 40 s puis investissement 420 s, Data = empreinte de la charte du pool): tesSUCCESS  https://devnet.xrpl.org/transactions/2E60000B17837439FF146F7E47B8841CDAFAE5FD3D75D434B2D7C71A9C2F6AF8
+21:08:11 phases : souscription jusqu'à 2026-11-01T21:08:45.000Z, investissement jusqu'à 2026-11-01T21:15:45.000Z, puis rachat
+21:08:11 coffre BFFDF652CBEB145D3F51497F4DAEE29F1A0085113851B5A4897C1EC33DB86D68 — pseudo-compte rKD76qu2gLyUrXdH9gpk7h5jnwxwqE7BuT — parts MPT 00000001C7CE61C72DC909C17DFA2C9D4A189F7555AD6CFC
+21:08:17 prêteur A dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/0375C2EBDC8AC451757FEC0FF475A72DDB5F685385CBFBD01C51E0A437DA406E
+21:08:23 prêteur B dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/E3D426A551B2060DF5FDB06BBF2CE32F8D6D4084ED54D295BDDE8713F69981EA
+21:08:24 coffre : AssetsTotal 160 XRP, AssetsAvailable 160 XRP
+21:08:30 LoanBrokerSet : dareskro courtier, DebtMaximum 48 XRP imposé par le registre: tesSUCCESS  https://devnet.xrpl.org/transactions/B3C7F73B5898D780890C3171D1BA79B08BCC549915C8C508BFA9081CED2254B9
+21:08:30 courtier EB8A8D50FC204E256BA3452C0772DD6971BBD85D02C1BE3D983FBB515DE62986 — DebtMaximum 48000000 drops
+21:08:36 LoanBrokerCoverDeposit : 10 XRP de couverture première perte, apportés par dareskro: tesSUCCESS  https://devnet.xrpl.org/transactions/6F96561B5219059F60C4A517139FAF167C94E71E0EF698CB5E8C7EFF0439F1B4
+21:08:36 attente : fin de la phase de souscription (15 s)…
+21:08:57 prêteur B tente un dépôt pendant la phase d'investissement: tecEXPIRED  https://devnet.xrpl.org/transactions/6366D9F83D21EFA110F6CA22052F250F564949825427EE249635AF1036CC6546
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:09:03 F-2026-001 LoanSet 45 XRP, signé courtier + contresigné fournisseur: tesSUCCESS  https://devnet.xrpl.org/transactions/C69063E363897769AA342A413B1F5287175454A0F7A8B96B0A2C8ADEF8F3F199
+21:09:03 prêt 635B63517EEE8937883BC39CEE01B0BD9693A062F1E31D02E55EDC32A71C710A — fournisseur 100 → 145 XRP ; échéance 846882640 (ripple time), remboursement périodique 45000000.25746131506
+21:09:04 coffre AssetsAvailable 115 XRP ; courtier DebtTotal 45000000 / DebtMaximum 48000000
+21:09:10 un étranger tente LoanPay sur le prêt 1: tecNO_PERMISSION  https://devnet.xrpl.org/transactions/2CB643A58807F5D5CA20D58B9FBBD1D6800CC874953A2804F15C9D60E94E2BE8
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:09:17 F-2026-002 LoanSet 9 XRP : 45 + 9 = 54 > DebtMaximum 48: tecLIMIT_EXCEEDED  https://devnet.xrpl.org/transactions/AF5127DBFEC3624A259661931453715C606ED62388439148356B12AA6D428E8F
+21:09:17 → tecLIMIT_EXCEEDED: le registre refuse lui-même ; aucune seconde signature ne peut passer outre
+21:09:23 F-2026-001 LoanPay avec tfLoanFullPayment sur un prêt à une seule échéance: tecKILLED  https://devnet.xrpl.org/transactions/4EE46A1AB6AED04C6A0FEF7F2740A78C87D2A739DA63696CAA3039908916DF0F
+21:09:29 F-2026-001 LoanPay régulier 45.000001 XRP (échéance unique, dû 45000000.25746131506 drops): tesSUCCESS  https://devnet.xrpl.org/transactions/114290A68A2EC068DB9F0DB1B0FE1484F06435E7C1B67850C1AD71D4908F0FB0
+21:09:30 après remboursement : coffre AssetsTotal 160.000001 / disponible 160.000001 XRP ; courtier DebtTotal undefined ; prêt 1 PaymentRemaining undefined, PrincipalOutstanding undefined
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:09:34 F-2026-003 LoanSet 36 XRP, signé courtier + contresigné fournisseur: tesSUCCESS  https://devnet.xrpl.org/transactions/54AE574CD4F6C8551ED74A8C669A317C8DABECC13E8E00072F3EC1EFC277FD3C
+21:09:34 prêt 3 1E04EB83F47A3C11AE8E8B6D2DFFEDCDB8EB9EFD33AF01A41C66BA58627B46E2, échéance 2026-11-01T21:11:11.000Z + grâce 60 s
+21:09:37 LoanManage défaut AVANT l'échéance: tecTOO_SOON  https://devnet.xrpl.org/transactions/8D26B41A571B7985DA65C5EA97018D44D9F817B40C27FCC2C9CAB813F2CCF0CD
+21:09:37 attente de l'échéance + grâce (166 s)…
+21:12:26 LoanManage tfLoanDefault après échéance + grâce: tesSUCCESS  https://devnet.xrpl.org/transactions/FCFBF19FC52F3CE80AB4942FE4812AD3AB36A2E6A01A81DA335060676F685261
+21:12:27 après défaut : coffre AssetsTotal 124.001801 / disponible 124.001801 XRP, LossUnrealized 0 ; courtier DebtTotal undefined, couverture 10000000 → 9998200
+21:12:27 prêteur A : 80000000 parts du coffre
+21:12:27 prêteur B : 80000000 parts du coffre
+21:12:34 prêteur A tente un retrait pendant la phase d'investissement: tecTOO_SOON  https://devnet.xrpl.org/transactions/9A046CC4D0B95ECE0ED87593D34D0F029F4EE58EA592C3DBD16EE8EDC3B3388C
+21:12:34 attente : début de la phase de rachat (197 s)…
+21:16:00 prêteur A retire ses 80000000 parts (VaultWithdraw, phase de rachat): tesSUCCESS  https://devnet.xrpl.org/transactions/DA36D0134C57BADB1EBBCF99DA1B942C1C46C97DFA69638DA49E57172BE37816
+21:16:01 prêteur A : 19.999998 → 82.000897 XRP (avait déposé 80)
+21:16:04 prêteur B retire ses 80000000 parts (VaultWithdraw, phase de rachat): tesSUCCESS  https://devnet.xrpl.org/transactions/569DABE04913A0FB1AA4C4D03CE43DD401B8C5C323074AA81D61113D6CE2E25F
+21:16:05 prêteur B : 19.999998 → 82.000898 XRP (avait déposé 80)
+/Users/jul/dareskro-facture/facture/node_modules/xrpl/dist/npm/utils/xrpConversion.js:19
+        throw new errors_1.ValidationError(`dropsToXrp: invalid value '${typeof dropsToConvert === 'string' ? dropsToConvert : JSON.stringify(dropsToConvert)}', should be a BigNumber or string-encoded number.`);
+              ^
+
+ValidationError: dropsToXrp: invalid value 'undefined', should be a BigNumber or string-encoded number.
+    at dropsToXrp (/Users/jul/dareskro-facture/facture/node_modules/xrpl/dist/npm/utils/xrpConversion.js:19:15)
+    at file:///Users/jul/dareskro-facture/facture/devnet_xls65_66.mjs:252:43 {
+  data: undefined
+}
+
+Node.js v26.12.1
+EXIT 1

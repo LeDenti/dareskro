@@ -1,0 +1,100 @@
+20:56:06 testnet wss://testnet.xrpl-labs.com
+20:56:06 0. huit comptes du robinet : deux prêteurs, le fournisseur, deux clients finaux, l'IA, la politique de risque, l'opérateur…
+20:57:04 preteurA     rPmacmWimoHfecxupkCY8UfYNg2AYpgniF
+20:57:04 preteurB     rn3p3PYhs7YMBs24eSpD1SaBqiG4afn582
+20:57:04 fournisseur  rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8
+20:57:04 client1      r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV
+20:57:04 client2      r33U8FTBEmirxaRtHRg6CijkToJKbJWWUc
+20:57:04 ia           rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG
+20:57:04 politique    rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1
+20:57:04 operateur    rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi
+20:57:04 
+1. le pool : un compte, trois signataires, deux signatures
+20:57:10 ouverture du compte du pool (réserve 3 XRP): tesSUCCESS  https://testnet.xrpl.org/transactions/BC17889D686BB35CA20A0042CB3774400C912664F9B6A7505C33440B0C46BC5D
+20:57:16 SignerListSet 2-sur-3 (IA, politique de risque, opérateur): tesSUCCESS  https://testnet.xrpl.org/transactions/E42DFD117AC2FC6856918596E9DA4EBF5311E85E80CA9073CCC79EBE6F4B4F05
+20:57:20 clé maîtresse du pool désactivée: tesSUCCESS  https://testnet.xrpl.org/transactions/93BB5DF35EC9FDDB291481315E4DE05B896538EFBC67AA17D72CECE25F0F3F73
+20:57:20 pool r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L  https://testnet.xrpl.org/accounts/r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L
+20:57:27 prêteur A apporte 80 XRP au pool: tesSUCCESS  https://testnet.xrpl.org/transactions/85689C381ABD3DB7D16448D0D25B6EACFB9289609C406545466ACF1C879C143C
+20:57:34 prêteur B apporte 80 XRP au pool: tesSUCCESS  https://testnet.xrpl.org/transactions/941496804D795763456130A82B75535B006F8C043DEC0DA49104B129E9C2835C
+20:57:34 capital 160 XRP (la réserve de 3 XRP n'en fait pas partie) ; plafonds : 30 % du capital par débiteur, 100 XRP absolu, avance ≤ 90 %, échéance ≤ 90 j
+20:57:34 
+═══ F-2026-001 — Pharmacie du Port (test), 50 XRP, due le 2026-11-01T21:00:05Z, avance demandée 45 ═══
+20:57:34 empreinte du dossier 6464c23db704fab7cd09b2cd31e99bf5878aea5a8c75cb740e6b87c9d030478a
+MPTokenMetadata is not properly formatted as JSON as per the XLS-89 standard. While adherence to this standard is not mandatory, such non-compliant MPToken's might not be discoverable by Explorers and Indexers in the XRPL ecosystem.
+- ticker/t: should have uppercase letters (A-Z) and digits (0-9) only. Max 6 characters recommended.
+- name/n: should be a non-empty string.
+- icon/i: should be a non-empty string.
+- asset_class/ac: should be one of rwa, memes, wrapped, gaming, defi, other.
+- issuer_name/in: should be a non-empty string.
+20:57:38 F-2026-001 jeton de la facture émis par le fournisseur (MPTokenIssuanceCreate): tesSUCCESS  https://testnet.xrpl.org/transactions/D8719C227BE4AF273C12AEF22BB722229DF72D24ECAF91A9282E23F2DFE13F30
+20:57:38 jeton 014FA1410E3165F92C360307598FC0A351AD5DC44D9D7F15 — métadonnées {"echeance":"2026-11-01T21:00:05Z","id":"F-2026-001","montant":"50","sha256":"6464c23db704fab7cd09b2cd31e99bf5878aea5a8c75cb740e6b87c9d030478a","t":"dareskro/facture","unite":"XRP"}
+20:57:39 analyse de l'IA : avancer — 6 faits, réserves : premier dossier de ce client : aucun historique de remboursement
+20:57:44 F-2026-001 analyse de l'IA ancrée (AccountSet, mémo sha256 ab01a36958c5…): tesSUCCESS  https://testnet.xrpl.org/transactions/511B7764E185B1F5A82E6C3D6F0B22B3B9510BADC4A34F6B8B7473A8D8C4EC53
+20:57:44 politique de risque : ACCEPTE
+20:57:47 F-2026-001 le pool accepte le jeton (MPTokenAuthorize, 2/3): tesSUCCESS  https://testnet.xrpl.org/transactions/7FB160CCEA49AEC4E7067530CD0136BA086BA46D9315CA25D29183B9E0FFFB5A
+20:57:51 F-2026-001 créance cédée : 1 jeton fournisseur → pool: tesSUCCESS  https://testnet.xrpl.org/transactions/357FB2DD6D54E5F5CF2FFFA96C8AA1C55093431294888E0EC2C174815B69EDA7
+20:57:57 F-2026-001 avance 45 XRP pool → fournisseur, signée 2/3: tesSUCCESS  https://testnet.xrpl.org/transactions/1A46D683C6534E5CD9FDB191B16F86CD69584DA1453D9FA8EEFC10E45E6D33F5
+20:58:02 F-2026-001 remboursement verrouillé par le client : escrow 50 XRP → pool, libérable à l'échéance: tesSUCCESS  https://testnet.xrpl.org/transactions/1C750D3D7D3BEFAC4AFA2F6D144BF7AB7260B66D5DD69F63D90D8E28898C5653
+20:58:09 F-2026-001 EscrowFinish par l'opérateur (avant l'échéance): tecNO_PERMISSION  https://testnet.xrpl.org/transactions/FFED265B46B31CC12542E3E308FFB602D932ECB7E2DEF705A0A5D623E49D35E0
+20:58:09 → le registre tient la date : avant l'échéance, personne n'encaisse
+20:58:09 
+═══ F-2026-002 — Pharmacie du Port (test), 10 XRP, due le 2026-11-01T21:00:40Z, avance demandée 9 ═══
+20:58:09 empreinte du dossier 0ebc6c4fe7c6c16158603ba83e3046d74e171e5ebcd180288301ea71d4738b95
+MPTokenMetadata is not properly formatted as JSON as per the XLS-89 standard. While adherence to this standard is not mandatory, such non-compliant MPToken's might not be discoverable by Explorers and Indexers in the XRPL ecosystem.
+- ticker/t: should have uppercase letters (A-Z) and digits (0-9) only. Max 6 characters recommended.
+- name/n: should be a non-empty string.
+- icon/i: should be a non-empty string.
+- asset_class/ac: should be one of rwa, memes, wrapped, gaming, defi, other.
+- issuer_name/in: should be a non-empty string.
+20:58:12 F-2026-002 jeton de la facture émis par le fournisseur (MPTokenIssuanceCreate): tesSUCCESS  https://testnet.xrpl.org/transactions/0907098E10E8F992ABA290B125E8600383216EC8AD1FAB6794C919581C20D2E7
+20:58:12 jeton 014FA1430E3165F92C360307598FC0A351AD5DC44D9D7F15 — métadonnées {"echeance":"2026-11-01T21:00:40Z","id":"F-2026-002","montant":"10","sha256":"0ebc6c4fe7c6c16158603ba83e3046d74e171e5ebcd180288301ea71d4738b95","t":"dareskro/facture","unite":"XRP"}
+20:58:12 analyse de l'IA : avancer — 6 faits, réserves : aucune
+20:58:16 F-2026-002 analyse de l'IA ancrée (AccountSet, mémo sha256 16ed7a71ea9a…): tesSUCCESS  https://testnet.xrpl.org/transactions/6DAF91903081971E80AE2922EA958C76278CE2B2C82637808343BAB4E556415C
+20:58:16 politique de risque : REFUSE — plafond de concentration : ce débiteur aurait 33.8 % du capital (54 / 160) > 30 %
+20:58:16 → la politique de risque ne signe pas. Le refus vient d'un signataire, pas du registre. Preuve :
+20:58:16 F-2026-002 avance 9 XRP pool → fournisseur, signée 1/3: tefBAD_QUORUM  (Signatures provided do not meet the quorum.)
+20:58:16 → l'IA seule : tefBAD_QUORUM — le registre compte les signatures, rien d'autre
+20:58:19 F-2026-002 le pool accepte le jeton (MPTokenAuthorize, 2/3): tesSUCCESS  https://testnet.xrpl.org/transactions/5DC531D212A8BE7095E3F433C2CB58AEBC5F8027885CECB8572F097883FFECEC
+20:58:26 F-2026-002 créance cédée : 1 jeton fournisseur → pool: tesSUCCESS  https://testnet.xrpl.org/transactions/2B36DD2DA610CE4487693171D533981AF93ED87547F1218F681DBB67D4566D8F
+20:58:29 F-2026-002 avance 9 XRP pool → fournisseur, signée 2/3: tesSUCCESS  https://testnet.xrpl.org/transactions/3622B6D3A0436875BCFFED1709F05AE56EF19ED493C45653A736F772E6E7C231
+20:58:29 → IA + opérateur : tesSUCCESS — rien dans le registre ne connaît le plafond. C'est ce que la version XLS-66 change (DebtMaximum).
+20:58:29 
+═══ F-2026-003 — Clinique des Pins (test), 40 XRP, due le 2026-11-01T21:00:00Z, avance demandée 36 ═══
+20:58:29 empreinte du dossier 3b403709f73dc6824b4497ca083a1075e679ebd137fc7cf638780af8d7b49410
+MPTokenMetadata is not properly formatted as JSON as per the XLS-89 standard. While adherence to this standard is not mandatory, such non-compliant MPToken's might not be discoverable by Explorers and Indexers in the XRPL ecosystem.
+- ticker/t: should have uppercase letters (A-Z) and digits (0-9) only. Max 6 characters recommended.
+- name/n: should be a non-empty string.
+- icon/i: should be a non-empty string.
+- asset_class/ac: should be one of rwa, memes, wrapped, gaming, defi, other.
+- issuer_name/in: should be a non-empty string.
+20:58:36 F-2026-003 jeton de la facture émis par le fournisseur (MPTokenIssuanceCreate): tesSUCCESS  https://testnet.xrpl.org/transactions/07299BE00ECCA1D6C005A48784DF8D4FDDDA7F39DBDE599A61CEBBFBC10FB61F
+20:58:36 jeton 014FA1450E3165F92C360307598FC0A351AD5DC44D9D7F15 — métadonnées {"echeance":"2026-11-01T21:00:00Z","id":"F-2026-003","montant":"40","sha256":"3b403709f73dc6824b4497ca083a1075e679ebd137fc7cf638780af8d7b49410","t":"dareskro/facture","unite":"XRP"}
+20:58:36 analyse de l'IA : avancer — 6 faits, réserves : premier dossier de ce client : aucun historique de remboursement
+20:58:40 F-2026-003 analyse de l'IA ancrée (AccountSet, mémo sha256 aaeb50e99c9a…): tesSUCCESS  https://testnet.xrpl.org/transactions/1C88D9BFF23F74A18EB04B994F48019F1DE84F27FE24B47881C172F19B166CDB
+20:58:40 politique de risque : ACCEPTE
+20:58:48 F-2026-003 le pool accepte le jeton (MPTokenAuthorize, 2/3): tesSUCCESS  https://testnet.xrpl.org/transactions/4CD5131391DD9A06CD4BD86248F537EBE9C91F0DC3B38655B9099A3A27182CAE
+20:58:54 F-2026-003 créance cédée : 1 jeton fournisseur → pool: tesSUCCESS  https://testnet.xrpl.org/transactions/614FF4461E7A93F3D894C5EFA975FE0FCF17115C61A6A4F58D911C3202B6FFDC
+20:59:01 F-2026-003 avance 36 XRP pool → fournisseur, signée 2/3: tesSUCCESS  https://testnet.xrpl.org/transactions/3DF1D98AD89342A8401AB52B646A345458A8AC45669B517F3BA2456867AFCA41
+20:59:01 → le client 2 dit qu'il paiera par virement ; rien n'est verrouillé
+20:59:01 soldes : pool 72.99976 XRP, fournisseur 189.999928 XRP ; encours {"r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV":"54","r33U8FTBEmirxaRtHRg6CijkToJKbJWWUc":"36"}
+20:59:01 attente de l'échéance F-003 (67 s)…
+21:00:08 attente de l'échéance F-001 (5 s)…
+21:00:13 
+5. les échéances
+21:00:18 F-2026-001 EscrowFinish par l'opérateur (à l'échéance): tesSUCCESS  https://testnet.xrpl.org/transactions/4A32AD5AFBD35D3F5EB70692531DD3C7A7698D3683E28B2E0D70EF8ACFDFCC0D
+21:00:25 F-2026-001 solde 4 XRP au fournisseur (frais 1 gardés par le pool), signé politique + opérateur: tesSUCCESS  https://testnet.xrpl.org/transactions/A76664E6A2238C6E5D81DAD3F7265D8DCD3E0025DD274DC10918DF38041C4EC9
+21:00:33 F-2026-001 jeton rendu à l'émetteur : créance éteinte (payée par le client à l'échéance): tesSUCCESS  https://testnet.xrpl.org/transactions/0A09B83AC6C2813BF238D3A222ADD3AD5DFEEC0402AE50DB09A775A56B1CBFCB
+21:00:39 F-2026-002 le client paie le pool par un Payment ordinaire (rien ne l'y forçait): tesSUCCESS  https://testnet.xrpl.org/transactions/B99BE239CD01E5FBE17620A191BBE11375477DC9E91BD65C071888D2D0C3C3DF
+21:00:46 F-2026-002 solde 0.8 XRP au fournisseur: tesSUCCESS  https://testnet.xrpl.org/transactions/C4475C6B5CB650089E6AC4BE71DA93846BDA875F2239B5E5A7F3CED477A315F9
+21:00:50 F-2026-002 jeton rendu à l'émetteur : créance éteinte (payée par le client): tesSUCCESS  https://testnet.xrpl.org/transactions/84F3C516F557A7B65BBD71982E79159088391136B61F609DE399E69DDBAD5788
+21:00:50 F-2026-003 : échéance 2026-11-01T21:00:00Z passée, transactions reçues du client 2 : 0
+21:00:50 → DÉFAUT. Ce que le pool peut faire sur le registre : l'écrire, garder le jeton de la créance. Ce qu'il ne peut pas : prélever le client — aucune transaction ne permet à un créancier de prendre ; rien n'est soumis ici.
+21:00:56 F-2026-003 défaut constaté par le pool (AccountSet 2/3, mémo): tesSUCCESS  https://testnet.xrpl.org/transactions/DAF3A7F0FBF9DD08036750D5EA96EF9DFAB5BB208C11C721C62B91BF6571C995
+21:00:56 → recours contractuel : le fournisseur rachète la créance (un Payment ordinaire, qu'il aurait aussi pu refuser)
+21:01:01 F-2026-003 le fournisseur rachète la créance : 36 XRP → pool: tesSUCCESS  https://testnet.xrpl.org/transactions/710F169F80FEB974CA046C9172C33A76F007A250DC67FB2C53FF42A9C5F9122C
+21:01:08 F-2026-003 jeton rendu à l'émetteur : créance éteinte (rachetée par le fournisseur après défaut du client): tesSUCCESS  https://testnet.xrpl.org/transactions/49B305483152AE82BC9A23CE6A7B418081EA46B57F1486FE23D4A08682CB2EC9
+21:01:08 
+soldes finaux : pool 164.199544 XRP (capital 160 + frais 1,2 + réserve ≈ 3 − frais de réseau), fournisseur 158.799916, client 1 39.999976, client 2 100
+21:01:08 qui détient quoi : les prêteurs ont apporté 160 ; le pool les tient sous 2 signatures sur 3 ; l'IA, la politique et l'opérateur ne détiennent rien ; dareskro n'a jamais eu la main seul
+21:01:08 compte rendu public : /Users/jul/dareskro-facture/facture/compte_rendu.json
+EXIT 0

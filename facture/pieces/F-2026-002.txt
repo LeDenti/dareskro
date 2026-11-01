@@ -1,0 +1,2 @@
+FACTURE F-2026-002 — Fournisseur : Atelier Nord (test) — Client : Pharmacie du Port (test)
+Prestation : pièces détachées. Montant : 10 XRP. Pièce de test, aucune donnée réelle.

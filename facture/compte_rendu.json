@@ -1,0 +1,618 @@
+{
+  "network": "wss://testnet.xrpl-labs.com",
+  "date": "2026-11-01T20:56:06.485Z",
+  "limites": {
+    "partDebiteurMax": 0.3,
+    "plafondDebiteur": "100",
+    "tauxAvanceMax": 0.9,
+    "echeanceMaxJours": 90,
+    "montantMin": "1",
+    "exigerAnalyse": true
+  },
+  "steps": [
+    {
+      "label": "ouverture du compte du pool (réserve 3 XRP)",
+      "result": "tesSUCCESS",
+      "hash": "BC17889D686BB35CA20A0042CB3774400C912664F9B6A7505C33440B0C46BC5D",
+      "ledger": 21995853,
+      "close": "2026-11-01T20:57:10Z",
+      "signers": [
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/BC17889D686BB35CA20A0042CB3774400C912664F9B6A7505C33440B0C46BC5D"
+    },
+    {
+      "label": "SignerListSet 2-sur-3 (IA, politique de risque, opérateur)",
+      "result": "tesSUCCESS",
+      "hash": "E42DFD117AC2FC6856918596E9DA4EBF5311E85E80CA9073CCC79EBE6F4B4F05",
+      "ledger": 21995855,
+      "close": "2026-11-01T20:57:12Z",
+      "signers": [
+        "r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/E42DFD117AC2FC6856918596E9DA4EBF5311E85E80CA9073CCC79EBE6F4B4F05"
+    },
+    {
+      "label": "clé maîtresse du pool désactivée",
+      "result": "tesSUCCESS",
+      "hash": "93BB5DF35EC9FDDB291481315E4DE05B896538EFBC67AA17D72CECE25F0F3F73",
+      "ledger": 21995856,
+      "close": "2026-11-01T20:57:20Z",
+      "signers": [
+        "r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/93BB5DF35EC9FDDB291481315E4DE05B896538EFBC67AA17D72CECE25F0F3F73"
+    },
+    {
+      "label": "prêteur A apporte 80 XRP au pool",
+      "result": "tesSUCCESS",
+      "hash": "85689C381ABD3DB7D16448D0D25B6EACFB9289609C406545466ACF1C879C143C",
+      "ledger": 21995858,
+      "close": "2026-11-01T20:57:22Z",
+      "signers": [
+        "rPmacmWimoHfecxupkCY8UfYNg2AYpgniF"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/85689C381ABD3DB7D16448D0D25B6EACFB9289609C406545466ACF1C879C143C"
+    },
+    {
+      "label": "prêteur B apporte 80 XRP au pool",
+      "result": "tesSUCCESS",
+      "hash": "941496804D795763456130A82B75535B006F8C043DEC0DA49104B129E9C2835C",
+      "ledger": 21995860,
+      "close": "2026-11-01T20:57:31Z",
+      "signers": [
+        "rn3p3PYhs7YMBs24eSpD1SaBqiG4afn582"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/941496804D795763456130A82B75535B006F8C043DEC0DA49104B129E9C2835C"
+    },
+    {
+      "label": "F-2026-001 jeton de la facture émis par le fournisseur (MPTokenIssuanceCreate)",
+      "result": "tesSUCCESS",
+      "hash": "D8719C227BE4AF273C12AEF22BB722229DF72D24ECAF91A9282E23F2DFE13F30",
+      "ledger": 21995861,
+      "close": "2026-11-01T20:57:32Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/D8719C227BE4AF273C12AEF22BB722229DF72D24ECAF91A9282E23F2DFE13F30",
+      "issuanceId": "014FA1410E3165F92C360307598FC0A351AD5DC44D9D7F15",
+      "metadata": "{\"echeance\":\"2026-11-01T21:00:05Z\",\"id\":\"F-2026-001\",\"montant\":\"50\",\"sha256\":\"6464c23db704fab7cd09b2cd31e99bf5878aea5a8c75cb740e6b87c9d030478a\",\"t\":\"dareskro/facture\",\"unite\":\"XRP\"}"
+    },
+    {
+      "label": "F-2026-001 analyse de l'IA ancrée (AccountSet, mémo sha256 ab01a36958c5…)",
+      "result": "tesSUCCESS",
+      "hash": "511B7764E185B1F5A82E6C3D6F0B22B3B9510BADC4A34F6B8B7473A8D8C4EC53",
+      "ledger": 21995863,
+      "close": "2026-11-01T20:57:41Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/511B7764E185B1F5A82E6C3D6F0B22B3B9510BADC4A34F6B8B7473A8D8C4EC53",
+      "analyse_sha256": "ab01a36958c5c1842044990dd12afd7bbd26266da14b3bfd27a0ba70670578b7"
+    },
+    {
+      "label": "F-2026-001 le pool accepte le jeton (MPTokenAuthorize, 2/3)",
+      "result": "tesSUCCESS",
+      "hash": "7FB160CCEA49AEC4E7067530CD0136BA086BA46D9315CA25D29183B9E0FFFB5A",
+      "ledger": 21995864,
+      "close": "2026-11-01T20:57:50Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/7FB160CCEA49AEC4E7067530CD0136BA086BA46D9315CA25D29183B9E0FFFB5A"
+    },
+    {
+      "label": "F-2026-001 créance cédée : 1 jeton fournisseur → pool",
+      "result": "tesSUCCESS",
+      "hash": "357FB2DD6D54E5F5CF2FFFA96C8AA1C55093431294888E0EC2C174815B69EDA7",
+      "ledger": 21995865,
+      "close": "2026-11-01T20:57:51Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/357FB2DD6D54E5F5CF2FFFA96C8AA1C55093431294888E0EC2C174815B69EDA7"
+    },
+    {
+      "label": "F-2026-001 avance 45 XRP pool → fournisseur, signée 2/3",
+      "result": "tesSUCCESS",
+      "hash": "1A46D683C6534E5CD9FDB191B16F86CD69584DA1453D9FA8EEFC10E45E6D33F5",
+      "ledger": 21995867,
+      "close": "2026-11-01T20:57:53Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/1A46D683C6534E5CD9FDB191B16F86CD69584DA1453D9FA8EEFC10E45E6D33F5"
+    },
+    {
+      "label": "F-2026-001 remboursement verrouillé par le client : escrow 50 XRP → pool, libérable à l'échéance",
+      "result": "tesSUCCESS",
+      "hash": "1C750D3D7D3BEFAC4AFA2F6D144BF7AB7260B66D5DD69F63D90D8E28898C5653",
+      "ledger": 21995868,
+      "close": "2026-11-01T20:58:00Z",
+      "signers": [
+        "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/1C750D3D7D3BEFAC4AFA2F6D144BF7AB7260B66D5DD69F63D90D8E28898C5653",
+      "finishAfter": 846882005
+    },
+    {
+      "label": "F-2026-001 EscrowFinish par l'opérateur (avant l'échéance)",
+      "result": "tecNO_PERMISSION",
+      "hash": "FFED265B46B31CC12542E3E308FFB602D932ECB7E2DEF705A0A5D623E49D35E0",
+      "ledger": 21995870,
+      "close": "2026-11-01T20:58:10Z",
+      "signers": [
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/FFED265B46B31CC12542E3E308FFB602D932ECB7E2DEF705A0A5D623E49D35E0"
+    },
+    {
+      "label": "F-2026-002 jeton de la facture émis par le fournisseur (MPTokenIssuanceCreate)",
+      "result": "tesSUCCESS",
+      "hash": "0907098E10E8F992ABA290B125E8600383216EC8AD1FAB6794C919581C20D2E7",
+      "ledger": 21995871,
+      "close": "2026-11-01T20:58:11Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/0907098E10E8F992ABA290B125E8600383216EC8AD1FAB6794C919581C20D2E7",
+      "issuanceId": "014FA1430E3165F92C360307598FC0A351AD5DC44D9D7F15",
+      "metadata": "{\"echeance\":\"2026-11-01T21:00:40Z\",\"id\":\"F-2026-002\",\"montant\":\"10\",\"sha256\":\"0ebc6c4fe7c6c16158603ba83e3046d74e171e5ebcd180288301ea71d4738b95\",\"t\":\"dareskro/facture\",\"unite\":\"XRP\"}"
+    },
+    {
+      "label": "F-2026-002 analyse de l'IA ancrée (AccountSet, mémo sha256 16ed7a71ea9a…)",
+      "result": "tesSUCCESS",
+      "hash": "6DAF91903081971E80AE2922EA958C76278CE2B2C82637808343BAB4E556415C",
+      "ledger": 21995872,
+      "close": "2026-11-01T20:58:12Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/6DAF91903081971E80AE2922EA958C76278CE2B2C82637808343BAB4E556415C",
+      "analyse_sha256": "16ed7a71ea9a468c6f1fc7531453878a6e5d8999b1845482294968695155c091"
+    },
+    {
+      "label": "F-2026-002 avance 9 XRP pool → fournisseur, signée 1/3",
+      "result": "tefBAD_QUORUM",
+      "message": "Signatures provided do not meet the quorum.",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG"
+      ]
+    },
+    {
+      "label": "F-2026-002 le pool accepte le jeton (MPTokenAuthorize, 2/3)",
+      "result": "tesSUCCESS",
+      "hash": "5DC531D212A8BE7095E3F433C2CB58AEBC5F8027885CECB8572F097883FFECEC",
+      "ledger": 21995873,
+      "close": "2026-11-01T20:58:20Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/5DC531D212A8BE7095E3F433C2CB58AEBC5F8027885CECB8572F097883FFECEC"
+    },
+    {
+      "label": "F-2026-002 créance cédée : 1 jeton fournisseur → pool",
+      "result": "tesSUCCESS",
+      "hash": "2B36DD2DA610CE4487693171D533981AF93ED87547F1218F681DBB67D4566D8F",
+      "ledger": 21995875,
+      "close": "2026-11-01T20:58:22Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/2B36DD2DA610CE4487693171D533981AF93ED87547F1218F681DBB67D4566D8F"
+    },
+    {
+      "label": "F-2026-002 avance 9 XRP pool → fournisseur, signée 2/3",
+      "result": "tesSUCCESS",
+      "hash": "3622B6D3A0436875BCFFED1709F05AE56EF19ED493C45653A736F772E6E7C231",
+      "ledger": 21995876,
+      "close": "2026-11-01T20:58:30Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/3622B6D3A0436875BCFFED1709F05AE56EF19ED493C45653A736F772E6E7C231"
+    },
+    {
+      "label": "F-2026-003 jeton de la facture émis par le fournisseur (MPTokenIssuanceCreate)",
+      "result": "tesSUCCESS",
+      "hash": "07299BE00ECCA1D6C005A48784DF8D4FDDDA7F39DBDE599A61CEBBFBC10FB61F",
+      "ledger": 21995878,
+      "close": "2026-11-01T20:58:32Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/07299BE00ECCA1D6C005A48784DF8D4FDDDA7F39DBDE599A61CEBBFBC10FB61F",
+      "issuanceId": "014FA1450E3165F92C360307598FC0A351AD5DC44D9D7F15",
+      "metadata": "{\"echeance\":\"2026-11-01T21:00:00Z\",\"id\":\"F-2026-003\",\"montant\":\"40\",\"sha256\":\"3b403709f73dc6824b4497ca083a1075e679ebd137fc7cf638780af8d7b49410\",\"t\":\"dareskro/facture\",\"unite\":\"XRP\"}"
+    },
+    {
+      "label": "F-2026-003 analyse de l'IA ancrée (AccountSet, mémo sha256 aaeb50e99c9a…)",
+      "result": "tesSUCCESS",
+      "hash": "1C88D9BFF23F74A18EB04B994F48019F1DE84F27FE24B47881C172F19B166CDB",
+      "ledger": 21995879,
+      "close": "2026-11-01T20:58:40Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/1C88D9BFF23F74A18EB04B994F48019F1DE84F27FE24B47881C172F19B166CDB",
+      "analyse_sha256": "aaeb50e99c9aa9afd51b3222aea87d279e66903842995da7dabbc243a7bcadc8"
+    },
+    {
+      "label": "F-2026-003 le pool accepte le jeton (MPTokenAuthorize, 2/3)",
+      "result": "tesSUCCESS",
+      "hash": "4CD5131391DD9A06CD4BD86248F537EBE9C91F0DC3B38655B9099A3A27182CAE",
+      "ledger": 21995881,
+      "close": "2026-11-01T20:58:42Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/4CD5131391DD9A06CD4BD86248F537EBE9C91F0DC3B38655B9099A3A27182CAE"
+    },
+    {
+      "label": "F-2026-003 créance cédée : 1 jeton fournisseur → pool",
+      "result": "tesSUCCESS",
+      "hash": "614FF4461E7A93F3D894C5EFA975FE0FCF17115C61A6A4F58D911C3202B6FFDC",
+      "ledger": 21995883,
+      "close": "2026-11-01T20:58:51Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/614FF4461E7A93F3D894C5EFA975FE0FCF17115C61A6A4F58D911C3202B6FFDC"
+    },
+    {
+      "label": "F-2026-003 avance 36 XRP pool → fournisseur, signée 2/3",
+      "result": "tesSUCCESS",
+      "hash": "3DF1D98AD89342A8401AB52B646A345458A8AC45669B517F3BA2456867AFCA41",
+      "ledger": 21995885,
+      "close": "2026-11-01T20:59:00Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/3DF1D98AD89342A8401AB52B646A345458A8AC45669B517F3BA2456867AFCA41"
+    },
+    {
+      "label": "F-2026-001 EscrowFinish par l'opérateur (à l'échéance)",
+      "result": "tesSUCCESS",
+      "hash": "4A32AD5AFBD35D3F5EB70692531DD3C7A7698D3683E28B2E0D70EF8ACFDFCC0D",
+      "ledger": 21995907,
+      "close": "2026-11-01T21:00:12Z",
+      "signers": [
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/4A32AD5AFBD35D3F5EB70692531DD3C7A7698D3683E28B2E0D70EF8ACFDFCC0D"
+    },
+    {
+      "label": "F-2026-001 solde 4 XRP au fournisseur (frais 1 gardés par le pool), signé politique + opérateur",
+      "result": "tesSUCCESS",
+      "hash": "A76664E6A2238C6E5D81DAD3F7265D8DCD3E0025DD274DC10918DF38041C4EC9",
+      "ledger": 21995909,
+      "close": "2026-11-01T21:00:21Z",
+      "signers": [
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/A76664E6A2238C6E5D81DAD3F7265D8DCD3E0025DD274DC10918DF38041C4EC9"
+    },
+    {
+      "label": "F-2026-001 jeton rendu à l'émetteur : créance éteinte (payée par le client à l'échéance)",
+      "result": "tesSUCCESS",
+      "hash": "0A09B83AC6C2813BF238D3A222ADD3AD5DFEEC0402AE50DB09A775A56B1CBFCB",
+      "ledger": 21995911,
+      "close": "2026-11-01T21:00:30Z",
+      "signers": [
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/0A09B83AC6C2813BF238D3A222ADD3AD5DFEEC0402AE50DB09A775A56B1CBFCB"
+    },
+    {
+      "label": "F-2026-002 le client paie le pool par un Payment ordinaire (rien ne l'y forçait)",
+      "result": "tesSUCCESS",
+      "hash": "B99BE239CD01E5FBE17620A191BBE11375477DC9E91BD65C071888D2D0C3C3DF",
+      "ledger": 21995913,
+      "close": "2026-11-01T21:00:40Z",
+      "signers": [
+        "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/B99BE239CD01E5FBE17620A191BBE11375477DC9E91BD65C071888D2D0C3C3DF"
+    },
+    {
+      "label": "F-2026-002 solde 0.8 XRP au fournisseur",
+      "result": "tesSUCCESS",
+      "hash": "C4475C6B5CB650089E6AC4BE71DA93846BDA875F2239B5E5A7F3CED477A315F9",
+      "ledger": 21995915,
+      "close": "2026-11-01T21:00:42Z",
+      "signers": [
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/C4475C6B5CB650089E6AC4BE71DA93846BDA875F2239B5E5A7F3CED477A315F9"
+    },
+    {
+      "label": "F-2026-002 jeton rendu à l'émetteur : créance éteinte (payée par le client)",
+      "result": "tesSUCCESS",
+      "hash": "84F3C516F557A7B65BBD71982E79159088391136B61F609DE399E69DDBAD5788",
+      "ledger": 21995916,
+      "close": "2026-11-01T21:00:50Z",
+      "signers": [
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/84F3C516F557A7B65BBD71982E79159088391136B61F609DE399E69DDBAD5788"
+    },
+    {
+      "label": "F-2026-003 défaut constaté par le pool (AccountSet 2/3, mémo)",
+      "result": "tesSUCCESS",
+      "hash": "DAF3A7F0FBF9DD08036750D5EA96EF9DFAB5BB208C11C721C62B91BF6571C995",
+      "ledger": 21995918,
+      "close": "2026-11-01T21:00:52Z",
+      "signers": [
+        "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/DAF3A7F0FBF9DD08036750D5EA96EF9DFAB5BB208C11C721C62B91BF6571C995"
+    },
+    {
+      "label": "F-2026-003 le fournisseur rachète la créance : 36 XRP → pool",
+      "result": "tesSUCCESS",
+      "hash": "710F169F80FEB974CA046C9172C33A76F007A250DC67FB2C53FF42A9C5F9122C",
+      "ledger": 21995919,
+      "close": "2026-11-01T21:01:00Z",
+      "signers": [
+        "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/710F169F80FEB974CA046C9172C33A76F007A250DC67FB2C53FF42A9C5F9122C"
+    },
+    {
+      "label": "F-2026-003 jeton rendu à l'émetteur : créance éteinte (rachetée par le fournisseur après défaut du client)",
+      "result": "tesSUCCESS",
+      "hash": "49B305483152AE82BC9A23CE6A7B418081EA46B57F1486FE23D4A08682CB2EC9",
+      "ledger": 21995921,
+      "close": "2026-11-01T21:01:02Z",
+      "signers": [
+        "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1",
+        "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+      ],
+      "explorer": "https://testnet.xrpl.org/transactions/49B305483152AE82BC9A23CE6A7B418081EA46B57F1486FE23D4A08682CB2EC9"
+    }
+  ],
+  "factures": {
+    "F-2026-001": {
+      "dossier": {
+        "version": "dareskro/facture/1",
+        "id": "F-2026-001",
+        "fournisseur": {
+          "nom": "Atelier Nord (test)",
+          "adresse": "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+        },
+        "client": {
+          "nom": "Pharmacie du Port (test)",
+          "adresse": "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV"
+        },
+        "montant": "50",
+        "unite": "XRP",
+        "emission": "2026-11-01",
+        "echeance": "2026-11-01T21:00:05Z",
+        "pieces": [
+          {
+            "nom": "F-2026-001.txt",
+            "sha256": "d3c2e3381ae088ec3eef10f762edb825c93291d2c4d99d6e43da0d3ae2999b21"
+          }
+        ],
+        "avance": {
+          "taux": 0.9,
+          "montant": "45"
+        },
+        "frais": {
+          "pct": 2,
+          "montant": "1"
+        },
+        "solde_fournisseur": "4",
+        "pool": "r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L",
+        "sha256": "6464c23db704fab7cd09b2cd31e99bf5878aea5a8c75cb740e6b87c9d030478a"
+      },
+      "jeton": "014FA1410E3165F92C360307598FC0A351AD5DC44D9D7F15",
+      "analyse": {
+        "sha256": "805a3990f7c57654cfb440c471fe299dc3b251385f51385d210e140b776e8cf5",
+        "ancrage": "511B7764E185B1F5A82E6C3D6F0B22B3B9510BADC4A34F6B8B7473A8D8C4EC53",
+        "fichier": "sortie/analyses/F-2026-001.json",
+        "recommandation": "avancer"
+      },
+      "politique": {
+        "ok": true,
+        "raisons": [],
+        "calcul": {
+          "montant": 50,
+          "avance": 45,
+          "capital": 160,
+          "dejaDu": 0,
+          "apres": 45,
+          "partApres": 0.2813,
+          "joursAvantEcheance": 0,
+          "limites": {
+            "partDebiteurMax": 0.3,
+            "plafondDebiteur": "100",
+            "tauxAvanceMax": 0.9,
+            "echeanceMaxJours": 90,
+            "montantMin": "1",
+            "exigerAnalyse": true
+          }
+        }
+      },
+      "avance": "1A46D683C6534E5CD9FDB191B16F86CD69584DA1453D9FA8EEFC10E45E6D33F5",
+      "escrow": {
+        "hash": "1C750D3D7D3BEFAC4AFA2F6D144BF7AB7260B66D5DD69F63D90D8E28898C5653",
+        "owner": "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV",
+        "sequence": 21995843,
+        "finishAfter": 846882005
+      },
+      "encaissement": "4A32AD5AFBD35D3F5EB70692531DD3C7A7698D3683E28B2E0D70EF8ACFDFCC0D",
+      "solde": "A76664E6A2238C6E5D81DAD3F7265D8DCD3E0025DD274DC10918DF38041C4EC9",
+      "eteinte": "0A09B83AC6C2813BF238D3A222ADD3AD5DFEEC0402AE50DB09A775A56B1CBFCB"
+    },
+    "F-2026-002": {
+      "dossier": {
+        "version": "dareskro/facture/1",
+        "id": "F-2026-002",
+        "fournisseur": {
+          "nom": "Atelier Nord (test)",
+          "adresse": "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+        },
+        "client": {
+          "nom": "Pharmacie du Port (test)",
+          "adresse": "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV"
+        },
+        "montant": "10",
+        "unite": "XRP",
+        "emission": "2026-11-01",
+        "echeance": "2026-11-01T21:00:40Z",
+        "pieces": [
+          {
+            "nom": "F-2026-002.txt",
+            "sha256": "cc654674400e595ebcef30d70768f3053318a97e1eab7f8a4da81e4ea36d50f8"
+          }
+        ],
+        "avance": {
+          "taux": 0.9,
+          "montant": "9"
+        },
+        "frais": {
+          "pct": 2,
+          "montant": "0.2"
+        },
+        "solde_fournisseur": "0.8",
+        "pool": "r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L",
+        "sha256": "0ebc6c4fe7c6c16158603ba83e3046d74e171e5ebcd180288301ea71d4738b95"
+      },
+      "jeton": "014FA1430E3165F92C360307598FC0A351AD5DC44D9D7F15",
+      "analyse": {
+        "sha256": "7547159510e13d9cc533ea4469180db3c1473f35e9c8f752993ac88a4974159c",
+        "ancrage": "6DAF91903081971E80AE2922EA958C76278CE2B2C82637808343BAB4E556415C",
+        "fichier": "sortie/analyses/F-2026-002.json",
+        "recommandation": "avancer"
+      },
+      "politique": {
+        "ok": false,
+        "raisons": [
+          "plafond de concentration : ce débiteur aurait 33.8 % du capital (54 / 160) > 30 %"
+        ],
+        "calcul": {
+          "montant": 10,
+          "avance": 9,
+          "capital": 160,
+          "dejaDu": 45,
+          "apres": 54,
+          "partApres": 0.3375,
+          "joursAvantEcheance": 0,
+          "limites": {
+            "partDebiteurMax": 0.3,
+            "plafondDebiteur": "100",
+            "tauxAvanceMax": 0.9,
+            "echeanceMaxJours": 90,
+            "montantMin": "1",
+            "exigerAnalyse": true
+          }
+        }
+      },
+      "contreEpreuve": "IA + opérateur passent outre la politique",
+      "avance": "3622B6D3A0436875BCFFED1709F05AE56EF19ED493C45653A736F772E6E7C231",
+      "remboursement": "B99BE239CD01E5FBE17620A191BBE11375477DC9E91BD65C071888D2D0C3C3DF",
+      "solde": "C4475C6B5CB650089E6AC4BE71DA93846BDA875F2239B5E5A7F3CED477A315F9",
+      "eteinte": "84F3C516F557A7B65BBD71982E79159088391136B61F609DE399E69DDBAD5788"
+    },
+    "F-2026-003": {
+      "dossier": {
+        "version": "dareskro/facture/1",
+        "id": "F-2026-003",
+        "fournisseur": {
+          "nom": "Atelier Nord (test)",
+          "adresse": "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8"
+        },
+        "client": {
+          "nom": "Clinique des Pins (test)",
+          "adresse": "r33U8FTBEmirxaRtHRg6CijkToJKbJWWUc"
+        },
+        "montant": "40",
+        "unite": "XRP",
+        "emission": "2026-11-01",
+        "echeance": "2026-11-01T21:00:00Z",
+        "pieces": [
+          {
+            "nom": "F-2026-003.txt",
+            "sha256": "89b5a546665d378cfae59e33de573577cc153c8cafe483b4f7b981f048e45fdf"
+          }
+        ],
+        "avance": {
+          "taux": 0.9,
+          "montant": "36"
+        },
+        "frais": {
+          "pct": 2,
+          "montant": "0.8"
+        },
+        "solde_fournisseur": "3.2",
+        "pool": "r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L",
+        "sha256": "3b403709f73dc6824b4497ca083a1075e679ebd137fc7cf638780af8d7b49410"
+      },
+      "jeton": "014FA1450E3165F92C360307598FC0A351AD5DC44D9D7F15",
+      "analyse": {
+        "sha256": "7b3e91c4ebe566d822cbafedb57b2dd738b734bfb0c36e4244beecb0a62ae0e1",
+        "ancrage": "1C88D9BFF23F74A18EB04B994F48019F1DE84F27FE24B47881C172F19B166CDB",
+        "fichier": "sortie/analyses/F-2026-003.json",
+        "recommandation": "avancer"
+      },
+      "politique": {
+        "ok": true,
+        "raisons": [],
+        "calcul": {
+          "montant": 40,
+          "avance": 36,
+          "capital": 160,
+          "dejaDu": 0,
+          "apres": 36,
+          "partApres": 0.225,
+          "joursAvantEcheance": 0,
+          "limites": {
+            "partDebiteurMax": 0.3,
+            "plafondDebiteur": "100",
+            "tauxAvanceMax": 0.9,
+            "echeanceMaxJours": 90,
+            "montantMin": "1",
+            "exigerAnalyse": true
+          }
+        }
+      },
+      "avance": "3DF1D98AD89342A8401AB52B646A345458A8AC45669B517F3BA2456867AFCA41",
+      "defaut": "DAF3A7F0FBF9DD08036750D5EA96EF9DFAB5BB208C11C721C62B91BF6571C995",
+      "rachat": "710F169F80FEB974CA046C9172C33A76F007A250DC67FB2C53FF42A9C5F9122C",
+      "eteinte": "49B305483152AE82BC9A23CE6A7B418081EA46B57F1486FE23D4A08682CB2EC9"
+    }
+  },
+  "accounts": {
+    "preteurA": "rPmacmWimoHfecxupkCY8UfYNg2AYpgniF",
+    "preteurB": "rn3p3PYhs7YMBs24eSpD1SaBqiG4afn582",
+    "fournisseur": "rpJsdAd1i1cFETyCHXpRetzSRs6AzVMtp8",
+    "client1": "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV",
+    "client2": "r33U8FTBEmirxaRtHRg6CijkToJKbJWWUc",
+    "ia": "rLTdRYLudPWQBRivqSuE3TsxhPKSUpiVLG",
+    "politique": "rUiaEtdUn6hkxDHBApTPE7oUesCETmeuT1",
+    "operateur": "rHUM2GAE8SyokuhVKoZkqB1Rquhy6Hyzyi"
+  },
+  "pool": "r6YuFKaUWWUfk9g8ZpK8gnpcQp5rDrC8L",
+  "soldesFinaux": {
+    "pool": 164.199544,
+    "fournisseur": 158.799916,
+    "client1": 39.999976,
+    "client2": 100
+  },
+  "encoursFinal": {
+    "r4n6qUhL8AdUcjYtpqompiUv99NEAHBDUV": "0",
+    "r33U8FTBEmirxaRtHRg6CijkToJKbJWWUc": "0"
+  }
+}

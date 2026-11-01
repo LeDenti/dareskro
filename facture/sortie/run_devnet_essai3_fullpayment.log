@@ -1,0 +1,42 @@
+21:03:17 devnet wss://s.devnet.rippletest.net:51233 — rippled 3.4.1, ledger 6601815
+21:03:17 SingleAssetVault enabled: true — LendingProtocol enabled: true
+21:03:17 1. quatre comptes du robinet devnet : dareskro (coffre + courtier), prêteur A, prêteur B, fournisseur, un étranger…
+21:03:48 dareskro     rDudHRKYFGUJ66bK7uonzfXH75WQMXEuYs
+21:03:48 preteurA     rDp5UWM47oeS9KaDdhirHL76f34r1RKKyJ
+21:03:48 preteurB     rf8w5B4hr8hxqxHC7V6ayiTVLtQ3ztgx8E
+21:03:48 fournisseur  rLoT8sBdaZXfPS8NirnuUWMnEXW1hxLm2y
+21:03:48 etranger     rfbcctcaYpwXvfhV2AEC6CsmPouMYnZtm2
+21:03:54 VaultCreate (XRP, public, fermé : souscription 40 s puis investissement 420 s, Data = empreinte de la charte du pool): tesSUCCESS  https://devnet.xrpl.org/transactions/82FBE5B57C3980A3AAB677E4ADCA7A471941C415425F2F0389BC94E64D9BEE82
+21:03:54 phases : souscription jusqu'à 2026-11-01T21:04:28.000Z, investissement jusqu'à 2026-11-01T21:11:28.000Z, puis rachat
+21:03:54 coffre C96861EC7A45368EE598CBDB29BBBF6FA702785ABB25BF064261816D03F982CA — pseudo-compte r9NwVFVkrDv5iBovtCSoQn6zRB8kxeK4LA — parts MPT 000000015A3E5763DC38AFFE236EE2FC51C926171EB2AB75
+21:04:01 prêteur A dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/29F2B7D5120137C8BB152D186A9DD5934B887B3DB6711B3FEEAA16B329DAF66E
+21:04:07 prêteur B dépose 80 XRP dans le coffre (VaultDeposit): tesSUCCESS  https://devnet.xrpl.org/transactions/240579664DDEEDD67D734F55CC008BDFD3A55D0F02BF0498C1A2FBB9E5AC6BF7
+21:04:07 coffre : AssetsTotal 160 XRP, AssetsAvailable 160 XRP
+21:04:14 LoanBrokerSet : dareskro courtier, DebtMaximum 48 XRP imposé par le registre: tesSUCCESS  https://devnet.xrpl.org/transactions/C443D78A9CFC36A0F0326513F5E131565C2D191689B11C0F395DC70B466ACAB5
+21:04:14 courtier DB786125D399827AAA315A8DAFF2BE81A53AFB5275B8FF0FAD7C0C5DFB15ED71 — DebtMaximum 48000000 drops
+21:04:17 LoanBrokerCoverDeposit : 10 XRP de couverture première perte, apportés par dareskro: tesSUCCESS  https://devnet.xrpl.org/transactions/D24DA5D87CA49878D4DBA00868FE7834F6698CF9AC5DDFB6581AAAF93C5C435A
+21:04:17 attente : fin de la phase de souscription (17 s)…
+21:04:40 prêteur B tente un dépôt pendant la phase d'investissement: tecEXPIRED  https://devnet.xrpl.org/transactions/6FE173CBCF5B9B2E13B466D349535242728C881F15B557AEAD1C114F979B8034
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:04:47 F-2026-001 LoanSet 45 XRP, signé courtier + contresigné fournisseur: tesSUCCESS  https://devnet.xrpl.org/transactions/6909646164F9F67D74606B24FD9F2742FF979A032A62F1E1E1B34B7677317594
+21:04:47 prêt FDAA9DA5EC10FFA5A9DEFBB2FAC3400F4AD20A9A428102061C8DC067FC4F1282 — fournisseur 100 → 145 XRP ; échéance 846882381 (ripple time), remboursement périodique 45000000.25746131506
+21:04:48 coffre AssetsAvailable 115 XRP ; courtier DebtTotal 45000000 / DebtMaximum 48000000
+21:04:54 un étranger tente LoanPay sur le prêt 1: tecNO_PERMISSION  https://devnet.xrpl.org/transactions/4BBCDAE9A484BC2430CE8AA018E89AC04148FBB06D013B025E640D405EC10743
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:05:01 F-2026-002 LoanSet 9 XRP : 45 + 9 = 54 > DebtMaximum 48: tecLIMIT_EXCEEDED  https://devnet.xrpl.org/transactions/0B84C18EF5575A9E01301E046626D3260692ED6AD599BCD8DAC5C7EDDCB6A189
+21:05:01 → tecLIMIT_EXCEEDED: le registre refuse lui-même ; aucune seconde signature ne peut passer outre
+21:05:07 F-2026-001 LoanPay intégral 45.000001 XRP (tfLoanFullPayment, dû 45000001 drops): tecKILLED  https://devnet.xrpl.org/transactions/5A5C01E8AE9EEE6689957B9542030A5C7ECDCA99ADCF37322327C9DADB6C89B9
+21:05:07 après remboursement : coffre AssetsTotal 160 / disponible 115 XRP ; courtier DebtTotal 45000000
+For LoanSet transaction the auto calculated Fee accounts for total number of signers the counterparty has to avoid transaction failure.
+21:05:14 F-2026-003 LoanSet 36 XRP, signé courtier + contresigné fournisseur: tecLIMIT_EXCEEDED  https://devnet.xrpl.org/transactions/D643A008BB5EAACE6AE5F2BBF4A19A7F7703338067F3A7FD24237364801CC25E
+file:///Users/jul/dareskro-facture/facture/devnet_xls65_66.mjs:93
+        if (expect !== "any" && code !== expect) throw new Error(`${label} → ${code}, expected ${expect}`);
+                                                       ^
+
+Error: F-2026-003 LoanSet 36 XRP, signé courtier + contresigné fournisseur → tecLIMIT_EXCEEDED, expected tesSUCCESS
+    at soumettre (file:///Users/jul/dareskro-facture/facture/devnet_xls65_66.mjs:93:56)
+    at async preter (file:///Users/jul/dareskro-facture/facture/devnet_xls65_66.mjs:173:13)
+    at async file:///Users/jul/dareskro-facture/facture/devnet_xls65_66.mjs:208:17
+
+Node.js v26.12.1
+EXIT 1
