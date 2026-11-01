@@ -62,8 +62,3 @@ near/.oracle_near.json
 placements/node_modules/
 placements/server.log
 oracle/oracle.log
-
-# invoice advance: keys of the test signers (0600), run outputs that may hold nothing secret are committed
-facture/cles/
-facture/node_modules/
-facture/service.log

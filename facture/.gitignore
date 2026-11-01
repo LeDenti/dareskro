@@ -1,0 +1,4 @@
+# keys of the test signers (0600, asked from the faucet by service.mjs): never committed
+cles/
+node_modules/
+service.log
