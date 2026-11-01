@@ -205,10 +205,22 @@ key goes in the URL path and is documented as not confidential, fees are set per
 key in Aurora's Client Portal (60 % integrator / 40 % Aurora, floor 2 bps on
 stables), and a quote carries an optional `appFees` line for the desk's margin.
 
-_Status: module written, not yet run — it needs an API key from
-`studio.aurora.dev` and a decision on where the escrow lives for the live demo
-(devnet program + mainnet funding leg, or a mainnet deployment for a few dollars
-of real USDC)._
+**Measured on 1 November 2026, with the project's own API key (`dareskro`,
+created in Aurora's Client Portal), `dry: true`, so no funds moved:**
+
+| Call | Result |
+|---|---|
+| `GET /api/tokens` | 210 assets, 15 of them on Solana (SOL, USDC, USDT, USD1, xBTC, …) |
+| quote: pay **1 USDC on Solana** with **SOL** | `amountIn` 0.013278573 SOL (1.27 $), delivered in ~19 s, deadline 15 min, withdraw fee 253 550 lamports |
+| quote: pay **3 USDC on Solana** with **XRP** (the chain dareskro comes from) | `amountIn` 2.630367 XRP (3.29 $), delivered in ~22 s |
+| quote: 1 USDC paid in XRP | **refused**: `Amount is too low for bridge, try at least 2245679` drops (≈ 2.25 XRP). Aurora enforces a bridge minimum per origin asset; the desk must surface it instead of retrying |
+| quote with a malformed `refundTo` | **refused** `400 refundTo is not valid` before any deposit address is issued: a refund address is validated up front, which is what a payroll desk needs |
+
+A dry quote carries no `depositAddress`; the real one (`dry: false`) does, and
+that is the live step left for the final submission: the escrow stays on devnet,
+the funding leg runs on mainnet for a few dollars (XRP → Solana USDC to the
+desk's address), and the film shows both halves. A mainnet deployment of the
+program itself would cost ~2 SOL of rent and buys nothing the judges asked for.
 
 ## Honest limits
 
