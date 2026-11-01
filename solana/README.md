@@ -1,7 +1,7 @@
 # dareskro on Solana — an escrow program with no owner
 
 **Encode Club Solana Hackathon 2026** (12 October → 8 November, online). Tracks: Aurora Intents, Best Consumer App.
-Demo video (2 min, English, explanations at the bottom of the frame): [dareskro_la_linea_solana.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.2-solana-midpoint/dareskro_la_linea_solana.mp4) · release [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet).
+Demo video (2 min, English, explanations at the bottom of the frame): [dareskro_la_linea_solana.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.2-solana-midpoint/dareskro_la_linea_solana.mp4) · release [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
 
 > The agent reads the evidence. The code computes the amount. A human validates.
 > A Solana program pays at the date, or when the proof is public. Nobody holds the
@@ -216,11 +216,27 @@ created in Aurora's Client Portal), `dry: true`, so no funds moved:**
 | quote: 1 USDC paid in XRP | **refused**: `Amount is too low for bridge, try at least 2245679` drops (≈ 2.25 XRP). Aurora enforces a bridge minimum per origin asset; the desk must surface it instead of retrying |
 | quote with a malformed `refundTo` | **refused** `400 refundTo is not valid` before any deposit address is issued: a refund address is validated up front, which is what a payroll desk needs |
 
-A dry quote carries no `depositAddress`; the real one (`dry: false`) does, and
-that is the live step left for the final submission: the escrow stays on devnet,
-the funding leg runs on mainnet for a few dollars (XRP → Solana USDC to the
-desk's address), and the film shows both halves. A mainnet deployment of the
-program itself would cost ~2 SOL of rent and buys nothing the judges asked for.
+**Run for real on 1 November 2026, 07:44 UTC, mainnet, real funds** — the desk's
+Solana address was paid in XRP from dareskro's own XRPL account, the chain the
+product comes from. `client/aurora_paye_xrp.mjs` asked a real quote, signed the
+XRPL Payment with the account's key (run by Julien, in his own terminal, with an
+explicit `--go`), told Aurora the hash, and polled `/api/status` until settlement:
+
+| Step | Where | Proof |
+|---|---|---|
+| Quote (`dry: false`), 3 USDC out, 15-min deadline | Aurora | `amountIn` 2.627332 XRP (3.28 $), deposit address `rMYEgFREZcNUt3viG3L7NkbefYta6Yb3NU`, no destination tag |
+| XRP leaves the payer `rNY2Vc9hBPBcbZZVqzLgzxtTp7e9wVGknb` | XRPL mainnet, ledger 108 040 855 | [`56205926…`](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) `tesSUCCESS`, fee 12 drops |
+| Aurora status | `PENDING_DEPOSIT` → `PROCESSING` → `SUCCESS` | 37 s after the quote (07:44:56 → 07:45:33), intent `C15Xn2BC…`, 0 refunded |
+| USDC land on the desk's address `4ypF64RB…` | Solana mainnet, slot 464 012 735 | [`58Az4DDm…`](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g) — USDC balance 0 → **3.000000**, token account created by the settlement |
+
+Honest numbers at this size: 3.28 $ paid for 3.00 $ delivered, because the
+withdraw fee is fixed (0.254 USDC) and dwarfs the 10 bps app fee; at 466 € of
+payroll the same fee is 0.05 %. The escrow itself stays on devnet for the
+hackathon: deploying the program on mainnet would cost ~2 SOL of rent and prove
+nothing more. What the live run proves is the thing Aurora's track asks for: a
+real cross-chain funding flow, refund address validated up front, settlement
+observed on both chains. The full record of the run (quote, hashes, status
+ticks, balances) is written to `client/sortie/`, which stays out of git.
 
 ## Honest limits
 
