@@ -350,7 +350,7 @@ swapped beneficiary, the double payment; and the deadline refund with the shape 
 | Landlord votes: all 0.212 SOL to me (`client/coffre.mjs`) | 1 vote, nothing moves | [`3xgkXtxY…`](https://explorer.solana.com/tx/3xgkXtxYvNRnB3ycaXgk82BrU8bYj3aybEccsUSgGXj6Vc4i8AffaW8fxZ89AGi6f3YKmcjfYxHc7pmrN7r226x7?cluster=devnet) |
 | Mediator votes: 0.08 SOL to the landlord, the rest back | 2 votes, none alike, nothing moves | [`43qF93KQ…`](https://explorer.solana.com/tx/43qF93KQpf2sDt6mKfT6eUS22EB7oL35psGmke7XnXZRLQSHno8y9Dz1RSV41PzhcnEzm5V4qtWyNVDMSFdAduXz?cluster=devnet) |
 | Tenant clicks "Agree with the mediator: 0.080 SOL" in Phantom | **2 of 3 — paid in that call**: 0.08 SOL to the landlord, 0.132 SOL back to the tenant, status Finished | [`5y9EGV42…`](https://explorer.solana.com/tx/5y9EGV42HyGG3QLKhcVF72fi3ay9k5Sf1DoyY2zJT5puLnTJcmUr7DQ7GhwMnNKAJ86ZVoMaPY2ynTkNH5Bb581K?cluster=devnet) |
-| Close | at the owner's convenience: the decided record stays readable until then (rent ≈ 0.006 SOL) | — |
+| Close, by the tenant in Phantom | record deleted, rent back | [`axSasdpk…`](https://explorer.solana.com/tx/axSasdpkMG2nvsqZjoqardEicfrgGYBbTipisHkd7ZXxEyM5gqKUgiy1k7KxPRSnrEiG34emQwUxXvp1AneqKna?cluster=devnet) |
 
 The page lists every vault where the wallet is owner, beneficiary or party, with
 the votes cast, one-click "Agree with…" buttons for the amounts already on the
