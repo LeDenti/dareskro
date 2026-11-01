@@ -1,0 +1,113 @@
+09:36:31 node wss://testnet.xrpl-labs.com
+09:36:31 reserves on this network: base 1 XRP, per owned object 0.2 XRP
+09:36:35 employeur: r9qWKQMehC9kV5PgmZnip7oD4KfvLkY7F1 (funded by the faucet; seed kept in agent/cles/xrpl_employeur.json, 0600, gitignored)
+09:36:40 caisse: rwxybaKRZnMMnnTSp6kPvvy5LcctVMzmMp (funded by the faucet; seed kept in agent/cles/xrpl_caisse.json, 0600, gitignored)
+09:36:40 deposit https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json: fetched, 9557 bytes, sha256 = the record's
+09:36:40 — transmission: the employer pays 1 drop to the pension fund, the act is the memos —
+09:36:47 Payment (transmission): tesSUCCESS in 6627 ms, fee 12 drops, ledger 21959557, 2026-10-31T09:36:42Z
+09:36:47   https://testnet.xrpl.org/transactions/AF17F5EFF8A9BA3CC6746F9C73CDDFA36912029EF9DFA2A7709A81C9AA5B6AF3
+09:36:47   memo dareskro/payslip-sha256  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+09:36:47   memo dareskro/sealed-sha256   9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27
+09:36:47   memo dareskro/sealed-uri      https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json
+09:36:47   memo dareskro/sealed-cid      bafkreie2ttzklujar3o6biyccawy3z7cbni5omlbvxrqesmpxllg5lk5e4
+09:36:47   memo dareskro/period          2026-10
+09:36:47   memo dareskro/employer        SIRET 12345678900012
+09:36:47 — variant: the same act as an NFT (NFTokenMint, tfBurnable only, Destination = the fund) —
+09:36:54 NFTokenMint (offer to the fund): tesSUCCESS in 7760 ms, fee 12 drops, ledger 21959559, 2026-10-31T09:36:51Z
+09:36:54   https://testnet.xrpl.org/transactions/AD3E431C069AF29DBB064AC0ED9F53198B93C42D621D4BCB06A5FA69C2200BBC
+09:36:54   NFTokenID 0001000060ED71FD923BD2B796801E0F5524C35BFB753F8F466C101E014F1383; sell offer 9305848F929AFEB7DCBCE221E3BDBBAE59EFF6F075688B2C53FEB4025D43FB84 to the fund only
+09:37:01 NFTokenAcceptOffer (the fund takes it): tesSUCCESS in 6626 ms, fee 12 drops, ledger 21959561, 2026-10-31T09:37:00Z
+09:37:01   https://testnet.xrpl.org/transactions/DB111FAFD709C246968506250C314DAB87350DCFF05C06791AEAF0D1CFC70FFA
+09:37:01   the fund's account_nfts: holds it (Issuer r9qWKQMehC9kV5PgmZnip7oD4KfvLkY7F1, Flags 1, URI -> https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json)
+09:37:01   the fund's OwnerCount 0 -> 1: 1 NFT page(s) = 0.2 XRP of reserve now locked on the fund's account
+09:37:01   revocability: the issuer burns the NFT the fund holds (tfBurnable), without the fund's signature…
+09:37:04 NFTokenBurn by the employer: tesSUCCESS in 3340 ms, fee 12 drops, ledger 21959562, 2026-10-31T09:37:01Z
+09:37:04   https://testnet.xrpl.org/transactions/472CA6DAF41C9B960253B1C688A72AAAA3A6E22350810D97FCD6817F63258C07
+09:37:04   after the burn the fund's account_nfts no longer lists it: the fund's copy of the act is gone from the ledger state (the mint and the burn stay in history)
+09:37:04 — the pension fund receives: fetch the URI, check the hash, open with its own key —
+09:37:04   fetched from the URI -> agent/sortie/recu_caisse.json, sha256 9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27 = memo dareskro/sealed-sha256
+09:37:04 $ node agent/divulgation.mjs --role retraite --file /Users/jul/dareskro-retraite/agent/sortie/recu_caisse.json
+    role retraite (the pension fund (Agirc-Arrco / CNAV)): unwrapped with agent/cles/retraite.key (kid cb8205351cb0d611), decrypted 4 837 bytes (+ padding) in 2.7 ms
+      recomputed sha256 384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      = sha256_plain of the sealed file = sha256 field of the statement
+    what anyone sees on testnet, EscrowCreate 1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D (845 ms):
+      from          rUcr3ua1ekMNbo5THDVKLG57zyu2UAT9q4
+      to            rDP6vEjjPVVTUU8w5KayYyRXhtAvZW9Z3J
+      amount        339.061874 XRP  (public: the XRP amount is never hidden on an escrow)
+      payable at    2026-10-25T19:48:01Z
+      memo          dareskro/statement-sha256  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      memo          dareskro/statement-id      stmt-ffff3dd0e216
+      memo          dareskro/fiat              440.36 USD @ 1.29876 USD/XRP Kraken XRP/USD 2026-10-25T19:46Z
+      memo          dareskro/oracle            rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+      memo          dareskro/gross             gross=564.56;net=440.36;employee_rate=0.22;tax_rate=0.0750;paid=440.36
+      memo          dareskro/zk-commitment     0x20613f4b2d866d2c331ec42fabd258b7916cbdb8363cbe1fb8d7bcaf495e8e7f
+      bound to escrow 1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D: MATCH
+      memo dareskro/fiat "440.36 USD @ 1.29876 USD/XRP Kraken XRP/USD 2026-10-25T19:46Z" vs statement net paid 407.33 USD: MISMATCH
+      memo dareskro/gross "gross=564.56;net=440.36;employee_rate=0.22;tax_rate=0.0750;paid=440.36" vs statement gross 564.56, net 440.36, paid 407.33: MISMATCH
+      zk opening sealed in the same file for employee, administration only: this role's scope is the statement, it has no key to the opening
+    --- statement (sealed for the public, open for this role) ---
+      employee  Pharmacien adjoint, coefficient 600, 18 ans d'anciennete  (badge A-0412)
+      period    2026-10, 2026-10-25 09:00-21:00, garde dimanche, volets ouverts
+      temps de garde                 250.51
+      majorations heures sup.         83.50
+      indemnite de dimanche           94.99
+      prime d anciennete              37.58
+      indemnite de fin de contrat     46.66
+      indemnite compensatrice de conges payes    51.32
+      gross                          564.56 USD  (CDD d'un jour (journee de garde))
+      employee contributions        -124.20 USD  (22 %)
+      net before tax                 440.36 USD
+      income tax withheld            -33.03 USD  (7.5 % personalised rate, to DGFiP by 2026-11-15)
+      NET PAID                       407.33 USD  -> the employee's escrow
+      employer contributions         237.12 USD  (42 %)
+      to URSSAF                      361.32 USD  -> a Check URSSAF cashes itself, due 2026-11-15
+      status    PROPOSITION, computed by officine.garde — deterministic, replayable to the cent
+09:37:05   the fund opens it: exit 1 (FAILED)
+09:37:05 $ node zk/ouvrir.mjs --role retraite
+    ! role retraite: role retraite: not a reader of the zk opening (its scope is the statement only; opening readers: employee, administration)
+09:37:05   the fund asks for the zk opening: exit 1 (refused: its scope is the statement only)
+09:37:05 $ node agent/divulgation.mjs --role public --file /Users/jul/dareskro-retraite/agent/sortie/recu_caisse.json
+    what anyone sees in agent/sortie/recu_caisse.json:
+      version       dareskro/confidential-statement.v2
+      sha256_plain  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      escrow        1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D
+      ciphertext    5 120 bytes, opaque (spaces to a 1024-byte multiple)
+      zk opening    400 bytes, opaque; commitment 0x20613f4b2d866d2c... (public already); readers employee, administration
+      readers       employee (kid 5b8f038cfd6e63e0), administration (kid b7559188b97af8cd), retraite (kid cb8205351cb0d611) (wrapped content key each; a key id names a key, it is not one)
+    what anyone sees on testnet, EscrowCreate 1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D (806 ms):
+      from          rUcr3ua1ekMNbo5THDVKLG57zyu2UAT9q4
+      to            rDP6vEjjPVVTUU8w5KayYyRXhtAvZW9Z3J
+      amount        339.061874 XRP  (public: the XRP amount is never hidden on an escrow)
+      payable at    2026-10-25T19:48:01Z
+      memo          dareskro/statement-sha256  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+      memo          dareskro/statement-id      stmt-ffff3dd0e216
+      memo          dareskro/fiat              440.36 USD @ 1.29876 USD/XRP Kraken XRP/USD 2026-10-25T19:46Z
+      memo          dareskro/oracle            rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW
+      memo          dareskro/gross             gross=564.56;net=440.36;employee_rate=0.22;tax_rate=0.0750;paid=440.36
+      memo          dareskro/zk-commitment     0x20613f4b2d866d2c331ec42fabd258b7916cbdb8363cbe1fb8d7bcaf495e8e7f
+      => the escrow cites the same statement hash as the sealed file: same statement, content unreadable
+    what the public cannot do: open it.
+      tried to unwrap the employee block with a random key: refused ("Unsupported state or unable to authenticate data")
+      tried to unwrap the administration block with a random key: refused ("Unsupported state or unable to authenticate data")
+      tried to unwrap the retraite block with a random key: refused ("Unsupported state or unable to authenticate data")
+      the 3 private keys (the employee; the tax and social administration (DGFiP, URSSAF); the pension fund (Agirc-Arrco / CNAV)) are the only way in: who worked, how many hours, which lines stay sealed in the file.
+    RESULT: OK, the file and the escrow show the public nothing private
+09:37:06   the public reads the same file: exit 0 (nothing private, no key opens it)
+09:37:06 $ node agent/divulgation.mjs --role retraite --file /Users/jul/dareskro-retraite/agent/sortie/recu_caisse.json --offline --key /var/folders/vs/zsc36d7j1fl78bsbsp13mbth0000gn/T/dareskro-etranger-57461/etranger.key
+    ! role retraite: decryption failed, the GCM tag does not authenticate (tampered file or wrong key): Unsupported state or unable to authenticate data
+09:37:06   a stranger with a fresh X25519 key claims to be the fund: exit 1 (GCM refuses)
+09:37:06 — acknowledgement: the fund pays 1 drop to the employer, memo dareskro/ack = the hash received —
+09:37:11 Payment (acknowledgement): tesSUCCESS in 4441 ms, fee 12 drops, ledger 21959564, 2026-10-31T09:37:11Z
+09:37:11   https://testnet.xrpl.org/transactions/9D11F9DF1AB8A8E3FD40B7E157813ECED75AF252C36A6ED316E3CB82F3715862
+09:37:11   memo dareskro/ack             384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+09:37:11   memo dareskro/ack-sealed      9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27
+09:37:11   memo dareskro/ack-of          AF17F5EFF8A9BA3CC6746F9C73CDDFA36912029EF9DFA2A7709A81C9AA5B6AF3
+09:37:11 — the fund's account history, as anyone reads it (account_tx) —
+    transmitted  2026-10-31T09:36:42Z  AF17F5EFF8A9BA3CC6746F9C73CDDFA36912029EF9DFA2A7709A81C9AA5B6AF3
+                 statement sha256 384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+                 sealed    sha256 9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27  at https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json
+    acknowledged 2026-10-31T09:37:11Z  9D11F9DF1AB8A8E3FD40B7E157813ECED75AF252C36A6ED316E3CB82F3715862
+                 ack = 384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf (= the statement hash transmitted)
+    what the history does not show: the employee, the hours, the lines, the amount. The 1 drop is the act, not the pay.
+09:37:11 record -> agent/sortie/transmission.json (phase acknowledged)
+09:37:11 the DSN (net-entreprises) remains the legal monthly declaration; this act proves what was transmitted and when, it replaces nothing.

@@ -1,36 +1,38 @@
 #!/usr/bin/env node
 // dareskro — who can read the sealed pay statement, and what the public sees instead.
 //
-//   node agent/divulgation.mjs --role administration|employee [--escrow <hash>] [--offline]
-//       unwraps with that role's private key, decrypts, recomputes the hash, compares it
-//       with the escrow memo on testnet, prints the statement.
-//   node agent/divulgation.mjs --role public [--escrow <hash>] [--offline]
+//   node agent/divulgation.mjs --role administration|employee|retraite [--escrow <hash>] [--offline] [--file <sealed>] [--key <private key>]
+//       unwraps with that role's private key (the directory's current key, or the retired key the
+//       file names, or --key), decrypts, recomputes the hash, compares it with the escrow memo on
+//       testnet, prints the statement.
+//   node agent/divulgation.mjs --role public [--escrow <hash>] [--offline] [--file <sealed>]
 //       prints only what anyone sees (file sizes, hashes, on-chain facts), shows that the
 //       content key cannot be unwrapped without a private key, and says what the memos give
 //       away: a memo naming the coefficient or the date is a privacy FAIL, whoever wrote it.
 //
-// Without --escrow, the hash recorded in bulletin.chiffre.json is used when there is one.
-// --offline skips testnet: the statement is read, the binding is reported as not checked.
-// Exit 0 ok, 1 mismatch, decryption failure or privacy leak, 2 usage.
+// Without --file, agent/sortie/bulletin.chiffre.json. Without --escrow, the hash recorded in the
+// file is used when there is one. --offline skips testnet: the statement is read, the binding is
+// reported as not checked. Exit 0 ok, 1 mismatch, decryption failure or privacy leak, 2 usage.
 
 import { createDecipheriv, randomBytes } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
-  CHIFFRE, ROLES, UsageError, arg, decodeMemos, decryptStatement, empreinte, fetchTx, fmtBytes,
-  keyPath, leaks, loadPrivateKey, memoFiat, memoHash, normHash, rel, rippleDate, unb64, unwrapKey, xrp,
+  CHIFFRE, READERS, ROLES, UsageError, VERSIONS_READ, arg, contentKeyFor, decodeMemos, decryptStatement, empreinte, fetchTx, fmtBytes,
+  keyPath, leaks, memoFiat, memoHash, normHash, rel, resolveKeyPath, rippleDate, unb64, xrp,
 } from "./confidentiel.mjs";
 
 const fail = (msg) => { console.error(msg); process.exit(1); };
 const offline = process.argv.includes("--offline");
 
-function fileFacts(file) {
-  console.log(`what anyone sees in ${rel(CHIFFRE)}:`);
+function fileFacts(file, path) {
+  console.log(`what anyone sees in ${rel(path)}:`);
   console.log(`  version       ${file.version}`);
   console.log(`  sha256_plain  ${file.sha256_plain}`);
   console.log(`  escrow        ${file.escrow ?? "(not bound)"}`);
   console.log(`  ciphertext    ${fmtBytes(unb64(file.ciphertext).length)}, opaque${file.padding ? ` (${file.padding})` : ""}`);
-  console.log(`  zk opening    ${file.zk?.opening ? `${fmtBytes(unb64(file.zk.opening.ciphertext).length)}, opaque; commitment ${file.zk.commitment.slice(0, 18)}... (public already)` : "none"}`);
-  console.log(`  recipients    ${Object.keys(file.recipients).join(", ")} (wrapped content key each)`);
+  console.log(`  zk opening    ${file.zk?.opening ? `${fmtBytes(unb64(file.zk.opening.ciphertext).length)}, opaque; commitment ${file.zk.commitment.slice(0, 18)}... (public already)${file.zk.recipients ? `; readers ${Object.keys(file.zk.recipients).join(", ")}` : ""}` : "none"}`);
+  console.log(`  readers       ${Object.entries(file.recipients).map(([r, b]) => b.kid ? `${r} (kid ${b.kid})` : r).join(", ")} (wrapped content key each; a key id names a key, it is not one)`);
 }
 
 // Prints the escrow as anyone can read it and returns the memos. Exits 1 if it is not a validated EscrowCreate.
@@ -78,8 +80,8 @@ function printStatement(b) {
   console.log(`  status    ${b.status}, computed by ${b.computed_by}`);
 }
 
-async function asPublic(file, escrow) {
-  fileFacts(file);
+async function asPublic(file, path, escrow) {
+  fileFacts(file, path);
   let ok = true;
   if (escrow && !offline) {
     const memos = await chainFacts(escrow);
@@ -89,36 +91,39 @@ async function asPublic(file, escrow) {
     if (!reportLeaks(memos)) ok = false;
   } else if (escrow) console.log(`  escrow ${escrow}: not fetched (--offline), binding and memos not checked`);
   console.log("what the public cannot do: open it.");
-  // No private key: the best anyone can do is guess a key. GCM refuses, as it must.
-  const block = file.recipients[ROLES[0]];
-  try {
-    const d = createDecipheriv("aes-256-gcm", randomBytes(32), unb64(block.iv), { authTagLength: 16 });
-    d.setAuthTag(unb64(block.tag));
-    d.update(unb64(block.wrapped)); d.final();
-    console.log("  unexpected: a random key unwrapped the content key"); ok = false;
-  } catch (e) {
-    console.log(`  tried to unwrap the ${ROLES[0]} block with a random key: refused ("${e.message}")`);
+  // No private key: the best anyone can do is guess a key. GCM refuses, as it must, on every block.
+  for (const [role, block] of Object.entries(file.recipients)) {
+    try {
+      const d = createDecipheriv("aes-256-gcm", randomBytes(32), unb64(block.iv), { authTagLength: 16 });
+      d.setAuthTag(unb64(block.tag));
+      d.update(unb64(block.wrapped)); d.final();
+      console.log(`  unexpected: a random key unwrapped the ${role} block`); ok = false;
+    } catch (e) {
+      console.log(`  tried to unwrap the ${role} block with a random key: refused ("${e.message}")`);
+    }
   }
-  console.log("  the two private keys are the only way in: who worked, how many hours, which lines stay sealed in the file.");
+  const n = Object.keys(file.recipients).length;
+  console.log(`  the ${n} private keys (${Object.keys(file.recipients).map((r) => READERS[r]?.name ?? r).join("; ")}) are the only way in: who worked, how many hours, which lines stay sealed in the file.`);
   console.log(ok ? "RESULT: OK, the file and the escrow show the public nothing private" : "RESULT: FAIL, the public learns more than the sealed file lets out");
   process.exit(ok ? 0 : 1);
 }
 
-async function asRole(role, file, escrow) {
-  if (!existsSync(keyPath(role))) throw new UsageError(`no private key for "${role}" at ${rel(keyPath(role))}: run node agent/confidentiel.mjs --init`);
+async function asRole(role, file, path, escrow, keyFile) {
+  if (!keyFile && !existsSync(keyPath(role))) throw new UsageError(`no private key for "${role}" at ${rel(keyPath(role))}: run node agent/confidentiel.mjs --init`);
   const t0 = performance.now();
   let plain;
   try {
-    const contentKey = unwrapKey(file.recipients[role], loadPrivateKey(role));
+    const contentKey = contentKeyFor(file, role, keyFile);
     plain = decryptStatement(file, contentKey);
     contentKey.fill(0);
   } catch (e) {
+    if (e instanceof UsageError) throw e;
     fail(`role ${role}: decryption failed, the GCM tag does not authenticate (tampered file or wrong key): ${e.message}`);
   }
   const ms = (performance.now() - t0).toFixed(1);
   const bulletin = JSON.parse(plain.toString("utf8"));
   const sha = empreinte(bulletin);
-  console.log(`role ${role}: unwrapped with ${rel(keyPath(role))}, decrypted ${fmtBytes(plain.toString("utf8").trimEnd().length)} (+ padding) in ${ms} ms`);
+  console.log(`role ${role} (${READERS[role].name}): unwrapped with ${rel(resolveKeyPath(role, file.recipients[role].kid, keyFile))}${file.recipients[role].kid ? ` (kid ${file.recipients[role].kid})` : ""}, decrypted ${fmtBytes(plain.toString("utf8").trimEnd().length)} (+ padding) in ${ms} ms`);
   console.log(`  recomputed sha256 ${sha}`);
   let ok = true;
   if (sha !== file.sha256_plain || sha !== bulletin.sha256) {
@@ -148,24 +153,33 @@ async function asRole(role, file, escrow) {
       }
     }
   } else if (escrow) console.log(`  escrow ${escrow}: binding not checked (--offline)`);
-  if (file.zk?.opening) console.log(`  zk opening sealed under the same key: node zk/ouvrir.mjs --role ${role} recomputes the commitment ${file.zk.commitment.slice(0, 18)}...`);
+  if (file.zk?.opening) {
+    const reads = !file.zk.recipients || file.zk.recipients[role];
+    console.log(reads
+      ? `  zk opening sealed in the same file: node zk/ouvrir.mjs --role ${role} recomputes the commitment ${file.zk.commitment.slice(0, 18)}...`
+      : `  zk opening sealed in the same file for ${Object.keys(file.zk.recipients).join(", ")} only: this role's scope is the statement, it has no key to the opening`);
+  }
   printStatement(bulletin);
   process.exit(ok ? 0 : 1);
 }
 
 function usage(code) {
-  console.error("usage: node agent/divulgation.mjs --role administration|employee|public [--escrow <EscrowCreate hash>] [--offline]");
+  console.error(`usage: node agent/divulgation.mjs --role ${ROLES.join("|")}|public [--escrow <EscrowCreate hash>] [--offline] [--file <sealed file>] [--key <private key>]`);
   process.exit(code);
 }
 
 try {
   const role = arg("--role");
   if (!role || ![...ROLES, "public"].includes(role)) usage(2);
-  if (!existsSync(CHIFFRE)) throw new UsageError(`${rel(CHIFFRE)} missing: run node agent/confidentiel.mjs --chiffre`);
-  const file = JSON.parse(readFileSync(CHIFFRE, "utf8"));
+  const path = arg("--file") ? resolve(arg("--file")) : CHIFFRE;
+  if (!existsSync(path)) throw new UsageError(`${rel(path)} missing: run node agent/confidentiel.mjs --chiffre`);
+  const file = JSON.parse(readFileSync(path, "utf8"));
+  if (!VERSIONS_READ.includes(file.version)) throw new UsageError(`${rel(path)}: version "${file.version}" is not one this tool reads (${VERSIONS_READ.join(", ")})`);
+  const keyFile = arg("--key") ? resolve(arg("--key")) : undefined;
+  if (keyFile && role === "public") throw new UsageError("--key makes no sense for the public: it has none");
   const escrow = normHash(arg("--escrow")) ?? file.escrow ?? null;
-  if (role === "public") await asPublic(file, escrow);
-  else await asRole(role, file, escrow);
+  if (role === "public") await asPublic(file, path, escrow);
+  else await asRole(role, file, path, escrow, keyFile);
 } catch (e) {
   console.error(e instanceof UsageError ? `usage: ${e.message}` : e.message);
   process.exit(e instanceof UsageError ? 2 : 1);

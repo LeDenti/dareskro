@@ -1,0 +1,23 @@
+22:07:58 employeur: r9qWKQMehC9kV5PgmZnip7oD4KfvLkY7F1 (kept, 99.999928 XRP)
+22:07:58 caisse: rwxybaKRZnMMnnTSp6kPvvy5LcctVMzmMp (kept, 99.999952 XRP)
+22:07:58 — the fund's account becomes an institution's: a signer list of 3, quorum 2 (SignerListSet, signed by the master key for the last time) —
+22:08:02 SignerListSet (2 of 3): tesSUCCESS in 4449 ms, fee 12 drops, ledger 21997071, 2026-11-01T22:08:01Z
+22:08:02   https://testnet.xrpl.org/transactions/8D38AF0F2045CD01EF3301FF15B139850AB931BD5BAD27E6AC58C611CDA8CC13
+22:08:02   signer rwpwkhFCHDAh33S3ZKe2xhGNw9f61rKTx9 (directeur), weight 1
+22:08:02   signer rPWF68bU16w5XuCLojGwiSLwxzfz76A7NQ (agent comptable), weight 1
+22:08:02   signer rwJtSTLDsTeueFNeBB13tMHRPSKiBbWVrf (responsable des carrières), weight 1
+22:08:02 — the master key is disabled (AccountSet asfDisableMaster): from now on only the list can sign —
+22:08:07 AccountSet asfDisableMaster: tesSUCCESS in 4500 ms, fee 12 drops, ledger 21997072, 2026-11-01T22:08:02Z
+22:08:07   https://testnet.xrpl.org/transactions/25E8A1BF71305F91D129BEF6827ADCBE37DA28A2C2523BC71FAD70510C990D24
+22:08:07   signers kept in agent/cles/xrpl_caisse_signers.json (0600, gitignored)
+22:08:07 — the same acknowledgement, three ways —
+22:09:19   signed by the master key alone: refused, tefMASTER_DISABLED
+22:10:33   signed by one signer of the list (quorum 2): refused, tefBAD_QUORUM
+22:10:39 Payment (ack, 2 of 3): tesSUCCESS in 6585 ms, fee 36 drops, ledger 21997116, 2026-11-01T22:10:40Z, signed by 2: rwpwkhFC…, rPWF68bU…
+22:10:39   https://testnet.xrpl.org/transactions/7FA4F9800923328506D67995717521F00A664E755B8C6BAA65AA9C65679373FC
+22:10:39   memo dareskro/ack             384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf
+22:10:39   memo dareskro/ack-sealed      1ec596cc4733277c10c69401cab4df5c10b1b5a5b1d3ffc8e1a1e5706aa49653
+22:10:39   memo dareskro/ack-of          3EE8D4BD9DBD222C37C3F6DDEE5D73C7C5CEC0DAB972E163F23853C3C85CA7E8
+22:10:39   the fund's account on the ledger: lsfDisableMaster set, signer list quorum 2 of 3; anyone can read who may sign for it, nobody can sign alone
+22:10:39 record -> agent/sortie/transmission.json (acknowledgement_multisig)
+22:10:39 the same works on the employer's side (pharmacist + accountant, 2 of 2): a Payment is a Payment, whoever signs it.

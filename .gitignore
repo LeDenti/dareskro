@@ -65,3 +65,6 @@ oracle/oracle.log
 near/cles/
 near/desk/sortie/*.mp4
 near/desk/sortie/.video_*
+
+# the pension fund's fetched copy of a deposit (a duplicate of agent/depots/<sha>.json)
+agent/sortie/recu_caisse.json

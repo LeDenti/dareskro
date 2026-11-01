@@ -311,10 +311,13 @@ account, the amount and the FinishAfter cadence remain common to all the escrows
 6. The point value is public (it is in the collective agreement). The `heures_semaine_avant`
    value (35) is public too and says the shift was overtime; hiding it would need a range
    proof on a private value instead, a small change if wanted.
-7. **Recipients are a committed file.** `agent/sortie/cles_publiques.json` lists who can read
-   every statement sealed afterwards; `--chiffre` refuses names outside employee/administration,
-   but nothing authenticates the administration's key. In production that key is pinned (its
-   fingerprint in the pay desk) or signed. Demo keys, gitignored, 0600.
+7. **Readers are a committed directory.** `agent/lecteurs.json` (since 31/10/2026; it replaced
+   `agent/sortie/cles_publiques.json`) lists who can read every statement sealed between `since`
+   and `revoked`: employee, administration, pension fund, each with a key id; `--chiffre` refuses
+   roles outside those three, `--revoke` retires a key. Nothing yet authenticates a reader's key
+   beyond the git history of that file. In production the key is pinned (its fingerprint in the
+   pay desk) or signed. Demo keys, gitignored, 0600. The pension fund's scope is the statement
+   only: the commitment's opening is sealed under a second key it does not receive.
 8. The sealed statement is padded with spaces to a 1 kB multiple, so the public learns a size
    class (3 072 bytes), not the statement's exact length; GCM tag length is pinned to 16 bytes.
 9. `node_modules` is 199 MB for a 5 kB circuit; 131 MB are native binaries the scripts never

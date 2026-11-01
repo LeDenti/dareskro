@@ -1,0 +1,26 @@
+09:34:46 node v26.12.1, branch transmission-retraite, deposit URL base https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots
+09:34:46 $ node agent/confidentiel.mjs --init
+    kept    agent/cles/employee.key
+    kept    agent/cles/administration.key
+    kept    agent/cles/retraite.key
+    directory agent/lecteurs.json: employee 5b8f038cfd6e63e0, administration b7559188b97af8cd, retraite cb8205351cb0d611
+09:34:46 sealing the statement for the three named readers (employee, administration, pension fund)…
+09:34:46 $ node agent/confidentiel.mjs --chiffre --escrow 1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D
+    escrow 1F1FE2C7...: memo hash = statement hash (872 ms on testnet)
+    sealed agent/sortie/bulletin.json: 4 845 bytes plain -> 9 557 bytes file, 3 readers, 877.6 ms
+           -> agent/sortie/bulletin.chiffre.json  and  app/public/bulletin.chiffre.json
+           sealed file sha256 9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27
+    what the public sees in that file:
+      version       dareskro/confidential-statement.v2
+      sha256_plain  384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf  (= the escrow memo)
+      escrow        1F1FE2C7A717FC42C1C202392561FA9CE55AAC45DE9AA6B9B9CBDC1DD968A00D
+      ciphertext    5 120 bytes, iv 12, tag 16  (statement padded to 1024 bytes: a size class, content opaque)
+      zk opening    400 bytes sealed under a second key for employee, administration; commitment 0x20613f4b2d866d2c... in clear (it is public already)
+      readers       employee (kid 5b8f038cfd6e63e0), administration (kid b7559188b97af8cd), retraite (kid cb8205351cb0d611): ephemeral pk 32, wrapped key 32, tag 16 each
+      nothing else: no name, no hours, no coefficient, no lines, no amount, no nonce.
+09:34:47 deposited agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json: 9557 bytes, sha256 9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27
+09:34:47   IPFS CIDv1 (raw leaf) of the same bytes: bafkreie2ttzklujar3o6biyccawy3z7cbni5omlbvxrqesmpxllg5lk5e4  (computed, not pinned: pinning is the employer's or the fund's service, with its own key)
+09:34:47   HTTPS URI (155 bytes): https://raw.githubusercontent.com/LeDenti/dareskro/transmission-retraite/agent/depots/9a9cf2a5d1208edde0a302102d8de7e20b51d73161ade302498fbad66ead5d27.json
+09:34:47   fetched now: no (HTTP 404) — push the branch, then run: node agent/demo_transmission_retraite.mjs transmit
+09:34:47 record -> agent/sortie/transmission.json (phase sealed)
+09:34:47 the chain will carry: the statement hash, the sealed file's hash, its URI, the period, the employer. Not the file.
