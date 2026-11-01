@@ -1,7 +1,7 @@
 # dareskro on Solana — an escrow program with no owner
 
 **Encode Club Solana Hackathon 2026** (12 October → 8 November, online). Tracks: Aurora Intents, Best Consumer App.
-Demo video (2 min, English, explanations at the bottom of the frame): [dareskro_la_linea_solana.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.2-solana-midpoint/dareskro_la_linea_solana.mp4) · release [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
+Demo video (2 min, English, explanations at the bottom of the frame): [dareskro_la_linea_solana.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.2-solana-midpoint/dareskro_la_linea_solana.mp4) · release [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **the pay desk has a Solana tab** (`app/`, services in `desk/`, run measured 1 Nov) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
 
 > The agent reads the evidence. The code computes the amount. A human validates.
 > A Solana program pays at the date, or when the proof is public. Nobody holds the
@@ -237,6 +237,46 @@ nothing more. What the live run proves is the thing Aurora's track asks for: a
 real cross-chain funding flow, refund address validated up front, settlement
 observed on both chains. The full record of the run (quote, hashes, status
 ticks, balances) is written to `client/sortie/`, which stays out of git.
+
+## The pay desk on Solana — same desk, another ledger
+
+The pay desk of the XRPL product (`app/`, React) gained a tab, **Solana · same
+desk**: the same statement, the same human validation, the same escrow with one
+possible outcome, on Solana. Two local services do what the Ledger and the XRPL
+oracle do on the other rail:
+
+| Piece | File | Role |
+|---|---|---|
+| desk service, 127.0.0.1:8790 | `desk/desk_solana.mjs` | holds the **employer's** devnet key; `POST /lock` turns the validated statement into `create(finish_after)` with memos `sha256:<statement>` · `<fiat> @ <rate> USD/SOL <statement id>` · `dareskro/oracle:<address>`, then tells the oracle; `POST /attempt` sends a forbidden action without preflight so the refusal is recorded; `GET /escrows` reads the employer's escrows **from the chain** and merges the oracle's word; `/fund/*` is Aurora Intents (quote for the statement's USDC, status, the run of 1 Nov as `/fund/proof`) |
+| oracle, 127.0.0.1:8791 | `desk/oracle_solana.mjs` | its own key, fees only; `/condition` issues a PREIMAGE-SHA-256 for a delivery escrow and keeps the secret (0600); `/watch` registers an escrow; every 5 s it reads the chain and calls `finish` when the cluster clock passes `finish_after` (payroll) or when the agreed file hashes right (delivery), `cancel` past `cancel_after` |
+| the tab | `app/src/SolanaDesk.tsx`, `app/src/solana.ts` | six cards: rail · statement · funding from any chain · lock · proofs · registry |
+
+Run it: `cd solana/desk && node oracle_solana.mjs create && node oracle_solana.mjs watch`
+in one terminal, `node desk_solana.mjs` in another (employer key = `~/.config/solana/id.json`
+or `SOLANA_KEYPAIR`), `cd app && npm run dev` for the desk, then the Solana tab.
+The rate comes from Aurora's own token list (the same source as the funding leg).
+
+**Run from the tab on 1 November 2026, 08:02–08:04 UTC, devnet, the full amount:**
+
+| Step | What happened | Proof |
+|---|---|---|
+| Statement | `bulletin.json`, net to pay **440.36 USD**, sha256 `384ec59c…`, validated by Julien at 08:02:24Z | the sha256 is the first memo |
+| Funding quote (dry) | 440.36 USDC on Solana for 355.539142 XRP (444.42 $), ≈ 24 s | Aurora quote, no deposit address issued |
+| Lock | `create`, **4.612065354 SOL** at 95.48 USD/SOL, payable at 08:04:23Z, escrow [`Fu4yEH4Y…`](https://explorer.solana.com/address/Fu4yEH4Y1sycRQPLDPZxo3G5sKm92PgfmFyERnUPQS2V?cluster=devnet) | [`5Lqp5sAz…`](https://explorer.solana.com/tx/5Lqp5sAzbDQAY7r9jNcWUDS5fSRebURJCQWwCh6KEhbYEnXrNTFGJYqJNVKt1bEr6G58fQsFmx9cY4snGVsrtCtm?cluster=devnet) |
+| Passer-by releases before the date | **refused `TooEarly`**, recorded | [`34QsK7is…`](https://explorer.solana.com/tx/34QsK7is7j8ajK4Xe8RGVc4VhG5TpuN3boxiaykLBiK2XmVMEhSJEHjHGnLneFiVZ4XwZ1VL9vwK4hxWhezibKSM?cluster=devnet) |
+| Employer takes the money back | **refused `NotCancellable`**, recorded | [`2hZBEFmp…`](https://explorer.solana.com/tx/2hZBEFmpCqPQX25qPubsdNa8CvJ2m6fm3ujjBYJiZ5VLcsoH3WDnfBJMGP7Dv7PtjKHBCegrZ1WNszWFw3jMsL3M?cluster=devnet) |
+| Passer-by releases to themselves | **refused `WrongDestination`**, recorded | [`2mcFfLPq…`](https://explorer.solana.com/tx/2mcFfLPqPxVYUE8Ckt9VTXwQFVtGCu98hHWoXjyvjdAFb1GwhPDHcQRTYNtJRAijDcDtk3V1RcuDKdMKDb4dAQfj?cluster=devnet) |
+| The oracle, 7 s after the date | `finish` by `5k8j3SXM…`, 4.612065354 SOL to the employee `9SnQCNbh…` | [`QfWj923H…`](https://explorer.solana.com/tx/QfWj923Hp4RvPHzej5Gssnzm6935KGAPJjS6SToh5PqFXVhdfLv1ggHL9WQXDeb9diSfVZ1cxRSEdgph8Qrt434?cluster=devnet) |
+
+The same sequence had run through the API alone a few minutes earlier (564.56 USD
+gross, escrow `2v8A2JYT…`, finished by the oracle at 07:59:55Z); the devnet SOL
+was returned to the employer's key afterwards to keep rehearsing.
+
+What is honest about it: on Solana the employer signs with a key held by the
+desk machine, not a hardware device (the Ledger path exists on XRPL only); the
+escrow is in SOL on devnet because Aurora's USDC lands on mainnet, and the two
+cannot meet without a mainnet deployment; the delivery kind is wired in both
+services but was exercised in the program's tests, not from the tab.
 
 ## Honest limits
 

@@ -36,6 +36,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { EscrowCancel, EscrowCreate, SubmittableTransaction, Transaction, Wallet } from "xrpl";
 import { ContractDesk, type ContractKind } from "./ContractDesk";
 import { PlacementDesk } from "./PlacementDesk";
+import { SolanaDesk } from "./SolanaDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
 import * as privacy from "./privacy";
@@ -102,7 +103,7 @@ const transports: { id: Mode; label: string }[] = [
 ];
 
 /** Who pays whom. The employee case is the payroll escrow; the other three are conditional escrows on the same oracle. */
-type CaseMode = "employee" | ContractKind | "placement";
+type CaseMode = "employee" | ContractKind | "placement" | "solana";
 
 const cases: { id: CaseMode; label: string }[] = [
   { id: "employee", label: "Employee" },
@@ -111,6 +112,8 @@ const cases: { id: CaseMode; label: string }[] = [
   { id: "affiliate", label: "Affiliate" },
   // the first real use: BottomRadar pays creators for a publication that stays online (placements/)
   { id: "placement", label: "Placement · BottomRadar" },
+  // the same payroll escrow on Solana (Encode Solana Hackathon 2026): solana/
+  { id: "solana", label: "Solana · same desk" },
 ];
 
 const speculosModels: { id: DeviceModelId; label: string }[] = [
@@ -165,6 +168,7 @@ function Desk(props: {
   // ---- the case: the device cards are shared, the rest depends on who pays whom
   const [caseMode, setCaseMode] = useState<CaseMode>("employee");
   const contract = caseMode !== "employee";
+  const onSolana = caseMode === "solana";
   const payerWord = contract ? "payer" : "employer";
 
   // ---- 1. the statement
@@ -976,81 +980,85 @@ function Desk(props: {
       </Card>
       )}
 
-      <Card n={contract ? "1" : "2"} title={`The ${payerWord}'s Ledger`} disabled={contract ? false : !validation}>
-        <div className="segmented">
-          {transports.map((t) => (
-            <button key={t.id} className={transport === t.id ? "active" : ""} onClick={() => props.setTransport(t.id)} disabled={!!session}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-        {transport === "speculos" && (
+      {!onSolana && (
+        <Card n={contract ? "1" : "2"} title={`The ${payerWord}'s Ledger`} disabled={contract ? false : !validation}>
+          <div className="segmented">
+            {transports.map((t) => (
+              <button key={t.id} className={transport === t.id ? "active" : ""} onClick={() => props.setTransport(t.id)} disabled={!!session}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {transport === "speculos" && (
+            <div className="row">
+              <label>
+                URL
+                <input value={props.speculosUrl} onChange={(e) => props.setSpeculosUrl(e.target.value)} disabled={!!session} />
+              </label>
+              <label>
+                Model
+                <select value={speculosModel} onChange={(e) => setSpeculosModel(e.target.value as DeviceModelId)} disabled={!!session}>
+                  {speculosModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
           <div className="row">
-            <label>
-              URL
-              <input value={props.speculosUrl} onChange={(e) => props.setSpeculosUrl(e.target.value)} disabled={!!session} />
-            </label>
-            <label>
-              Model
-              <select value={speculosModel} onChange={(e) => setSpeculosModel(e.target.value as DeviceModelId)} disabled={!!session}>
-                {speculosModels.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+            {session ? (
+              <button onClick={disconnect}>Disconnect</button>
+            ) : (
+              <button className="primary" onClick={connect} disabled={connecting || (!contract && !validation)}>
+                {connecting ? "Connecting…" : "Connect the Ledger"}
+              </button>
+            )}
+            <button onClick={getAddress} disabled={!session}>
+              Get the {payerWord}'s address
+            </button>
+            <label className="check">
+              <input type="checkbox" checked={checkOnDevice} onChange={(e) => setCheckOnDevice(e.target.checked)} />
+              Verify on device
             </label>
           </div>
-        )}
-        <div className="row">
-          {session ? (
-            <button onClick={disconnect}>Disconnect</button>
-          ) : (
-            <button className="primary" onClick={connect} disabled={connecting || (!contract && !validation)}>
-              {connecting ? "Connecting…" : "Connect the Ledger"}
-            </button>
+          <ErrorBox error={connectError} />
+          {session && (
+            <dl>
+              <dt>Device</dt>
+              <dd>
+                {session.deviceName} · {sessionState?.deviceStatus ?? "…"}
+                {sessionState && "currentApp" in sessionState && ` · app ${sessionState.currentApp.name} ${sessionState.currentApp.version}`}
+              </dd>
+            </dl>
           )}
-          <button onClick={getAddress} disabled={!session}>
-            Get the {payerWord}'s address
-          </button>
-          <label className="check">
-            <input type="checkbox" checked={checkOnDevice} onChange={(e) => setCheckOnDevice(e.target.checked)} />
-            Verify on device
-          </label>
-        </div>
-        <ErrorBox error={connectError} />
-        {session && (
-          <dl>
-            <dt>Device</dt>
-            <dd>
-              {session.deviceName} · {sessionState?.deviceStatus ?? "…"}
-              {sessionState && "currentApp" in sessionState && ` · app ${sessionState.currentApp.name} ${sessionState.currentApp.version}`}
-            </dd>
-          </dl>
-        )}
-        <ActionStatus state={addressAction.state} error={addressAction.error} />
-        {employer && (
-          <dl>
-            <dt>{contract ? "Payer" : "Employer"}</dt>
-            <dd>
-              <a href={xrpl.explorerAccountUrl(employer.address)} target="_blank">
-                {employer.address}
-              </a>
-            </dd>
-            <dt>Balance</dt>
-            <dd>
-              {balance === undefined ? "…" : balance === null ? "Not funded yet" : `${balance} XRP (testnet)`}{" "}
-              <button onClick={fund} disabled={faucetBusy}>
-                {faucetBusy ? "Funding (about 100 XRP per faucet call)…" : `Get test XRP (needs ${neededXrp})`}
-              </button>
-              {balance !== undefined && balance !== null && balance < neededXrp && (
-                <span className="ko"> · too low: {contract ? "the contract needs 30 XRP" : `${neededXrp} XRP needed for the escrows, the reserve and the fees`}</span>
-              )}
-            </dd>
-          </dl>
-        )}
-        <ErrorBox error={faucetError} />
-      </Card>
+          <ActionStatus state={addressAction.state} error={addressAction.error} />
+          {employer && (
+            <dl>
+              <dt>{contract ? "Payer" : "Employer"}</dt>
+              <dd>
+                <a href={xrpl.explorerAccountUrl(employer.address)} target="_blank">
+                  {employer.address}
+                </a>
+              </dd>
+              <dt>Balance</dt>
+              <dd>
+                {balance === undefined ? "…" : balance === null ? "Not funded yet" : `${balance} XRP (testnet)`}{" "}
+                <button onClick={fund} disabled={faucetBusy}>
+                  {faucetBusy ? "Funding (about 100 XRP per faucet call)…" : `Get test XRP (needs ${neededXrp})`}
+                </button>
+                {balance !== undefined && balance !== null && balance < neededXrp && (
+                  <span className="ko"> · too low: {contract ? "the contract needs 30 XRP" : `${neededXrp} XRP needed for the escrows, the reserve and the fees`}</span>
+                )}
+              </dd>
+            </dl>
+          )}
+          <ErrorBox error={faucetError} />
+        </Card>
+      )}
+
+      {onSolana && <SolanaDesk />}
 
       {contract && caseMode === "placement" && (
         <PlacementDesk
@@ -1065,7 +1073,7 @@ function Desk(props: {
         />
       )}
 
-      {contract && caseMode !== "placement" && (
+      {contract && caseMode !== "placement" && !onSolana && (
         <ContractDesk
           // a new desk per case and per payer address: a prepared escrow never outlives the address it was built for
           key={`${caseMode}-${employer?.address ?? ""}`}
@@ -1373,75 +1381,77 @@ function Desk(props: {
       </>
       )}
 
-      <Card title="Registry — everything the oracle watches, every kind" disabled={!oracleId}>
-        <p className="hint">
-          {oracleId
-            ? `${registry.length} escrows in oracle/registry.json (public). Newest first. Payroll escrows registered before the kinds existed show as payroll.`
-            : "No oracle running: nothing to list."}
-        </p>
-        {registry.length > 0 && (
-          <table className="lines registry">
-            <thead>
-              <tr>
-                <th>Kind</th>
-                <th>Owner</th>
-                <th>#</th>
-                <th>Destination</th>
-                <th className="num">Amount</th>
-                <th>Status</th>
-                <th>Last word</th>
-                <th>Proof</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...registry].reverse().map((e) => {
-                const kind = e.kind ?? "payroll";
-                const proofLink = e.proof?.url ?? (e.payout === "usd" && e.payoutResult && !("error" in e.payoutResult) ? e.payoutResult.redemption_explorer : undefined);
-                return (
-                  <tr key={`${e.owner}-${e.sequence}`}>
-                    <td>{kind}</td>
-                    <td className="muted">
-                      <a href={xrpl.explorerAccountUrl(e.owner)} target="_blank">{e.owner.slice(0, 8)}…</a>
-                    </td>
-                    <td className="num">{e.sequence}</td>
-                    <td className="muted">
-                      <a href={xrpl.explorerAccountUrl(e.destination)} target="_blank">{e.destination.slice(0, 8)}…</a>
-                    </td>
-                    <td className="num">{e.amountXrp ? `${e.amountXrp} XRP` : e.amount ? `${e.amount} ${e.currency ?? ""}`.trim() : "?"}</td>
-                    <td className={e.status === "finished" ? "ok" : e.status === "waiting" ? "pending" : e.status === "expired-refunded" ? "ko" : "muted"}>
-                      {e.status}
-                      {e.finishHash && (
-                        <>
-                          {" "}
-                          <a href={xrpl.explorerTxUrl(e.finishHash)} target="_blank">finish</a>
-                        </>
-                      )}
-                      {e.refundHash && (
-                        <>
-                          {" "}
-                          <a href={xrpl.explorerTxUrl(e.refundHash)} target="_blank">refund</a>
-                        </>
-                      )}
-                    </td>
-                    <td className="muted">{e.lastWhy ?? e.note ?? e.lastResult ?? (e.orderHash ? `order ${e.orderHash.slice(0, 10)}…` : "")}</td>
-                    <td className="muted">
-                      {proofLink ? (
-                        <a href={proofLink} target="_blank">{e.proof?.url ? "url" : "AP4M"}</a>
-                      ) : e.proof?.orderRef ? (
-                        e.proof.orderRef
-                      ) : e.statementSha256 ? (
-                        `sha256 ${e.statementSha256.slice(0, 10)}…`
-                      ) : (
-                        ""
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </Card>
+      {!onSolana && (
+        <Card title="Registry — everything the oracle watches, every kind" disabled={!oracleId}>
+          <p className="hint">
+            {oracleId
+              ? `${registry.length} escrows in oracle/registry.json (public). Newest first. Payroll escrows registered before the kinds existed show as payroll.`
+              : "No oracle running: nothing to list."}
+          </p>
+          {registry.length > 0 && (
+            <table className="lines registry">
+              <thead>
+                <tr>
+                  <th>Kind</th>
+                  <th>Owner</th>
+                  <th>#</th>
+                  <th>Destination</th>
+                  <th className="num">Amount</th>
+                  <th>Status</th>
+                  <th>Last word</th>
+                  <th>Proof</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...registry].reverse().map((e) => {
+                  const kind = e.kind ?? "payroll";
+                  const proofLink = e.proof?.url ?? (e.payout === "usd" && e.payoutResult && !("error" in e.payoutResult) ? e.payoutResult.redemption_explorer : undefined);
+                  return (
+                    <tr key={`${e.owner}-${e.sequence}`}>
+                      <td>{kind}</td>
+                      <td className="muted">
+                        <a href={xrpl.explorerAccountUrl(e.owner)} target="_blank">{e.owner.slice(0, 8)}…</a>
+                      </td>
+                      <td className="num">{e.sequence}</td>
+                      <td className="muted">
+                        <a href={xrpl.explorerAccountUrl(e.destination)} target="_blank">{e.destination.slice(0, 8)}…</a>
+                      </td>
+                      <td className="num">{e.amountXrp ? `${e.amountXrp} XRP` : e.amount ? `${e.amount} ${e.currency ?? ""}`.trim() : "?"}</td>
+                      <td className={e.status === "finished" ? "ok" : e.status === "waiting" ? "pending" : e.status === "expired-refunded" ? "ko" : "muted"}>
+                        {e.status}
+                        {e.finishHash && (
+                          <>
+                            {" "}
+                            <a href={xrpl.explorerTxUrl(e.finishHash)} target="_blank">finish</a>
+                          </>
+                        )}
+                        {e.refundHash && (
+                          <>
+                            {" "}
+                            <a href={xrpl.explorerTxUrl(e.refundHash)} target="_blank">refund</a>
+                          </>
+                        )}
+                      </td>
+                      <td className="muted">{e.lastWhy ?? e.note ?? e.lastResult ?? (e.orderHash ? `order ${e.orderHash.slice(0, 10)}…` : "")}</td>
+                      <td className="muted">
+                        {proofLink ? (
+                          <a href={proofLink} target="_blank">{e.proof?.url ? "url" : "AP4M"}</a>
+                        ) : e.proof?.orderRef ? (
+                          e.proof.orderRef
+                        ) : e.statementSha256 ? (
+                          `sha256 ${e.statementSha256.slice(0, 10)}…`
+                        ) : (
+                          ""
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      )}
     </main>
   );
 }

@@ -8,3 +8,6 @@ test-ledger
 .surfpool
 client/cles/
 client/sortie/
+desk/cles/
+desk/sortie/
+desk/registry_solana.json
