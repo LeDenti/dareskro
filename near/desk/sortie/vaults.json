@@ -1,0 +1,139 @@
+[
+  {
+    "id": "4",
+    "action": "create",
+    "by": "dareskro-employee.testnet",
+    "ok": true,
+    "hash": "dqNfZfDpv3VczSkiS47kPPLAGwqYZzQfkh48NnYCj9x",
+    "explorer": "https://testnet.nearblocks.io/txns/dqNfZfDpv3VczSkiS47kPPLAGwqYZzQfkh48NnYCj9x",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_create\",\"data\":[{\"id\":\"4\",\"vault\":{\"owner\":\"dareskro-employee.testnet\",\"beneficiary\":\"dareskro-employer.testnet\",\"amount\":\"993180000000000000000000\",\"parties\":[\"dareskro-employee.testnet\",\"dareskro-employer.testnet\",\"dareskro-oracle.testnet\"],\"threshold\":2,\"votes\":[],\"deadline\":\"1793571102547644502\",\"memos\":[\"lease:L-2026-11 · 12 rue de la Paix · deposit 1 200 EUR\",\"inventory_in:sha256:d1d3f7a8c83e89734e0a636217379406225f44070ab1a927c43c0d199381d6c7\",\"inventory_out:sha256:589310d4c83b74f7169fe981a430e5a8efb68f9a830ec94600d90eca3586578d\",\"quote:sha256:4ba6f58a1499be17ddeee9b6c0b55cdf717039123ca1ef5d0142101444654ad3 repainting quote 180 EUR\"],\"status\":\"Locked\",\"paid_to_beneficiary\":\"0\",\"created_at\":\"1793570504899443897\",\"closed_at\":null,\"closed_by\":null}}]}"
+    ],
+    "amountNear": "0.9932",
+    "parties": [
+      "dareskro-employee.testnet",
+      "dareskro-employer.testnet",
+      "dareskro-oracle.testnet"
+    ],
+    "threshold": 2,
+    "deadline": "1793571102547644502",
+    "at": "2026-11-01T22:01:45.805Z"
+  },
+  {
+    "id": "4",
+    "action": "vote",
+    "by": "dareskro-stranger.testnet",
+    "toBeneficiaryNear": "0.15",
+    "ok": false,
+    "hash": "CNoWR7HuDVTBR8HbuUWsbidAJVu2CGAz4nrq9muLyqkm",
+    "explorer": "https://testnet.nearblocks.io/txns/CNoWR7HuDVTBR8HbuUWsbidAJVu2CGAz4nrq9muLyqkm",
+    "error": "not a party to this deposit",
+    "logs": [],
+    "decided": false,
+    "status": "Locked",
+    "refused": true,
+    "at": "2026-11-01T22:01:51.495Z"
+  },
+  {
+    "id": "4",
+    "action": "vote",
+    "by": "dareskro-employer.testnet",
+    "toBeneficiaryNear": "0.15",
+    "ok": true,
+    "hash": "BKPi3ETdcgyJrucesZJ4L3679MRm8zCPEX7dHkHwYAuk",
+    "explorer": "https://testnet.nearblocks.io/txns/BKPi3ETdcgyJrucesZJ4L3679MRm8zCPEX7dHkHwYAuk",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_vote\",\"data\":[{\"id\":\"4\",\"party\":\"dareskro-employer.testnet\",\"to_beneficiary\":\"150000000000000000000000\",\"agree\":1,\"threshold\":2}]}"
+    ],
+    "decided": false,
+    "status": "Locked",
+    "refused": false,
+    "at": "2026-11-01T22:01:53.900Z"
+  },
+  {
+    "id": "4",
+    "action": "vote",
+    "by": "dareskro-employee.testnet",
+    "toBeneficiaryNear": "0",
+    "ok": true,
+    "hash": "6ru2pRTn6ACSfDXr6Lhy2S7Bh3vx2pKm9pCdvHiNXwji",
+    "explorer": "https://testnet.nearblocks.io/txns/6ru2pRTn6ACSfDXr6Lhy2S7Bh3vx2pKm9pCdvHiNXwji",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_vote\",\"data\":[{\"id\":\"4\",\"party\":\"dareskro-employee.testnet\",\"to_beneficiary\":\"0\",\"agree\":1,\"threshold\":2}]}"
+    ],
+    "decided": false,
+    "status": "Locked",
+    "refused": false,
+    "at": "2026-11-01T22:01:55.919Z"
+  },
+  {
+    "id": "4",
+    "action": "vote",
+    "by": "dareskro-oracle.testnet",
+    "toBeneficiaryNear": "0.15",
+    "ok": true,
+    "hash": "Ca73ycDbVgiubcxguiEfX445A9qBCULexPTHzebom51b",
+    "explorer": "https://testnet.nearblocks.io/txns/Ca73ycDbVgiubcxguiEfX445A9qBCULexPTHzebom51b",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_vote\",\"data\":[{\"id\":\"4\",\"party\":\"dareskro-oracle.testnet\",\"to_beneficiary\":\"150000000000000000000000\",\"agree\":2,\"threshold\":2}]}",
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_decided\",\"data\":[{\"id\":\"4\",\"by\":\"dareskro-oracle.testnet\",\"to_beneficiary\":\"150000000000000000000000\",\"to_owner\":\"843180000000000000000000\",\"votes\":2,\"timeout\":false}]}"
+    ],
+    "decided": true,
+    "status": "Finished",
+    "refused": false,
+    "at": "2026-11-01T22:01:59.425Z"
+  },
+  {
+    "id": "5",
+    "action": "create",
+    "by": "dareskro-employee.testnet",
+    "ok": true,
+    "hash": "Bz5GddEmr2AycENw8umuDMsfxszbY2Rm2jCMSFmZBfd3",
+    "explorer": "https://testnet.nearblocks.io/txns/Bz5GddEmr2AycENw8umuDMsfxszbY2Rm2jCMSFmZBfd3",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_create\",\"data\":[{\"id\":\"5\",\"vault\":{\"owner\":\"dareskro-employee.testnet\",\"beneficiary\":\"dareskro-employer.testnet\",\"amount\":\"993180000000000000000000\",\"parties\":[\"dareskro-employee.testnet\",\"dareskro-employer.testnet\",\"dareskro-oracle.testnet\"],\"threshold\":2,\"votes\":[],\"deadline\":\"1793570551046938484\",\"memos\":[\"lease:L-2026-11 · 12 rue de la Paix · deposit 1 200 EUR\",\"inventory_in:sha256:d1d3f7a8c83e89734e0a636217379406225f44070ab1a927c43c0d199381d6c7\",\"inventory_out:sha256:589310d4c83b74f7169fe981a430e5a8efb68f9a830ec94600d90eca3586578d\",\"quote:sha256:4ba6f58a1499be17ddeee9b6c0b55cdf717039123ca1ef5d0142101444654ad3 repainting quote 180 EUR\"],\"status\":\"Locked\",\"paid_to_beneficiary\":\"0\",\"created_at\":\"1793570523078101390\",\"closed_at\":null,\"closed_by\":null}}]}"
+    ],
+    "amountNear": "0.9932",
+    "parties": [
+      "dareskro-employee.testnet",
+      "dareskro-employer.testnet",
+      "dareskro-oracle.testnet"
+    ],
+    "threshold": 2,
+    "deadline": "1793570551046938484",
+    "at": "2026-11-01T22:02:03.924Z"
+  },
+  {
+    "id": "5",
+    "action": "timeout",
+    "by": "dareskro-stranger.testnet",
+    "ok": false,
+    "hash": "7DEyunhb6Bp2a1QpSJ1tL5SKpHsXmwgTUUYkgieceBge",
+    "explorer": "https://testnet.nearblocks.io/txns/7DEyunhb6Bp2a1QpSJ1tL5SKpHsXmwgTUUYkgieceBge",
+    "error": "deadline not reached: the parties can still decide",
+    "logs": [],
+    "status": "Locked",
+    "refused": true,
+    "at": "2026-11-01T22:02:06.194Z"
+  },
+  {
+    "id": "5",
+    "action": "timeout",
+    "by": "dareskro-stranger.testnet",
+    "ok": true,
+    "hash": "7HmvfdCuGfuH8ZBhud1nRhL5V82DA2ux3Tan7ud6bTx6",
+    "explorer": "https://testnet.nearblocks.io/txns/7HmvfdCuGfuH8ZBhud1nRhL5V82DA2ux3Tan7ud6bTx6",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_decided\",\"data\":[{\"id\":\"5\",\"by\":\"dareskro-stranger.testnet\",\"to_beneficiary\":\"0\",\"to_owner\":\"993180000000000000000000\",\"votes\":0,\"timeout\":true}]}"
+    ],
+    "status": "Cancelled",
+    "refused": false,
+    "at": "2026-11-01T22:02:35.048Z"
+  }
+]

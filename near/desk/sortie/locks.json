@@ -1,0 +1,22 @@
+[
+  {
+    "id": "19",
+    "ok": true,
+    "hash": "4VRPHf5WP6DGgGZ9aGfMoAojNj1JgsjVPrjLZC1GEpmL",
+    "explorer": "https://testnet.nearblocks.io/txns/4VRPHf5WP6DGgGZ9aGfMoAojNj1JgsjVPrjLZC1GEpmL",
+    "error": null,
+    "logs": [
+      "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"create\",\"data\":[{\"id\":\"19\",\"escrow\":{\"owner\":\"dareskro-employer.testnet\",\"destination\":\"dareskro-employee.testnet\",\"amount\":\"995940000000000000000000\",\"finish_after\":\"1793570499785384721\",\"cancel_after\":null,\"condition\":null,\"memos\":[\"sha256:384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf\",\"net 440.36 USD validated by Julien, pay desk operator\",\"dareskro/oracle:dareskro-oracle.testnet\"],\"status\":\"Locked\",\"created_at\":\"1793570477245043436\",\"closed_at\":null,\"closed_by\":null,\"fulfillment\":null}}]}"
+    ],
+    "destination": "dareskro-employee.testnet",
+    "finishAfter": "1793570499785384721",
+    "finishAfterMs": 1793570499785,
+    "memos": [
+      "sha256:384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+      "net 440.36 USD validated by Julien, pay desk operator",
+      "dareskro/oracle:dareskro-oracle.testnet"
+    ],
+    "amountNear": "0.9959",
+    "lockedAt": "2026-11-01T22:01:18.114Z"
+  }
+]

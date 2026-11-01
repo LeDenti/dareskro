@@ -1,0 +1,13 @@
+2026-11-01 21:54:37 UTC  desk NEAR (dareskro.testnet, testnet) listening on http://127.0.0.1:8794
+2026-11-01 22:01:18 UTC  lock escrow #19: 0.9959 NEAR to dareskro-employee.testnet, payable in 25 s  https://testnet.nearblocks.io/txns/4VRPHf5WP6DGgGZ9aGfMoAojNj1JgsjVPrjLZC1GEpmL
+2026-11-01 22:01:21 UTC  attempt early-finish on #19 by dareskro-stranger.testnet: refused: too early: the contract's clock has not reached finish_after  https://testnet.nearblocks.io/txns/AShdhHYK2GR5aVXgBThvigw81GH1rFuSrmL3TNvjS37
+2026-11-01 22:01:23 UTC  attempt cancel on #19 by dareskro-employer.testnet: refused: this escrow has no cancel_after: nobody can cancel it  https://testnet.nearblocks.io/txns/41as1VcQuBfnjhsYThoMF4EdFdLynnMqm7SHg61FJ1kF
+2026-11-01 22:01:43 UTC  attempt finish on #19 by dareskro-stranger.testnet: accepted  https://testnet.nearblocks.io/txns/5KkhyE1QD1ymaiTUL9yRBuPSeU9MawEc4Swq85kNRNGr
+2026-11-01 22:01:45 UTC  vault #4 created by dareskro-employee.testnet: 0.9932 NEAR for dareskro-employer.testnet, 2 of 3, deadline in 600 s  https://testnet.nearblocks.io/txns/dqNfZfDpv3VczSkiS47kPPLAGwqYZzQfkh48NnYCj9x
+2026-11-01 22:01:51 UTC  vault #4 vote by dareskro-stranger.testnet: 0.15 NEAR to the beneficiary → refused: not a party to this deposit  https://testnet.nearblocks.io/txns/CNoWR7HuDVTBR8HbuUWsbidAJVu2CGAz4nrq9muLyqkm
+2026-11-01 22:01:53 UTC  vault #4 vote by dareskro-employer.testnet: 0.15 NEAR to the beneficiary → recorded, 1 vote(s)  https://testnet.nearblocks.io/txns/BKPi3ETdcgyJrucesZJ4L3679MRm8zCPEX7dHkHwYAuk
+2026-11-01 22:01:55 UTC  vault #4 vote by dareskro-employee.testnet: 0 NEAR to the beneficiary → recorded, 2 vote(s)  https://testnet.nearblocks.io/txns/6ru2pRTn6ACSfDXr6Lhy2S7Bh3vx2pKm9pCdvHiNXwji
+2026-11-01 22:01:59 UTC  vault #4 vote by dareskro-oracle.testnet: 0.15 NEAR to the beneficiary → DECIDED, paid  https://testnet.nearblocks.io/txns/Ca73ycDbVgiubcxguiEfX445A9qBCULexPTHzebom51b
+2026-11-01 22:02:03 UTC  vault #5 created by dareskro-employee.testnet: 0.9932 NEAR for dareskro-employer.testnet, 2 of 3, deadline in 30 s  https://testnet.nearblocks.io/txns/Bz5GddEmr2AycENw8umuDMsfxszbY2Rm2jCMSFmZBfd3
+2026-11-01 22:02:06 UTC  vault #5 timeout by dareskro-stranger.testnet: refused: deadline not reached: the parties can still decide  https://testnet.nearblocks.io/txns/7DEyunhb6Bp2a1QpSJ1tL5SKpHsXmwgTUUYkgieceBge
+2026-11-01 22:02:35 UTC  vault #5 timeout by dareskro-stranger.testnet: returned to the owner  https://testnet.nearblocks.io/txns/7HmvfdCuGfuH8ZBhud1nRhL5V82DA2ux3Tan7ud6bTx6

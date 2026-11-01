@@ -16,17 +16,20 @@
 //!   the NEAR counterpart of the XLS-56 Batch dareskro used for net pay +
 //!   contributions + income tax.
 //!
+//! Two more records live here: the sealed payslip (a NEP-171 token nobody can transfer)
+//! and the shared deposit, a vault decided by a threshold of parties (the rental deposit).
+//!
 //! Who holds the funds: this contract account. Deploy it, then delete its
 //! full-access keys (`near account delete-keys`): from then on nobody can change
 //! the code or take the balance, and the only moves left are the four methods.
 //!
 //! Times are nanoseconds since the Unix epoch, as `env::block_timestamp()`.
-use near_sdk::json_types::U64;
+use near_sdk::json_types::{Base64VecU8, U64, U128};
 use near_sdk::serde_json::json;
-use near_sdk::store::IterableMap;
+use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{
-    AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, PromiseError, env, near,
-    require,
+    AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, PromiseError, PromiseOrValue,
+    PromiseResult, env, near, require,
 };
 
 const CALLBACK_GAS: Gas = Gas::from_tgas(5);
@@ -79,6 +82,9 @@ pub struct NewEscrow {
 #[near(serializers = [borsh])]
 enum StorageKey {
     Escrows,
+    Payslips,
+    PayslipsByOwner,
+    Vaults,
 }
 
 #[near(contract_state)]
@@ -86,6 +92,136 @@ enum StorageKey {
 pub struct Contract {
     escrows: IterableMap<u64, Escrow>,
     next_id: u64,
+    /// the sealed payslips, NEP-171 tokens nobody can transfer; token id = "payslip-<n>"
+    payslips: IterableMap<String, Payslip>,
+    next_payslip: u64,
+    payslips_by_owner: LookupMap<AccountId, Vec<String>>,
+    /// the shared deposits, decided by a threshold of parties
+    vaults: IterableMap<u64, Vault>,
+    next_vault: u64,
+}
+
+/// The state before payslips existed (deployed 31/10/2026 07:5x UTC); `migrate` reads it.
+#[near(serializers = [borsh])]
+pub struct ContractV1 {
+    escrows: IterableMap<u64, Escrow>,
+    next_id: u64,
+}
+
+// ------------------------------------------------------------------------------------------
+// The sealed payslip. The chain is public and permanent, so the payslip never goes on it in
+// clear: it is sealed off-chain (AES-256-GCM under a fresh content key, that key wrapped for
+// each reader with X25519 — see ../scelle.mjs, the same scheme as agent/confidentiel.mjs on
+// XRPL) and what is stored here is the sealed file, the sha256 of the clear statement and the
+// list of readers who hold a capsule: the employee, URSSAF, the pension fund, the tax office.
+// Anyone can read the record; only a reader's private key turns it back into a payslip.
+// It is issued as a NEP-171 token owned by the employee, so wallets and explorers show
+// "my payslips", and it cannot be transferred: a payslip stays with the person it names.
+// ------------------------------------------------------------------------------------------
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Payslip {
+    pub owner_id: AccountId,
+    pub issuer: AccountId,
+    pub escrow_id: Option<U64>,
+    pub period: String,
+    /// sha256 (hex) of the clear statement — the same value the escrow's memo carries
+    pub sha256: String,
+    /// who holds a key capsule inside `sealed`
+    pub readers: Vec<String>,
+    /// the sealed file, opaque to everyone who is not a reader
+    pub sealed: String,
+    pub issued_at: U64,
+}
+
+/// NEP-177 token metadata.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct TokenMetadata {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub media: Option<String>,
+    pub media_hash: Option<Base64VecU8>,
+    pub copies: Option<u64>,
+    pub issued_at: Option<String>,
+    pub expires_at: Option<String>,
+    pub starts_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub extra: Option<String>,
+    pub reference: Option<String>,
+    pub reference_hash: Option<Base64VecU8>,
+}
+
+/// NEP-171 token view.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct Token {
+    pub token_id: String,
+    pub owner_id: AccountId,
+    pub metadata: TokenMetadata,
+}
+
+/// NEP-177 contract metadata.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct NFTContractMetadata {
+    pub spec: String,
+    pub name: String,
+    pub symbol: String,
+    pub icon: Option<String>,
+    pub base_uri: Option<String>,
+    pub reference: Option<String>,
+    pub reference_hash: Option<Base64VecU8>,
+}
+
+// ------------------------------------------------------------------------------------------
+// The shared deposit (coffre). A rental deposit is held in euros and usually returned in
+// part, so it is not an escrow: nobody should be able to pay it out alone, and any split
+// must be possible. On XRPL dareskro gave each lease an account under a 2-of-3 signer list
+// (depot/). Here the vault is a record of this contract: the tenant (owner) funds it, the
+// landlord is the beneficiary, a mediator is the third party. Each party votes the amount
+// that goes to the beneficiary — the rest returns to the owner — and the vote that reaches
+// the threshold pays, in the same call. Past the deadline with no decision, anyone may
+// return everything to the owner. The memos carry the lease id and the sha256 of the
+// inventories and quotes: the public trace a judge can read.
+// ------------------------------------------------------------------------------------------
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Vote {
+    pub party: AccountId,
+    pub to_beneficiary: NearToken,
+}
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Vault {
+    /// who funded it and gets back what the beneficiary is not awarded (the tenant)
+    pub owner: AccountId,
+    /// who the votes award money to (the landlord)
+    pub beneficiary: AccountId,
+    /// what is held (the deposit minus this record's storage)
+    pub amount: NearToken,
+    /// who may vote, 2 to 8 accounts
+    pub parties: Vec<AccountId>,
+    /// how many parties must vote the same amount
+    pub threshold: u8,
+    pub votes: Vec<Vote>,
+    /// after this time, with no decision, anyone may return everything to the owner
+    pub deadline: Option<U64>,
+    pub memos: Vec<String>,
+    pub status: Status,
+    pub paid_to_beneficiary: NearToken,
+    pub created_at: U64,
+    pub closed_at: Option<U64>,
+    pub closed_by: Option<AccountId>,
+}
+
+const MAX_PARTIES: usize = 8;
+
+fn is_hex(s: &str, len: usize) -> bool {
+    s.len() == len && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
 fn event(name: &str, data: near_sdk::serde_json::Value) {
@@ -115,7 +251,31 @@ fn check_shape(e: &NewEscrow) {
 impl Contract {
     #[init]
     pub fn new() -> Self {
-        Self { escrows: IterableMap::new(StorageKey::Escrows), next_id: 1 }
+        Self {
+            escrows: IterableMap::new(StorageKey::Escrows),
+            next_id: 1,
+            payslips: IterableMap::new(StorageKey::Payslips),
+            next_payslip: 1,
+            payslips_by_owner: LookupMap::new(StorageKey::PayslipsByOwner),
+            vaults: IterableMap::new(StorageKey::Vaults),
+            next_vault: 1,
+        }
+    }
+
+    /// From the first deployment (escrows only) to this one. Keeps every escrow.
+    #[private]
+    #[init(ignore_state)]
+    pub fn migrate() -> Self {
+        let old: ContractV1 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
+        Self {
+            escrows: old.escrows,
+            next_id: old.next_id,
+            payslips: IterableMap::new(StorageKey::Payslips),
+            next_payslip: 1,
+            payslips_by_owner: LookupMap::new(StorageKey::PayslipsByOwner),
+            vaults: IterableMap::new(StorageKey::Vaults),
+            next_vault: 1,
+        }
     }
 
     // ------------------------------------------------------------------ writes
@@ -280,6 +440,303 @@ impl Contract {
         U64(env::block_timestamp())
     }
 
+    // ------------------------------------------------------- the sealed payslip
+
+    /// Issue the sealed payslip of a period to the employee, as a token they own and
+    /// nobody can transfer. The attached deposit pays the record's storage; the surplus
+    /// goes back. `sha256` is the clear statement's; `sealed` is opaque except to `readers`.
+    #[payable]
+    pub fn issue_payslip(
+        &mut self,
+        owner_id: AccountId,
+        escrow_id: Option<U64>,
+        period: String,
+        sha256: String,
+        readers: Vec<String>,
+        sealed: String,
+    ) -> Token {
+        require!(is_hex(&sha256, 64), "sha256 must be 64 hex characters");
+        require!(!readers.is_empty(), "a payslip nobody can read is not a payslip");
+        require!(!sealed.is_empty() && sealed.len() <= 64 * 1024, "sealed file: 1 byte to 64 KiB");
+        require!(!period.is_empty() && period.len() <= 16, "period, e.g. 2026-10");
+        if let Some(id) = escrow_id {
+            require!(self.escrows.contains_key(&id.0), "unknown escrow");
+        }
+        let deposit = env::attached_deposit();
+        let before = env::storage_usage();
+        let token_id = format!("payslip-{}", self.next_payslip);
+        self.next_payslip += 1;
+        let p = Payslip {
+            owner_id: owner_id.clone(),
+            issuer: env::predecessor_account_id(),
+            escrow_id,
+            period,
+            sha256: sha256.to_ascii_lowercase(),
+            readers,
+            sealed,
+            issued_at: U64(env::block_timestamp()),
+        };
+        self.payslips.insert(token_id.clone(), p);
+        let mut list = self.payslips_by_owner.get(&owner_id).cloned().unwrap_or_default();
+        list.push(token_id.clone());
+        self.payslips_by_owner.insert(owner_id.clone(), list);
+        self.payslips.flush();
+        self.payslips_by_owner.flush();
+        let storage = env::storage_byte_cost().saturating_mul((env::storage_usage() - before) as u128);
+        require!(deposit >= storage, format!("attach at least {} for this record's storage", storage));
+        let surplus = deposit.saturating_sub(storage);
+        if surplus.as_yoctonear() > 0 {
+            Promise::new(env::predecessor_account_id()).transfer(surplus).detach();
+        }
+        env::log_str(&format!(
+            "EVENT_JSON:{}",
+            json!({"standard": "nep171", "version": "1.2.0", "event": "nft_mint",
+                   "data": [{"owner_id": owner_id, "token_ids": [token_id]}]})
+        ));
+        event("payslip", json!({"token_id": token_id, "owner_id": owner_id, "sha256": sha256, "storage": storage}));
+        self.token(&token_id).unwrap()
+    }
+
+    /// The whole record, sealed file included.
+    pub fn payslip(&self, token_id: String) -> Option<Payslip> {
+        self.payslips.get(&token_id).cloned()
+    }
+
+    // NEP-171 / NEP-177 views, so wallets and explorers list the payslips.
+
+    pub fn nft_metadata(&self) -> NFTContractMetadata {
+        NFTContractMetadata {
+            spec: "nft-1.0.0".into(),
+            name: "dareskro — sealed payslips".into(),
+            symbol: "PAYSLIP".into(),
+            icon: None,
+            base_uri: None,
+            reference: None,
+            reference_hash: None,
+        }
+    }
+
+    pub fn nft_token(&self, token_id: String) -> Option<Token> {
+        self.token(&token_id)
+    }
+
+    pub fn nft_total_supply(&self) -> U128 {
+        U128((self.next_payslip - 1) as u128)
+    }
+
+    pub fn nft_supply_for_owner(&self, account_id: AccountId) -> U128 {
+        U128(self.payslips_by_owner.get(&account_id).map(|v| v.len()).unwrap_or(0) as u128)
+    }
+
+    pub fn nft_tokens_for_owner(&self, account_id: AccountId, from_index: Option<U128>, limit: Option<u64>) -> Vec<Token> {
+        let from = from_index.map(|v| v.0 as usize).unwrap_or(0);
+        let limit = limit.unwrap_or(50) as usize;
+        self.payslips_by_owner
+            .get(&account_id)
+            .map(|ids| ids.iter().skip(from).take(limit).filter_map(|id| self.token(id)).collect())
+            .unwrap_or_default()
+    }
+
+    /// A payslip stays with the person it names. Both NEP-171 transfer entry points refuse.
+    #[payable]
+    pub fn nft_transfer(&mut self, receiver_id: AccountId, token_id: String, approval_id: Option<u64>, memo: Option<String>) {
+        let _ = (receiver_id, approval_id, memo);
+        require!(self.payslips.contains_key(&token_id), "unknown token");
+        env::panic_str("a payslip is not transferable: it stays with the person it was issued to");
+    }
+
+    #[payable]
+    pub fn nft_transfer_call(&mut self, receiver_id: AccountId, token_id: String, approval_id: Option<u64>, memo: Option<String>, msg: String) -> bool {
+        let _ = (receiver_id, approval_id, memo, msg);
+        require!(self.payslips.contains_key(&token_id), "unknown token");
+        env::panic_str("a payslip is not transferable: it stays with the person it was issued to");
+    }
+
+    fn token(&self, token_id: &str) -> Option<Token> {
+        let p = self.payslips.get(token_id)?;
+        let hash = hex::decode(&p.sha256).unwrap_or_default();
+        Some(Token {
+            token_id: token_id.to_string(),
+            owner_id: p.owner_id.clone(),
+            metadata: TokenMetadata {
+                title: Some(format!("Payslip {}", p.period)),
+                description: Some(format!(
+                    "Sealed payslip for {}: readable by {} only; sha256 of the clear statement in reference_hash.",
+                    p.period,
+                    p.readers.join(", ")
+                )),
+                media: None,
+                media_hash: None,
+                copies: Some(1),
+                issued_at: Some((p.issued_at.0 / 1_000_000).to_string()),
+                expires_at: None,
+                starts_at: None,
+                updated_at: None,
+                extra: Some(
+                    json!({"escrow_id": p.escrow_id, "readers": p.readers, "sealed_bytes": p.sealed.len(), "issuer": p.issuer, "transferable": false})
+                        .to_string(),
+                ),
+                reference: None,
+                reference_hash: Some(Base64VecU8(hash)),
+            },
+        })
+    }
+
+    // ------------------------------------------------------- the shared deposit
+
+    /// Lock the attached deposit for `beneficiary`, to be decided by `threshold` of
+    /// `parties`. The caller is the owner. The record's storage is paid out of the deposit.
+    #[payable]
+    pub fn vault_create(
+        &mut self,
+        beneficiary: AccountId,
+        parties: Vec<AccountId>,
+        threshold: u8,
+        deadline: Option<U64>,
+        memos: Option<Vec<String>>,
+    ) -> U64 {
+        let owner = env::predecessor_account_id();
+        require!(beneficiary != env::current_account_id(), "the vault cannot pay the contract itself");
+        require!(beneficiary != owner, "owner and beneficiary are the two sides of a deposit");
+        require!(parties.len() >= 2 && parties.len() <= MAX_PARTIES, "2 to 8 parties");
+        require!(
+            threshold >= 1 && (threshold as usize) <= parties.len(),
+            "threshold must be between 1 and the number of parties"
+        );
+        for (i, p) in parties.iter().enumerate() {
+            require!(!parties[..i].contains(p), "a party is listed twice");
+        }
+        let now = env::block_timestamp();
+        if let Some(d) = deadline {
+            require!(d.0 > now, "deadline already passed");
+        }
+        let deposit = env::attached_deposit();
+        let before = env::storage_usage();
+        let id = self.next_vault;
+        self.next_vault += 1;
+        self.vaults.insert(
+            id,
+            Vault {
+                owner,
+                beneficiary,
+                amount: deposit,
+                parties,
+                threshold,
+                votes: Vec::new(),
+                deadline,
+                memos: memos.unwrap_or_default(),
+                status: Status::Locked,
+                paid_to_beneficiary: NearToken::from_yoctonear(0),
+                created_at: U64(now),
+                closed_at: None,
+                closed_by: None,
+            },
+        );
+        self.vaults.flush();
+        let storage = env::storage_byte_cost().saturating_mul((env::storage_usage() - before) as u128);
+        require!(deposit > storage, "deposit does not even cover the record's storage");
+        let v = self.vaults.get_mut(&id).unwrap();
+        v.amount = deposit.saturating_sub(storage);
+        let snapshot = v.clone();
+        event("vault_create", json!({"id": U64(id), "vault": snapshot}));
+        U64(id)
+    }
+
+    /// One party's vote: `to_beneficiary` for the beneficiary, the rest back to the owner.
+    /// A party may change its vote while the vault is locked. The vote that reaches the
+    /// threshold pays both sides in this same call; until then nothing moves.
+    pub fn vault_vote(&mut self, id: U64, to_beneficiary: NearToken) -> PromiseOrValue<bool> {
+        let now = env::block_timestamp();
+        let party = env::predecessor_account_id();
+        let v = self.vaults.get_mut(&id.0).unwrap_or_else(|| env::panic_str("unknown vault"));
+        require!(v.status == Status::Locked, "vault already closed");
+        require!(v.parties.contains(&party), "not a party to this deposit");
+        require!(to_beneficiary <= v.amount, "vote exceeds the deposit");
+        v.votes.retain(|x| x.party != party);
+        v.votes.push(Vote { party: party.clone(), to_beneficiary });
+        let agree = v.votes.iter().filter(|x| x.to_beneficiary == to_beneficiary).count();
+        event("vault_vote", json!({"id": id, "party": party, "to_beneficiary": to_beneficiary, "agree": agree, "threshold": v.threshold}));
+        if agree < v.threshold as usize {
+            return PromiseOrValue::Value(false);
+        }
+        let to_owner = v.amount.saturating_sub(to_beneficiary);
+        v.status = Status::Finished;
+        v.closed_at = Some(U64(now));
+        v.closed_by = Some(party.clone());
+        v.paid_to_beneficiary = to_beneficiary;
+        let (owner, beneficiary) = (v.owner.clone(), v.beneficiary.clone());
+        event("vault_decided", json!({"id": id, "by": party, "to_beneficiary": to_beneficiary, "to_owner": to_owner, "votes": agree, "timeout": false}));
+        PromiseOrValue::Promise(Self::pay_out(id, beneficiary, to_beneficiary, owner, to_owner))
+    }
+
+    /// Past the deadline with no decision: anyone may return the whole deposit to the owner.
+    pub fn vault_timeout(&mut self, id: U64) -> Promise {
+        let now = env::block_timestamp();
+        let caller = env::predecessor_account_id();
+        let v = self.vaults.get_mut(&id.0).unwrap_or_else(|| env::panic_str("unknown vault"));
+        require!(v.status == Status::Locked, "vault already closed");
+        let d = v.deadline.unwrap_or_else(|| env::panic_str("this vault has no deadline: only the parties can decide"));
+        require!(now >= d.0, "deadline not reached: the parties can still decide");
+        v.status = Status::Cancelled;
+        v.closed_at = Some(U64(now));
+        v.closed_by = Some(caller.clone());
+        let (owner, amount) = (v.owner.clone(), v.amount);
+        event("vault_decided", json!({"id": id, "by": caller, "to_beneficiary": NearToken::from_yoctonear(0), "to_owner": amount, "votes": 0, "timeout": true}));
+        Promise::new(owner).transfer(amount).then(
+            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_vault_paid(id),
+        )
+    }
+
+    /// After the payout: if a leg failed (an account deleted meanwhile), say so on the ledger.
+    /// The vault stays decided; the memo of the failed leg is the trace to act on.
+    #[private]
+    pub fn on_vault_paid(&mut self, id: U64) -> bool {
+        let mut ok = true;
+        for i in 0..env::promise_results_count() {
+            if !matches!(env::promise_result(i), PromiseResult::Successful(_)) {
+                ok = false;
+            }
+        }
+        if !ok {
+            event("vault_transfer_failed", json!({"id": id}));
+        }
+        ok
+    }
+
+    pub fn vault(&self, id: U64) -> Option<Vault> {
+        self.vaults.get(&id.0).cloned()
+    }
+
+    pub fn vaults(&self, from_index: Option<U64>, limit: Option<u32>) -> Vec<(U64, Vault)> {
+        let from = from_index.map(|v| v.0).unwrap_or(1);
+        let limit = limit.unwrap_or(50) as usize;
+        self.vaults
+            .iter()
+            .filter(|(k, _)| **k >= from)
+            .take(limit)
+            .map(|(k, v)| (U64(*k), v.clone()))
+            .collect()
+    }
+
+    pub fn vault_count(&self) -> U64 {
+        U64(self.next_vault - 1)
+    }
+
+    fn pay_out(id: U64, beneficiary: AccountId, to_beneficiary: NearToken, owner: AccountId, to_owner: NearToken) -> Promise {
+        let mut p: Option<Promise> = None;
+        if to_beneficiary.as_yoctonear() > 0 {
+            p = Some(Promise::new(beneficiary).transfer(to_beneficiary));
+        }
+        if to_owner.as_yoctonear() > 0 {
+            let q = Promise::new(owner).transfer(to_owner);
+            p = Some(match p {
+                Some(a) => a.and(q),
+                None => q,
+            });
+        }
+        p.unwrap().then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_vault_paid(id))
+    }
+
     // --------------------------------------------------------------- internals
 
     fn insert(&mut self, item: &NewEscrow) -> u64 {
@@ -377,6 +834,89 @@ mod unit {
         assert_eq!(e.status, Status::Finished);
         assert_eq!(e.fulfillment.unwrap(), hex::encode(b"the right key"));
         assert_eq!(e.closed_by.unwrap(), accounts(3));
+    }
+
+    #[test]
+    fn payslip_is_issued_and_listed() {
+        testing_env!(ctx(1, NearToken::from_millinear(50).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new();
+        let sha = hex::encode(env::sha256(b"the clear statement"));
+        let t = c.issue_payslip(accounts(2), None, "2026-10".into(), sha.clone(), vec!["employee".into(), "retraite".into()], "sealed…".into());
+        assert_eq!(t.token_id, "payslip-1");
+        assert_eq!(t.owner_id, accounts(2));
+        assert_eq!(t.metadata.reference_hash.unwrap().0, hex::decode(&sha).unwrap());
+        assert_eq!(c.nft_supply_for_owner(accounts(2)), U128(1));
+        assert_eq!(c.nft_tokens_for_owner(accounts(2), None, None).len(), 1);
+        assert_eq!(c.payslip("payslip-1".into()).unwrap().sealed, "sealed…");
+        assert_eq!(c.nft_total_supply(), U128(1));
+    }
+
+    #[test]
+    #[should_panic(expected = "not transferable")]
+    fn payslip_cannot_be_transferred() {
+        testing_env!(ctx(1, NearToken::from_millinear(50).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new();
+        let sha = hex::encode(env::sha256(b"x"));
+        c.issue_payslip(accounts(2), None, "2026-10".into(), sha, vec!["employee".into()], "s".into());
+        testing_env!(ctx(2, 1, 2_000).build());
+        c.nft_transfer(accounts(3), "payslip-1".into(), None, None);
+    }
+
+    fn vault_2_of_3() -> (Contract, U64) {
+        testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new();
+        let id = c.vault_create(accounts(2), vec![accounts(1), accounts(2), accounts(3)], 2, Some(U64(900_000)), Some(vec!["lease:L-1".into()]));
+        (c, id)
+    }
+
+    #[test]
+    fn vault_pays_when_two_of_three_agree() {
+        let (mut c, id) = vault_2_of_3();
+        let v = c.vault(id).unwrap();
+        assert_eq!(v.status, Status::Locked);
+        assert!(v.amount > NearToken::from_millinear(990));
+        // the landlord alone moves nothing
+        testing_env!(ctx(2, 0, 2_000).build());
+        assert!(matches!(c.vault_vote(id, NearToken::from_millinear(150)), PromiseOrValue::Value(false)));
+        assert_eq!(c.vault(id).unwrap().status, Status::Locked);
+        // the tenant disagrees: still nothing
+        testing_env!(ctx(1, 0, 3_000).build());
+        assert!(matches!(c.vault_vote(id, NearToken::from_millinear(0)), PromiseOrValue::Value(false)));
+        assert_eq!(c.vault(id).unwrap().votes.len(), 2);
+        // the mediator sides with the landlord: paid
+        testing_env!(ctx(3, 0, 4_000).build());
+        assert!(matches!(c.vault_vote(id, NearToken::from_millinear(150)), PromiseOrValue::Promise(_)));
+        let v = c.vault(id).unwrap();
+        assert_eq!(v.status, Status::Finished);
+        assert_eq!(v.paid_to_beneficiary, NearToken::from_millinear(150));
+        assert_eq!(v.closed_by.unwrap(), accounts(3));
+        assert_eq!(c.vault_count(), U64(1));
+    }
+
+    #[test]
+    #[should_panic(expected = "not a party")]
+    fn vault_stranger_cannot_vote() {
+        let (mut c, id) = vault_2_of_3();
+        testing_env!(ctx(4, 0, 2_000).build());
+        let _ = c.vault_vote(id, NearToken::from_millinear(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "deadline not reached")]
+    fn vault_timeout_waits_for_the_deadline() {
+        let (mut c, id) = vault_2_of_3();
+        testing_env!(ctx(4, 0, 2_000).build());
+        let _ = c.vault_timeout(id);
+    }
+
+    #[test]
+    fn vault_timeout_after_the_deadline_by_anyone() {
+        let (mut c, id) = vault_2_of_3();
+        testing_env!(ctx(4, 0, 900_001).build());
+        let _ = c.vault_timeout(id);
+        let v = c.vault(id).unwrap();
+        assert_eq!(v.status, Status::Cancelled);
+        assert_eq!(v.paid_to_beneficiary, NearToken::from_yoctonear(0));
     }
 
     #[test]

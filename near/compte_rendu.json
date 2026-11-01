@@ -2,66 +2,91 @@
   "network": "testnet",
   "contract": "dareskro.testnet",
   "oracle": "dareskro-oracle.testnet",
-  "started": "2026-10-31T07:58:11.898Z",
+  "started": "2026-11-01T21:54:37.934Z",
   "steps": [
     {
       "name": "payroll_create",
-      "id": "1",
-      "hash": "84KesLHxoSBJwvBwLMhBtbrzGZTJKLE3HaKhp57rUbof",
+      "id": "13",
+      "hash": "9ckhVaviw3LcXJ2Eh8NdzQS56MWSiaZLYCkWzxo4kMVq",
       "escrow": {
         "owner": "dareskro-employer.testnet",
         "destination": "dareskro-employee.testnet",
         "amount": "996330000000000000000000",
-        "finish_after": "1793433565853684317",
+        "finish_after": "1793570152382319076",
         "cancel_after": null,
         "condition": null,
         "memos": [
-          "sha256:dd3d7d8751aa0bfbeb3258064f7eefa619a0e9ef1eecf76b123b00913f3aa6af",
+          "sha256:e1537eda93fa56819e53981e0d6343c4602cbb8e8f9fd591048eb0bed6a58835",
           "net 440.36 EUR",
           "dareskro/oracle:dareskro-oracle.testnet"
         ],
         "status": "Locked",
-        "created_at": "1793433493260411560",
+        "created_at": "1793570079744557254",
         "closed_at": null,
         "closed_by": null,
         "fulfillment": null
       }
     },
     {
+      "name": "1d the employee gives the payslip away",
+      "expected": "refused: not transferable",
+      "got": "a payslip is not transferable: it stays with the person it was issued to",
+      "hash": "4NPBSVdkQAc4C9rRdi34xTidSArKQGHcsanBBPh4SJ7P",
+      "as_expected": true
+    },
+    {
+      "name": "payslip",
+      "token_id": "payslip-2",
+      "hash": "2vKYhUVtbK1fX5GJnGCx5yX6F3EkxPUrqxhJrbsDMP7v",
+      "sealed_bytes": 7851,
+      "readers": [
+        "employee",
+        "urssaf",
+        "retraite",
+        "dgfip"
+      ],
+      "sha256": "e1537eda93fa56819e53981e0d6343c4602cbb8e8f9fd591048eb0bed6a58835",
+      "pension_fund_reads": {
+        "period": "2026-10",
+        "total": "564.56"
+      },
+      "stranger_opening": "stranger is not a reader of this payslip"
+    },
+    {
       "name": "2 stranger finishes before the date",
       "expected": "refused: too early",
       "got": "too early: the contract's clock has not reached finish_after",
-      "hash": "3TV2JVA2adYTghpLfHSyCGu2JodRSuMAxvJXkKWsxHm1",
+      "hash": "GM4DkVjgdve95guZXeKe7DqTEEQWAQSQu4wuKtEZptCq",
       "as_expected": true
     },
     {
       "name": "3 employer cancels the payroll escrow",
       "expected": "refused: nobody can cancel",
       "got": "this escrow has no cancel_after: nobody can cancel it",
-      "hash": "39uHEe16B9xHiteNMzJw5rEXmuWnH4wrtDPg5XMgDZtj",
+      "hash": "2nju2jTWcYRbUYvHHG1eqxV32wjDavtF8u22iKaUeK4n",
       "as_expected": true
     },
     {
       "name": "4a batch with a short deposit",
       "expected": "refused: does not cover the batch",
       "got": "deposit 1.00 NEAR does not cover the batch: 3.00 NEAR + storage 0.009 NEAR",
-      "hash": "39tk4YJrCtQYFKskmkFzEG8AKYbyPcFAdPuJnPpCjtsd",
+      "hash": "HF5jND7aM3Dbxo5af8AS5vGuCCrSWmXdXroN3tucJuUa",
       "as_expected": true
     },
     {
       "name": "batch_create",
       "ids": [
-        "2",
-        "3",
-        "4"
+        "14",
+        "15",
+        "16"
       ],
-      "hash": "HiosFJnELZszsrtqbaHntEsfyG5RYQMaAjcYg7L6NBjj"
+      "hash": "2AYdtU1PxVY3shrtoWBENiPmcvawAxe8QcCYFVCV7pwA"
     },
     {
       "name": "delivery_create",
-      "id": "5",
-      "hash": "EMS1af4XSKb9Ec1Zbr8jL8JTca8jGGNob2XLTd7QjMw4",
-      "condition": "b0e8e7ff27f1cc93ccf807b0977ab4dd9feae0c1972a7f204194cceb11dd9072",
+      "id": "17",
+      "hash": "FPfxqj9At13Uj6yzU6VhDYdqQ6ESyQc1WWVLomQg2yBh",
+      "condition": "44caf4c9d24c4fc658c9cbbf8544d9e9f91d6dfb3f9840bea18f0561ddf71fef",
       "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/LICENSE",
       "sha256": "c3b463ae211f43f6574b690a885c001ca0e0551c0b04328639c8a41f10dbba58"
     },
@@ -69,116 +94,209 @@
       "name": "5a stranger finishes without the secret",
       "expected": "refused: bring the fulfillment",
       "got": "this escrow is locked by a condition: bring the fulfillment",
-      "hash": "FsHeHu86v9LsJQwyRaTytHwnm2YecwXUnagJVEy9sxfc",
+      "hash": "FwsBJyFvcaHo8JjSLxZe3W2aNzSBntz8DUhDCswSvMu5",
       "as_expected": true
     },
     {
       "name": "5b stranger finishes with a wrong secret",
       "expected": "refused: does not match",
       "got": "fulfillment does not match the condition",
-      "hash": "DF9DHFJPH4735x3BrWQPodYdwx5XmEUrfVtuTJpHef1f",
+      "hash": "G7gYbyDtaM2xoXrZQo7S5JxhAmDoR4oV9gPAQwiVPG4b",
       "as_expected": true
     },
     {
       "name": "5c employer takes it back before the deadline",
       "expected": "refused: too early",
       "got": "too early: cancel_after not reached",
-      "hash": "3g6XpGWSfQaVSyXqhgviP8TXXnRDiywRhvhRoYe3dC1b",
+      "hash": "997JzbzYwy6zPoFxyAEzgm7TAYUVUzddHBN3GWwchaqH",
       "as_expected": true
     },
     {
       "name": "delivery_never_create",
-      "id": "6",
-      "hash": "FCRaFjC5kUzbgvLMeeRimTGyt7aTv4CaUcPd8W5kmomw"
+      "id": "18",
+      "hash": "NiShntK9bRgEVDMxukdmWS3xcF7KjYa1THc3KrXQdsC"
     },
     {
       "name": "oracle_loop",
       "submitted": [
         {
-          "id": "5",
+          "id": "17",
           "action": "finish",
           "ok": true,
-          "hash": "3StGQzE9oAtLnXjthuR1FKvpBF4wNen665rizRSzxecZ"
+          "hash": "By25KztFPjExCepJHT2MKzxRzakAJm3VXEUdqXMxWPHD"
         },
         {
-          "id": "1",
+          "id": "13",
           "action": "finish",
           "ok": true,
-          "hash": "BS411RjzQafP8NrJBTSQm9NHhmeKKtUYhC4XirAzYrxg"
+          "hash": "F32G27P9FiMP2pC4KPuEq5hSFdfkqiK5VPsVxTinYgjE"
         },
         {
-          "id": "2",
+          "id": "14",
           "action": "finish",
           "ok": true,
-          "hash": "ACAYyJnBx7LqYUs9Ci9PsmYbjpa5LFscxT8Mvhj6bBEs"
+          "hash": "481A7MKWugJuRGtwRhmJtXCpUa8W3WDowb7X8Z1ZSLXm"
         },
         {
-          "id": "3",
+          "id": "15",
           "action": "finish",
           "ok": true,
-          "hash": "xmT6xDsgL3WqQALkFUwwwrr13srzgFe4YXcHcZUQ4TM"
+          "hash": "AqZ9BiEXy2aeK2Ar4m3LaDbtAYLToeaPAy4kkj3QE2BC"
         },
         {
-          "id": "4",
+          "id": "16",
           "action": "finish",
           "ok": true,
-          "hash": "HkDMtpBsLe8M9DaNzzPU6SewfnjiTi7vSRFsjoVgKRET"
+          "hash": "3SA6huRv11VKGrz2BDsUw2h9usy4hN9wLcg9KStRqPye"
         },
         {
-          "id": "6",
+          "id": "18",
           "action": "cancel",
           "ok": true,
-          "hash": "7wotFYbchWeHEhr5BgjwgPyPjndgF2thUG2VJoYQ3X9D"
+          "hash": "6QiUYMVTSb5fwKUuj5W1pF2kGRCC3eBsysNuYP4VPt54"
         }
       ],
-      "employee_before": "10000000000000000000000000",
-      "employee_after": "11991400000000000000000000"
+      "employee_before": "12982192138125577300000000",
+      "employee_after": "14973592138125577300000000"
     },
     {
       "name": "8 finish the payroll escrow twice",
       "expected": "refused: already closed",
       "got": "escrow already closed",
-      "hash": "2t7HjTMemFm1arDjCWqLQZHE7D5LTTGX3X5zvPpxk6Uz",
+      "hash": "E2UmBUs718TkYo2xfYV6QgeSaKrZzwWPbFERwXVCNtpt",
       "as_expected": true
+    },
+    {
+      "name": "vault_create",
+      "id": "2",
+      "hash": "GWYrAgboQooJTSaiWzGpFrMpqAEoH5Zz8RwveUk8qZKL",
+      "vault": {
+        "owner": "dareskro-employee.testnet",
+        "beneficiary": "dareskro-employer.testnet",
+        "amount": "993180000000000000000000",
+        "parties": [
+          "dareskro-employee.testnet",
+          "dareskro-employer.testnet",
+          "dareskro-oracle.testnet"
+        ],
+        "threshold": 2,
+        "votes": [],
+        "deadline": "1793570781933452826",
+        "memos": [
+          "lease:L-2026-11 · 12 rue de la Paix · deposit 1 200 EUR",
+          "inventory_in:sha256:f2632aa2b67af91d0f97d3d843fa68ca11af0d55cb2f57dfa62baf3b9c581930",
+          "inventory_out:sha256:7204d2f99630b0975f5fd3819deed4f97eecb1208ae3a1b09680c098bd3e5ae0",
+          "quote:sha256:4ba6f58a1499be17ddeee9b6c0b55cdf717039123ca1ef5d0142101444654ad3 repainting quote 180 EUR"
+        ],
+        "status": "Locked",
+        "paid_to_beneficiary": "0",
+        "created_at": "1793570184390968996",
+        "closed_at": null,
+        "closed_by": null
+      }
+    },
+    {
+      "name": "9a a stranger votes",
+      "expected": "refused: not a party",
+      "got": "not a party to this deposit",
+      "hash": "GHu4zE6ihWoEF6pMZfdumPnTkWjMniJTWLc4a5awgPnb",
+      "as_expected": true
+    },
+    {
+      "name": "vault_vote_landlord_alone",
+      "hash": "E4A6US5Jg6nfxAjKCromSgkn243YLLCMsidRvXqUjgQX",
+      "decided": false,
+      "status": "Locked"
+    },
+    {
+      "name": "vault_vote_tenant_disagrees",
+      "hash": "4cGKrLrnyyzthqLcUCw6mbMWNME3TxpA6bnmX5vf2c7M",
+      "decided": false
+    },
+    {
+      "name": "vault_decided",
+      "hash": "2F3Lo2BQs2KBXc1MrYP5J4PiAGCUZ8UELP7zTZjte9KX",
+      "status": "Finished",
+      "paid_to_beneficiary": "150000000000000000000000",
+      "landlord_before": "2472622422929434700000000",
+      "landlord_after": "2622406322995952800000000",
+      "tenant_before": "13912669448324774300000000",
+      "tenant_after": "14816285770538284200000000",
+      "closed_by": "dareskro-oracle.testnet"
+    },
+    {
+      "name": "9e the landlord votes again",
+      "expected": "refused: already closed",
+      "got": "vault already closed",
+      "hash": "8fr2RFxPbRzdnwBMWbZz5iwAViW3PtpLURE8dBLaDNJo",
+      "as_expected": true
+    },
+    {
+      "name": "vault_never_create",
+      "id": "3",
+      "hash": "GTyNwgErhdLsaZkQh31GoSsGasgspFoJEv1pEmjEhGNV"
+    },
+    {
+      "name": "10a a stranger calls the deadline too soon",
+      "expected": "refused: deadline not reached",
+      "got": "deadline not reached: the parties can still decide",
+      "hash": "DxPSQc1gNkSab6o53N3PrQiCkdtWLf9ERafQHdnDmo7P",
+      "as_expected": true
+    },
+    {
+      "name": "vault_timeout",
+      "hash": "9KmZJvz2B3mZ5ySutUP6M7tusqg8GVKauP3PRnCvMXBh",
+      "status": "Cancelled",
+      "closed_by": "dareskro-stranger.testnet"
     }
   ],
-  "payroll": {
-    "id": "1",
-    "amount_near": "0.9963",
-    "finish_after": "1793433565853684317",
-    "destination": "dareskro-employee.testnet",
-    "finish_hash": "BS411RjzQafP8NrJBTSQm9NHhmeKKtUYhC4XirAzYrxg",
-    "finish_explorer": "https://testnet.nearblocks.io/txns/BS411RjzQafP8NrJBTSQm9NHhmeKKtUYhC4XirAzYrxg",
-    "finished_after_s": 4
+  "payslip_token": "payslip-2",
+  "deposit": {
+    "id": "2",
+    "decided_hash": "2F3Lo2BQs2KBXc1MrYP5J4PiAGCUZ8UELP7zTZjte9KX",
+    "decided_explorer": "https://testnet.nearblocks.io/txns/2F3Lo2BQs2KBXc1MrYP5J4PiAGCUZ8UELP7zTZjte9KX",
+    "paid_to_landlord_near": "0.1500",
+    "back_to_tenant_near": "0.8432",
+    "timeout_id": "3",
+    "timeout_hash": "9KmZJvz2B3mZ5ySutUP6M7tusqg8GVKauP3PRnCvMXBh"
   },
-  "finished": "2026-10-31T07:59:56.380Z",
+  "payroll": {
+    "id": "13",
+    "amount_near": "0.9963",
+    "finish_after": "1793570152382319076",
+    "destination": "dareskro-employee.testnet",
+    "finish_hash": "F32G27P9FiMP2pC4KPuEq5hSFdfkqiK5VPsVxTinYgjE",
+    "finish_explorer": "https://testnet.nearblocks.io/txns/F32G27P9FiMP2pC4KPuEq5hSFdfkqiK5VPsVxTinYgjE",
+    "finished_after_s": 5
+  },
+  "finished": "2026-11-01T21:57:47.054Z",
   "final": {
-    "1": {
+    "13": {
       "status": "Finished",
       "closed_by": "dareskro-oracle.testnet",
       "fulfillment": null
     },
-    "2": {
+    "14": {
       "status": "Finished",
       "closed_by": "dareskro-oracle.testnet",
       "fulfillment": null
     },
-    "3": {
+    "15": {
       "status": "Finished",
       "closed_by": "dareskro-oracle.testnet",
       "fulfillment": null
     },
-    "4": {
+    "16": {
       "status": "Finished",
       "closed_by": "dareskro-oracle.testnet",
       "fulfillment": null
     },
-    "5": {
+    "17": {
       "status": "Finished",
       "closed_by": "dareskro-oracle.testnet",
-      "fulfillment": "9224cc667e95427dd6394adce3736e46ec66bbe16ca5ffa112debc10811af598"
+      "fulfillment": "e0a6113fcceb9485bacce634884a5efb0c32b02cb16b021da88627948eb7cff1"
     },
-    "6": {
+    "18": {
       "status": "Cancelled",
       "closed_by": "dareskro-oracle.testnet",
       "fulfillment": null

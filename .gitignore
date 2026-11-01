@@ -62,3 +62,6 @@ near/.oracle_near.json
 placements/node_modules/
 placements/server.log
 oracle/oracle.log
+near/cles/
+near/desk/sortie/*.mp4
+near/desk/sortie/.video_*

@@ -1,0 +1,10 @@
+{
+  "curve": "x25519",
+  "note": "demo keys; whoever is listed here can open every payslip sealed afterwards",
+  "readers": {
+    "employee": "Z5cLbBBsHCrI5g8y3qJDMHxsS1QwUTElKBPpS1Z4lXo=",
+    "urssaf": "eWRJmiLvJuSSuSfCoFVnkAjbavaH3x1sYlybtohLSXQ=",
+    "retraite": "JLkk0nJ3GdvZNM2pv5ozVeqCQicNHaK64lKjLllGAxI=",
+    "dgfip": "x9IvI0BsJLTMYwi/SB2E9LKhvaOPC6CW1QXecy1jhXo="
+  }
+}

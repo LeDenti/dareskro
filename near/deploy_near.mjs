@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  *   node deploy_near.mjs deploy     deploy contract/target/near/dareskro_escrow.wasm on dareskro.testnet and call new()
+ *   node deploy_near.mjs deploy --migrate   redeploy on an initialised account and call migrate() (state layout changed)
  *   node deploy_near.mjs keys       list the contract account's access keys
  *   node deploy_near.mjs lock --yes delete every full-access key: from then on nobody can change the code or
  *                                   take the balance; the only moves left are create / finish / cancel. Irreversible.
@@ -19,8 +20,9 @@ if (cmd === 'deploy') {
   try { await view('count'); } catch { initialised = false; }
   const acts = [actions.deployContract(code)];
   if (!initialised) acts.push(actions.functionCall('new', {}, teraToGas('30'), 0n));
+  else if (process.argv.includes('--migrate')) acts.push(actions.functionCall('migrate', {}, teraToGas('30'), 0n));
   const r = await owner.signAndSendTransaction({ receiverId: CONTRACT, actions: acts });
-  console.log(`${initialised ? 'code replaced' : 'deployed and initialised'} on ${CONTRACT}: ${EXPLORER(r.transaction.hash)}`);
+  console.log(`${initialised ? (process.argv.includes('--migrate') ? 'code replaced and state migrated' : 'code replaced') : 'deployed and initialised'} on ${CONTRACT}: ${EXPLORER(r.transaction.hash)}`);
   console.log(`count = ${await view('count')}`);
 } else if (cmd === 'keys') {
   const l = await owner.getAccessKeyList();

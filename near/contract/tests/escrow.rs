@@ -132,3 +132,94 @@ async fn batch_all_or_nothing_and_surplus_back() -> anyhow::Result<()> {
     let _ = worker;
     Ok(())
 }
+
+#[tokio::test]
+async fn payslip_token_owned_by_the_employee_not_transferable() -> anyhow::Result<()> {
+    let (_worker, contract, employer, employee, stranger) = setup().await?;
+    let sha = hex::encode(Sha256::digest(b"the clear statement"));
+    let sealed = "x".repeat(2000);
+    let before = employer.view_account().await?.balance;
+    let t: Value = employer
+        .call(contract.id(), "issue_payslip")
+        .args_json(json!({"owner_id": employee.id(), "period": "2026-10", "sha256": sha, "readers": ["employee", "urssaf", "retraite", "dgfip"], "sealed": sealed}))
+        .deposit(NearToken::from_millinear(100))
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(t["token_id"], "payslip-1");
+    assert_eq!(t["owner_id"], json!(employee.id()));
+    // the record costs its storage, not the whole deposit
+    let spent = before.saturating_sub(employer.view_account().await?.balance);
+    assert!(spent < NearToken::from_millinear(60), "spent {spent}");
+    let mine: Vec<Value> = contract.view("nft_tokens_for_owner").args_json(json!({"account_id": employee.id()})).await?.json()?;
+    assert_eq!(mine.len(), 1);
+    // anyone reads the sealed file; it is only bytes to them
+    let p: Value = contract.view("payslip").args_json(json!({"token_id": "payslip-1"})).await?.json()?;
+    assert_eq!(p["sealed"].as_str().unwrap().len(), 2000);
+    // the employee cannot give it away, nor can a stranger take it
+    err_contains(employee.call(contract.id(), "nft_transfer").args_json(json!({"receiver_id": stranger.id(), "token_id": "payslip-1"})).deposit(NearToken::from_yoctonear(1)).transact().await?, "not transferable");
+    err_contains(stranger.call(contract.id(), "nft_transfer").args_json(json!({"receiver_id": stranger.id(), "token_id": "payslip-1"})).deposit(NearToken::from_yoctonear(1)).transact().await?, "not transferable");
+    Ok(())
+}
+
+#[tokio::test]
+async fn deposit_decided_by_two_of_three_or_returned_at_the_deadline() -> anyhow::Result<()> {
+    let (worker, contract, landlord, tenant, mediator) = setup().await?;
+    let passerby = worker.dev_create_account().await?;
+    let deadline = now_ns(&contract).await? + 600_000_000_000;
+    let parties = json!([tenant.id(), landlord.id(), mediator.id()]);
+    let id: Value = tenant
+        .call(contract.id(), "vault_create")
+        .args_json(json!({"beneficiary": landlord.id(), "parties": parties, "threshold": 2, "deadline": deadline.to_string(),
+                          "memos": ["lease:L-2026-11", "inventory_out:sha256:abc", "quote:sha256:def 180 EUR"]}))
+        .deposit(ONE)
+        .transact()
+        .await?
+        .json()?;
+    let landlord_before = landlord.view_account().await?.balance;
+    let tenant_before = tenant.view_account().await?.balance;
+    let cut = NearToken::from_millinear(150);
+
+    // not a party
+    err_contains(passerby.call(contract.id(), "vault_vote").args_json(json!({"id": id, "to_beneficiary": cut})).transact().await?, "not a party");
+    // the landlord alone: recorded, nothing moves
+    let r: Value = landlord.call(contract.id(), "vault_vote").args_json(json!({"id": id, "to_beneficiary": cut})).transact().await?.json()?;
+    assert_eq!(r, json!(false));
+    let v: Value = contract.view("vault").args_json(json!({"id": id})).await?.json()?;
+    assert_eq!(v["status"], "Locked");
+    // the tenant disagrees
+    tenant.call(contract.id(), "vault_vote").args_json(json!({"id": id, "to_beneficiary": NearToken::from_yoctonear(0)})).transact().await?.into_result()?;
+    // the mediator sides with the quote: paid, both legs
+    mediator.call(contract.id(), "vault_vote").args_json(json!({"id": id, "to_beneficiary": cut})).deposit(NearToken::from_yoctonear(0)).max_gas().transact().await?.into_result()?;
+    let v: Value = contract.view("vault").args_json(json!({"id": id})).await?.json()?;
+    assert_eq!(v["status"], "Finished");
+    assert_eq!(v["paid_to_beneficiary"], json!(cut));
+    let landlord_after = landlord.view_account().await?.balance;
+    let tenant_after = tenant.view_account().await?.balance;
+    let got = landlord_after.saturating_sub(landlord_before);
+    assert!(got > NearToken::from_millinear(149) && got <= cut, "landlord got {got}");
+    let back = tenant_after.saturating_sub(tenant_before);
+    assert!(back > NearToken::from_millinear(830) && back < NearToken::from_millinear(870), "tenant got back {back}"); // 0.85 ± gas refunds still landing
+    // closed
+    err_contains(landlord.call(contract.id(), "vault_vote").args_json(json!({"id": id, "to_beneficiary": cut})).transact().await?, "already closed");
+
+    // a deposit nobody decides
+    let soon = now_ns(&contract).await? + 8_000_000_000;
+    let id2: Value = tenant
+        .call(contract.id(), "vault_create")
+        .args_json(json!({"beneficiary": landlord.id(), "parties": parties, "threshold": 2, "deadline": soon.to_string()}))
+        .deposit(ONE)
+        .transact()
+        .await?
+        .json()?;
+    err_contains(passerby.call(contract.id(), "vault_timeout").args_json(json!({"id": id2})).transact().await?, "deadline not reached");
+    wait_until(&worker, &contract, soon).await?;
+    let before = tenant.view_account().await?.balance;
+    passerby.call(contract.id(), "vault_timeout").args_json(json!({"id": id2})).max_gas().transact().await?.into_result()?;
+    let v: Value = contract.view("vault").args_json(json!({"id": id2})).await?.json()?;
+    assert_eq!(v["status"], "Cancelled");
+    assert_eq!(v["closed_by"], json!(passerby.id()));
+    let back = tenant.view_account().await?.balance.saturating_sub(before);
+    assert!(back > NearToken::from_millinear(990), "tenant got back {back}");
+    Ok(())
+}
