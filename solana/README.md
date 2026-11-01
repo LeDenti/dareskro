@@ -3,7 +3,7 @@
 **The employer pays with what they hold, on the chain they hold it on; the employee receives USDC locked on Solana that nobody can take back or redirect.** The bridge is not the product. The padlock on the pay line is.
 
 **Encode Club Solana Hackathon 2026** (12 October → 8 November, online). Tracks: Aurora Intents, Best Consumer App.
-**Final demo video (3 min 56, English, subtitled): [dareskro_la_linea_solana_final.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.3-solana-final/dareskro_la_linea_solana_final.mp4)** — the drawn story (2 min), then the real screens of 1 November: Aurora on mainnet, the pay desk on devnet · release [v0.3-solana-final](https://github.com/LeDenti/dareskro/releases/tag/v0.3-solana-final) (mid-point: [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint)) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **the pay desk has a Solana tab** (`app/`, services in `desk/`, run measured 1 Nov) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
+**Final demo video (3 min 56, English, subtitled): [dareskro_la_linea_solana_final.mp4](https://github.com/LeDenti/dareskro/releases/download/v0.3-solana-final/dareskro_la_linea_solana_final.mp4)** — the drawn story (2 min), then the real screens of 1 November: Aurora on mainnet, the pay desk on devnet · release [v0.3-solana-final](https://github.com/LeDenti/dareskro/releases/tag/v0.3-solana-final) (mid-point: [v0.2-solana-midpoint](https://github.com/LeDenti/dareskro/releases/tag/v0.2-solana-midpoint)) · program on devnet [`6NoVNiHv…`](https://explorer.solana.com/address/6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu?cluster=devnet) · **a one-page app, no terminal** (`web/`: Phantom or burner key, lock, release, cancel, XRP/SOL/NEAR) · **the pay desk has a Solana tab** (`app/`, services in `desk/`, run measured 1 Nov) · **Aurora Intents run live on mainnet, 1 Nov 2026**: XRP → 3 USDC on Solana in 37 s ([XRPL](https://livenet.xrpl.org/transactions/56205926A4B9F65FBE7775F7607D4D568F94995BEF722731577B721C3C74A1E1) · [Solana](https://solscan.io/tx/58Az4DDmpE9MQBMfKjw6bU4SFNuPDkmF1mW1EF2qjaZV6K3W1VMDpXToJZjm7HoKw8bUm4MfyNjyKuQ4x9oguQ9g)).
 
 > The agent reads the evidence. The code computes the amount. A human validates.
 > A Solana program pays at the date, or when the proof is public. Nobody holds the
@@ -279,6 +279,30 @@ desk machine, not a hardware device (the Ledger path exists on XRPL only); the
 escrow is in SOL on devnet because Aurora's USDC lands on mainnet, and the two
 cannot meet without a mainnet deployment; the delivery kind is wired in both
 services but was exercised in the program's tests, not from the tab.
+
+## The page — no terminal
+
+`web/` is a single page (Vite, `@solana/web3.js`, nothing else) for the judge or
+the employer who will not open a terminal: connect **Phantom** or use a devnet
+**burner key**, fill *recipient · amount in USD · pay date*, choose what the payer
+pays with — **SOL** from the wallet, **XRP** or **NEAR** through an Aurora Intents
+quote — and lock. The list below is read from the chain: **Release** (anyone, after
+the date), **Cancel** (only if a cancel date was written, only after it), **Close**
+(the payer deletes a finished record and gets the rent back). Every action is sent
+without preflight, so a refusal is recorded and linked. `cd solana/web && npm install && npm run dev`.
+
+**Run from the page on 1 November 2026, 09:48–09:52 Paris, devnet, burner key `BCkzP6Qn…`:**
+
+| Click | Result | Proof |
+|---|---|---|
+| Quote, pay with NEAR, 10 USDC | Aurora answered (dry): the NEAR amount, delivered in ≈ 24 s | — |
+| Quote, pay with XRP, 10 USDC | 8.282573 XRP (10.35 $), ≈ 22 s, withdraw fee 0.254 USDC | written in the escrow's second memo |
+| Lock 10 USD → 0.1046 SOL, payable 09:50 | escrow `67BSAgWy…` | [`43fe85DH…`](https://explorer.solana.com/tx/43fe85DHLSe3j12haMyAy9ecK5xp4hukHobpTXkv8kjpjvFBgUUQEM9aQiEC1i7uteefKCxymVtrmc3ZpmG9RLrX?cluster=devnet) |
+| Cancel (no cancel date) | **refused `NotCancellable`**, recorded | [`5SpfSJCS…`](https://explorer.solana.com/tx/5SpfSJCSvmFF29p9nUtZrxVScgsJnZ18GX6KnE53pCZ59wDZLaWwBbJi2WqbsseXEhCbbeE3FH4zQTrtbHTnvbkk?cluster=devnet) |
+| Release, after the date | paid to the recipient | [`3feiFwWb…`](https://explorer.solana.com/tx/3feiFwWb1LBtGKNcwE9gQkN4ikgwwtHhxLotBCDJDv8iiQMS141QFbRkNe5Dn7NKaKSbLhrWf5mr5gtJ9FdiYw16?cluster=devnet) |
+| Close | record deleted, rent back to the payer | [`c85AtMMV…`](https://explorer.solana.com/tx/c85AtMMVkH8kSc2JZkqgQ2XrbzFeTXZnhMhsfAtW6qEhksik1fjwixZtKPDq92zEtbsksVZHNtNWqGNjSKkLcug?cluster=devnet) |
+| Lock 5 USD → 0.0523 SOL, payable 09:58 | escrow `FNe5fU…` | [`2AmDMo6T…`](https://explorer.solana.com/tx/2AmDMo6TJkRSZmiPxoE73pThBNSAodsGHJja9vGy9TyJb7oM4VpVK1UK6KZXmTndWzxYhWBBNiTft7PxfX7ZdxeG?cluster=devnet) |
+| Release, before the date | **refused `TooEarly`**, recorded | [`3Lye6E6v…`](https://explorer.solana.com/tx/3Lye6E6vexBdn5Z3smDjcc4HRHvaRuWVeCUaRz6iNvTRE6E9hYEQPLh3U9t5BXgKQUPuWwWA93ovNXP5mYjqWv9x?cluster=devnet) |
 
 ## Honest limits
 

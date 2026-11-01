@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>dareskro on Solana</title>
+<link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+<header>
+  <h1>dareskro <span class="muted">on Solana · devnet</span></h1>
+  <p>The employer pays with what they hold, on the chain they hold it on; the employee receives funds locked on Solana that nobody can take back or redirect. No terminal: this page talks to the program <a id="program-link" target="_blank" rel="noreferrer">6NoVNiHv…</a> directly.</p>
+</header>
+<main>
+  <section class="card" id="card-wallet">
+    <h2><span class="step">1</span> Wallet</h2>
+    <div class="row">
+      <button id="btn-phantom" class="primary">Connect Phantom</button>
+      <button id="btn-burner">Use a burner key (devnet, kept in this browser)</button>
+      <button id="btn-airdrop" hidden>Airdrop 1 SOL (devnet)</button>
+      <button id="btn-disconnect" hidden>Disconnect</button>
+    </div>
+    <p id="wallet-info" class="muted">No wallet yet. Phantom signs on your device; the burner key is a throwaway for devnet only.</p>
+    <p id="wallet-error" class="ko" hidden></p>
+  </section>
+
+  <section class="card disabled" id="card-create">
+    <h2><span class="step">2</span> Create an escrow</h2>
+    <div class="row">
+      <label class="grow">Recipient (Solana address, fixed forever)<input id="f-dest" placeholder="the employee's or freelancer's address" /></label>
+    </div>
+    <div class="row">
+      <label>Amount (USD)<input id="f-usd" type="number" min="0.01" step="0.01" value="25" /></label>
+      <label>Pay date<input id="f-date" type="datetime-local" /></label>
+      <label class="check"><input id="f-cancellable" type="checkbox" /> refundable to me after</label>
+      <label><span class="muted">cancel date</span><input id="f-cancel" type="datetime-local" disabled /></label>
+    </div>
+    <p class="hint" id="rate-line">Rate: …</p>
+    <div class="row">
+      <label class="grow">The payer pays with
+        <select id="f-pay"></select>
+      </label>
+      <label class="grow" id="refund-wrap" hidden>Refund address on the origin chain<input id="f-refund" placeholder="r… or name.near" /></label>
+      <button id="btn-quote" hidden>Get the Aurora quote</button>
+    </div>
+    <div id="quote-box" class="box" hidden></div>
+    <div class="row">
+      <label class="grow">Memo (optional)<input id="f-memo" placeholder="statement hash, invoice number…" maxlength="128" /></label>
+    </div>
+    <div class="row">
+      <button id="btn-lock" class="primary">Lock the funds</button>
+      <label class="check"><input id="f-record" type="checkbox" checked /> send without preflight, so a refusal is recorded on chain</label>
+    </div>
+    <p id="lock-status" class="muted"></p>
+    <p id="lock-error" class="ko" hidden></p>
+  </section>
+
+  <section class="card disabled" id="card-list">
+    <h2><span class="step">3</span> Escrows — yours as payer, yours as recipient</h2>
+    <p class="hint">Read from the chain every 8 s. <b>Release</b> is open to anyone once the date has passed; before it, the program answers <code>TooEarly</code>. <b>Cancel</b> only exists if a cancel date was written, and only after it. <b>Close</b> deletes a finished record and returns its rent to the payer.</p>
+    <div id="list"></div>
+    <p id="list-error" class="ko" hidden></p>
+  </section>
+
+  <section class="card" id="card-log">
+    <h2><span class="step">4</span> What this page sent</h2>
+    <ul id="log"></ul>
+  </section>
+</main>
+<footer class="muted">Encode Solana Hackathon 2026 · <a href="https://github.com/LeDenti/dareskro/tree/main/solana" target="_blank" rel="noreferrer">github.com/LeDenti/dareskro · solana/</a> · funding from any chain by Aurora Intents (mainnet only: the quote is real, the devnet escrow is funded by the wallet).</footer>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
