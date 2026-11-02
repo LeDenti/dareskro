@@ -15,3 +15,5 @@ Context: Anchor program `dareskro_escrow` on devnet ([`6NoVNiHv…`](https://exp
 - Item 1 → Anchor issue [#5239](https://github.com/otter-sec/anchor/issues/5239) (the repository now lives at `otter-sec/anchor`).
 - Item 2 → Anchor issue [#5240](https://github.com/otter-sec/anchor/issues/5240) (discussions there are closed to outside contributors, so it is an issue).
 - Item 3 → sent to Aurora by e-mail.
+- Items 1 and 2, as a question and answer for people who search: Solana Stack Exchange [#24567](https://solana.stackexchange.com/questions/24567) / [answer](https://solana.stackexchange.com/a/24568).
+- Items 1–3, two posts in `#general` of the Solana Hackathon 2026 category of the Encode Club Discord (https://discord.com/channels/705799923014041651/1547983146094436472).
