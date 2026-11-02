@@ -23,3 +23,8 @@ Context: dareskro locks payroll in XRP. The desk converts the amount to drops (`
 - Repository: <https://github.com/LeDenti/dareskro>, MIT. Every cited line refers to commit `58228d1` (`58228d15b0f737d89088819512e4e380a86c774b`) on `main`, 2 November 2026.
 - Networks: testnet `wss://testnet.xrpl-labs.com`, devnet `wss://s.devnet.rippletest.net:51233`. Explorers: testnet.xrpl.org, devnet.xrpl.org.
 - Written after the XRPL Commons hackathon, New York, 24–25 October 2026, and the week that followed.
+
+## Filed upstream, 2 November 2026
+- Item 1 → XRPL-Standards discussion [#677](https://github.com/XRPLF/XRPL-Standards/discussions/677) (XLS Ideas).
+- Item 2 → sent to Ripple through its contact form (issuer decision, not a GitHub matter).
+- Item 3 → xrpl.js issue [#3562](https://github.com/XRPLF/xrpl.js/issues/3562).

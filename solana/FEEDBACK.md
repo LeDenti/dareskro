@@ -10,3 +10,8 @@ Context: Anchor program `dareskro_escrow` on devnet ([`6NoVNiHv…`](https://exp
 - Repository: <https://github.com/LeDenti/dareskro>, folder `solana/`, MIT. Every cited line refers to commit `58228d1` (`58228d15b0f737d89088819512e4e380a86c774b`) on `main`, 2 November 2026.
 - Program: devnet `6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu`; release [v0.3-solana-final](https://github.com/LeDenti/dareskro/releases/tag/v0.3-solana-final) (film and captures of 1 November).
 - Item 1 is a code review, not a measurement: there is no transaction to cite.
+
+## Filed upstream, 2 November 2026
+- Item 1 → Anchor issue [#5239](https://github.com/otter-sec/anchor/issues/5239) (the repository now lives at `otter-sec/anchor`).
+- Item 2 → Anchor issue [#5240](https://github.com/otter-sec/anchor/issues/5240) (discussions there are closed to outside contributors, so it is an issue).
+- Item 3 → sent to Aurora by e-mail.

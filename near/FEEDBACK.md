@@ -12,3 +12,10 @@ Context: Rust contract `contract/src/lib.rs` (near-sdk 5.30) with escrows, non-t
 ## References
 - Repository: <https://github.com/LeDenti/dareskro>, folder `near/`, MIT. Every cited line refers to commit `58228d1` (`58228d15b0f737d89088819512e4e380a86c774b`) on `main`, 2 November 2026.
 - Contract: `dareskro.testnet` ([deploy](https://testnet.nearblocks.io/txns/AwuuUYFBTqtMktFrDVCtrMhN52nPk4XTKxc3gT9ScwSv)); the full run table of 1 November, with every transaction, is in [`near/README.md` l.73-118](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/README.md#L73).
+
+## Filed upstream, 2 November 2026
+- Items 2 and 6 → near-sdk-rs issue [#1665](https://github.com/near/near-sdk-rs/issues/1665).
+- Item 3 → near-sdk-rs issue [#1666](https://github.com/near/near-sdk-rs/issues/1666).
+- Item 1 → near-sdk-rs discussion [#1667](https://github.com/near/near-sdk-rs/discussions/1667) (Ideas).
+- Item 4 → near-api-js issue [#2026](https://github.com/near/near-api-js/issues/2026).
+- Item 5 → near-api-js issue [#2027](https://github.com/near/near-api-js/issues/2027).
