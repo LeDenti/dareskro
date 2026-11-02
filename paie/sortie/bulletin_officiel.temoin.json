@@ -1,0 +1,18 @@
+{
+  "pdf": "paie/sortie/bulletin_officiel.pdf",
+  "pdf_sha256": "ec75f4ce516c5793514dbff371f1fab4fcba76d6a27a94826dd441808f2cbceb",
+  "statement": "paie/sortie/bulletin_eur.json",
+  "statement_sha256": "268a8a7830cd037fa013ce497266debebf50e4c421248bf8fec6c0a56db5b94b",
+  "statement_id": "stmt-ffff3dd0e216",
+  "employer_file": "paie/employeur.exemple.json",
+  "example_data": true,
+  "real_rates_entered": false,
+  "currency": "EUR",
+  "gross": "564.56",
+  "net_before_tax": "440.36",
+  "tax_withheld": "33.03",
+  "net_paid": "407.33",
+  "to_urssaf": "361.32",
+  "employer_cost": "801.68",
+  "checks": "sha256 of the canonical JSON = file's sha256; each line = base x rate; gross = sum of lines; net = gross - employee contributions; paid = net - tax; cost = gross + employer contributions"
+}

@@ -1,0 +1,124 @@
+{
+  "statement_id": "stmt-ffff3dd0e216",
+  "employee": {
+    "label": "Pharmacien adjoint, coefficient 600, 18 ans d'anciennete",
+    "badge": "A-0412"
+  },
+  "period": "2026-10",
+  "evidence": {
+    "schedule": {
+      "date": "2026-10-25",
+      "slot": "09:00-21:00",
+      "type": "garde dimanche, volets ouverts",
+      "week_hours_before": "35"
+    },
+    "badge": {
+      "arrivee": "2026-10-25T08:56:00+01:00",
+      "depart": "2026-10-25T21:03:00+01:00",
+      "heures_badgees": "12.12",
+      "heures_retenues": "12.00",
+      "regle": "heures planifiees, couvertes par le badge a 15 min pres"
+    },
+    "anomalies": []
+  },
+  "parameters": {
+    "coefficient": "600",
+    "point_value_eur": "5.277",
+    "hourly_rate_eur": "20.8756",
+    "shutters": "ouverts",
+    "seniority_years": "18"
+  },
+  "contract": {
+    "type": "CDD d'un jour (journee de garde)",
+    "fixed_term": true,
+    "end_of_contract_bonus_rate": "0.10",
+    "paid_leave_rate": "0.10",
+    "leave_basis": "gross including the end-of-contract bonus"
+  },
+  "lines": [
+    {
+      "item": "temps de garde",
+      "detail": "12.00 h passees, 100 % du temps passe -> 12.00 h retenues x 20.8756 €",
+      "amount": "250.51"
+    },
+    {
+      "item": "majorations heures sup.",
+      "detail": "garde placee apres 35 h deja faites : 8 h a +25 %, 4.00 h a +50 %",
+      "amount": "83.50"
+    },
+    {
+      "item": "indemnite de dimanche",
+      "detail": "12.00 h x 1,5 point x 5.277 € = forfait horaire, independant du coefficient",
+      "amount": "94.99"
+    },
+    {
+      "item": "prime d anciennete",
+      "detail": "18 ans -> 15 % du minimum de coefficient, au prorata des heures effectives",
+      "amount": "37.58"
+    },
+    {
+      "item": "indemnite de fin de contrat",
+      "detail": "10 % du brut de la garde (CDD, L1243-8)",
+      "amount": "46.66"
+    },
+    {
+      "item": "indemnite compensatrice de conges payes",
+      "detail": "10 % du brut, indemnite de fin de contrat incluse (L1242-16)",
+      "amount": "51.32"
+    }
+  ],
+  "total": "564.56",
+  "gross": "564.56",
+  "currency": "EUR",
+  "contributions": {
+    "recipient": "URSSAF",
+    "due": "2026-11-15",
+    "basis": "aggregated indicative rates, URSSAF 2026 scale (health, pension, unemployment, CSG/CRDS); the DSN computes line by line",
+    "employee": {
+      "rate": "0.22",
+      "amount": "124.20"
+    },
+    "employer": {
+      "rate": "0.42",
+      "amount": "237.12"
+    },
+    "total_to_urssaf": "361.32",
+    "rates_source": "purchased with the rules (fixed_term, contributions)"
+  },
+  "net_to_pay": "440.36",
+  "withholding": {
+    "recipient": "DGFiP",
+    "due": "2026-11-15",
+    "basis": "personalised rate transmitted by DGFiP through the DSN, applied to the net to pay (simplified basis: the DSN computes the exact taxable net)",
+    "rate": "0.0750",
+    "amount": "33.03"
+  },
+  "net_paid": "407.33",
+  "employer_cost": "801.68",
+  "rest_hours_outside_escrow": "12.00",
+  "rest_note": "repos d egale duree — le texte ne prevoit pas de le remplacer par une indemnite",
+  "sources": [
+    "convention pharmacie d'officine IDCC 1996, art. 11 (anciennete : 15 % au-dela de 15 ans)",
+    "art. 7 -> accord du 23/03/2000 revise le 09/04/2008, art. 4 (garde dimanche : 1,5 point par heure, repos d'egale duree)",
+    "valeur du point 5,277 EUR, accord du 19/01/2026, A CONFIRMER",
+    "Code du travail L1243-8 (indemnite de fin de contrat, 10 % du brut) et L1242-16 (indemnite compensatrice de conges payes, 10 %, indemnite de fin de contrat incluse dans l'assiette)",
+    "cotisations : taux agreges indicatifs (bareme URSSAF 2026), la DSN calcule ligne par ligne ; exigibilite le 15 du mois suivant",
+    "prelevement a la source (CGI art. 204 A et suivants) : taux personnalise transmis par la DGFiP, retenu par l'employeur, reverse le 15 du mois suivant"
+  ],
+  "rules_source": {
+    "how": "purchased by the agent over x402 on Mastercard AP4M",
+    "provider": "http://127.0.0.1:4308/resource",
+    "paid_rlusd": "0.05",
+    "channel_cap_rlusd": "2.0",
+    "redemption_tx": "0xcb49f537e8541056d6a223728ef39ada000f5ea07ce42ecd4c94ccd9da0e52b9",
+    "redemption_explorer": "https://explorer.testnet.xrplevm.org/tx/0xcb49f537e8541056d6a223728ef39ada000f5ea07ce42ecd4c94ccd9da0e52b9",
+    "receipt_url": "https://hackathon.ap4m.build/public/evidence/claims/0xb4c75682c0f4eca503177b39d8d7edc1abb1c26db6076e6b0e93f8f0fd1d00a8/0xacfb16c82c57a5dcf429c9d5afb199dbb934c83f0a53a340dda6a24725ca844d.json",
+    "purchased_at": "2026-10-25T09:39:03.090Z",
+    "agreement": "Pharmacie d'officine, IDCC 1996",
+    "valid_from": "2026-01-19"
+  },
+  "computed_by": "officine.garde — deterministic, replayable to the cent",
+  "computed_at": "2026-10-25T14:33:40+00:00",
+  "status": "PROPOSITION",
+  "sha256": "268a8a7830cd037fa013ce497266debebf50e4c421248bf8fec6c0a56db5b94b"
+}

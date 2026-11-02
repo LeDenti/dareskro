@@ -1,0 +1,13 @@
+{
+  "name": "dareskro-paie",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The Sunday shift paid for real: official payslip PDF, SEPA pain.001 order, anchoring of the statement hash on the XRP Ledger.",
+  "scripts": {
+    "ancrer": "node ancrer.mjs"
+  },
+  "dependencies": {
+    "xrpl": "^5.3.0"
+  }
+}

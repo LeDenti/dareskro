@@ -1,0 +1,9 @@
+# the real employer / employee file: personal data (addresses, social security number, IBANs), never committed
+employeur.json
+# signing keys for the anchoring script (0600 files written by hand)
+cles/
+# node
+node_modules/
+# local outputs built from the real employer file
+sortie/reel/
+sortie/ouvert/

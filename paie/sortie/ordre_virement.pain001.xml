@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>DARESKRO-stmt-ffff3dd0e216</MsgId>
+      <CreDtTm>2026-10-25T14:33:40</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>407.33</CtrlSum>
+      <InitgPty>
+        <Nm>PHARMACIE DE L'EXEMPLE (SELARL)</Nm>
+        <Id>
+          <OrgId>
+            <Othr>
+              <Id>12345678900012</Id>
+              <SchmeNm>
+                <Cd>CUST</Cd>
+              </SchmeNm>
+            </Othr>
+          </OrgId>
+        </Id>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>PAIE-2026-10-ffff3dd0e216</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <BtchBookg>false</BtchBookg>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>407.33</CtrlSum>
+      <PmtTpInf>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+        <CtgyPurp>
+          <Cd>SALA</Cd>
+        </CtgyPurp>
+      </PmtTpInf>
+      <ReqdExctnDt>2026-11-05</ReqdExctnDt>
+      <Dbtr>
+        <Nm>PHARMACIE DE L'EXEMPLE (SELARL)</Nm>
+        <PstlAdr>
+          <Ctry>FR</Ctry>
+          <AdrLine>12 rue de l'Exemple</AdrLine>
+          <AdrLine>13001 Marseille</AdrLine>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>FR7630006000011234567890189</IBAN>
+        </Id>
+        <Ccy>EUR</Ccy>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>AGRIFRPP</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <ChrgBr>SLEV</ChrgBr>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>stmt-ffff3dd0e216-NET</InstrId>
+          <EndToEndId>stmt-ffff3dd0e216</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="EUR">407.33</InstdAmt>
+        </Amt>
+        <CdtrAgt>
+          <FinInstnId>
+            <BIC>PSSTFRPPXXX</BIC>
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>Camille EXEMPLE</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>FR1420041010050500013M02606</IBAN>
+          </Id>
+        </CdtrAcct>
+        <Purp>
+          <Cd>SALA</Cd>
+        </Purp>
+        <RmtInf>
+          <Ustrd>SALAIRE 2026-10 GARDE 2026-10-25 BULLETIN stmt-ffff3dd0e216 SHA256 268a8a7830cd037f</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

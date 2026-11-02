@@ -1,0 +1,34 @@
+{
+  "network": "testnet",
+  "node": "wss://testnet.xrpl-labs.com",
+  "nft_id": "0000000073982907650FF7D1C69E12D241A4778C19152D8398423CD1014F0F82",
+  "taxon": 1996,
+  "uri": "dareskro:scelle/sha256/21dfcaa0938b4a4bd9efbcdddb3bacf0944013f8395e34af946a38ca70085d91",
+  "issuer": "rBYUzLoGJcfr9xGM329hfVgGjUsGkiRjQW",
+  "holder": "rsVJocSgCeUAMCX2Xg3yRoe6opxpBmvTuC",
+  "statement_sha256": "268a8a7830cd037fa013ce497266debebf50e4c421248bf8fec6c0a56db5b94b",
+  "pdf_sha256": "ec75f4ce516c5793514dbff371f1fab4fcba76d6a27a94826dd441808f2cbceb",
+  "sealed_sha256": "21dfcaa0938b4a4bd9efbcdddb3bacf0944013f8395e34af946a38ca70085d91",
+  "readers": [
+    "dgfip",
+    "employee",
+    "retraite",
+    "urssaf"
+  ],
+  "mint": {
+    "hash": "80885B0CF6B41C47F09D17FB6257CBB5E253C3F0CC2AA57EB76FF2F73BEF77BC",
+    "ledger": 21959503,
+    "explorer": "https://testnet.xrpl.org/transactions/80885B0CF6B41C47F09D17FB6257CBB5E253C3F0CC2AA57EB76FF2F73BEF77BC"
+  },
+  "offer": {
+    "hash": "910E24C4274E60280153FDB7A9F35EC634C42A4AD9AD9F0316545F55B6A81316",
+    "index": "0D06160EBEDE16BF185DD6A612C404AEA3211572A22D2F8EAD7C9A9B03B6F54E",
+    "explorer": "https://testnet.xrpl.org/transactions/910E24C4274E60280153FDB7A9F35EC634C42A4AD9AD9F0316545F55B6A81316"
+  },
+  "accept": {
+    "hash": "F74B0BEE8CA66C2CEBA537557C052FBC912B9E2E49598BE412C5DD6FF1F15600",
+    "ledger": 21959507,
+    "explorer": "https://testnet.xrpl.org/transactions/F74B0BEE8CA66C2CEBA537557C052FBC912B9E2E49598BE412C5DD6FF1F15600"
+  },
+  "at": "2026-10-31T09:33:51.894Z"
+}

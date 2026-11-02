@@ -1,0 +1,9 @@
+{
+  "what": "the same statement with currency set to EUR, the currency of its parameters; no amount changed",
+  "source": "agent/sortie/bulletin.json",
+  "source_sha256": "384ec59ca17114dbe09e081c5cf0990a4cbe5ba859519ca2a8c1ca9a2f8347bf",
+  "source_currency": "USD",
+  "result_sha256": "268a8a7830cd037fa013ce497266debebf50e4c421248bf8fec6c0a56db5b94b",
+  "rule": "SHA-256 of the canonical JSON (sort_keys, separators (',', ':'), without sha256/status/validation), as in agent/bulletin_garde.py",
+  "equivalent_command": "agent/bulletin_garde.py --devise EUR (same amounts; computed_at would differ)"
+}
