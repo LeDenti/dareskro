@@ -1,0 +1,139 @@
+{
+  "network": "testnet",
+  "contract": "dareskro.testnet",
+  "started": "2026-11-02T21:44:08.786Z",
+  "steps": [
+    {
+      "name": "1 pool_create",
+      "id": "1",
+      "pool": {
+        "creator": "dareskro-employee.testnet",
+        "destination": "dareskro-employer.testnet",
+        "target": "600000000000000000000000",
+        "funded": "6520000000000000000000",
+        "shares": [
+          {
+            "payer": "dareskro-employee.testnet",
+            "amount": "6520000000000000000000"
+          }
+        ],
+        "finish_after": "1793655872950994753",
+        "deadline": "1793656447950994753",
+        "memos": [
+          "lease:L-9",
+          "deposit shared with a guarantor",
+          "dareskro/oracle:dareskro-oracle.testnet"
+        ],
+        "status": "Open",
+        "created_at": "1793655850377485018",
+        "filled_at": null,
+        "closed_at": null,
+        "closed_by": null
+      },
+      "hash": "7kj5CcibgzEiBxgwKAFnCB5JpoW5oAUXGzhEJg7T7zD1"
+    },
+    {
+      "name": "2a guarantor 0.3",
+      "status": "Open",
+      "funded": "306090000000000000000000",
+      "hash": "zgJJmZNz3dVqNfeLMyaThpUFJJ5AZZRpdzqkTV8Tzvw"
+    },
+    {
+      "name": "2b tenant 0.2",
+      "status": "Open",
+      "funded": "506090000000000000000000",
+      "hash": "AaQdCkcauj9HRUTCUus1HTv428DG4LCfTiwbgw9LtTGu"
+    },
+    {
+      "name": "3a finish while open",
+      "expected": "refused: not full yet",
+      "got": "pool not full yet",
+      "hash": "r2YwBtRft8XAFkf7wB3AVCjstNP94BRmNa4xB7s3Xs7",
+      "as_expected": true
+    },
+    {
+      "name": "3b refund before the deadline",
+      "expected": "refused: deadline not reached",
+      "got": "deadline not reached: the pool can still fill",
+      "hash": "bEyvjhq5Q2xvcoJu4q8h8P3dzyQNSziRuBgeMAd5Ves",
+      "as_expected": true
+    },
+    {
+      "name": "4 third payer fills",
+      "status": "Locked",
+      "funded": "600000000000000000000000",
+      "spent": "33900574285092500000000",
+      "shares": [
+        {
+          "payer": "dareskro-employee.testnet",
+          "amount": "206520000000000000000000"
+        },
+        {
+          "payer": "dareskro-oracle.testnet",
+          "amount": "299570000000000000000000"
+        },
+        {
+          "payer": "dareskro-stranger.testnet",
+          "amount": "93910000000000000000000"
+        }
+      ],
+      "hash": "9rn42p8CA4sbPHV2o6GoJibbZ6PCXqergNrfA4D4y6sn"
+    },
+    {
+      "name": "4b one more share once full",
+      "expected": "refused: already full",
+      "got": "pool already full or closed",
+      "hash": "aca6ByyccHwTKMWKtUz5bA7GumJscSZtY53FGD1qtjq",
+      "as_expected": true
+    },
+    {
+      "name": "4c finish before the date",
+      "expected": "refused: too early",
+      "got": "too early: the contract's clock has not reached finish_after",
+      "hash": "HQxAZHkvSTFLGVsK3BvgtNmo7xgQGVmk9sKEyvA3bBjF",
+      "as_expected": true
+    },
+    {
+      "name": "5 pool_finish",
+      "status": "Finished",
+      "got": "600000000000000000000000",
+      "closed_by": "dareskro-stranger.testnet",
+      "hash": "HS6YWZsHzAyLp95cHhnzFc1tu7V24bRPtHKUsAx3aJUJ"
+    },
+    {
+      "name": "6 second pool",
+      "id": "2",
+      "status": "Open",
+      "funded": "206780000000000000000000",
+      "hash": "5WnMRvYc64KgUpEnrxQsWEaJayRtKgEjtcAXk1azyDCz"
+    },
+    {
+      "name": "6c refund too soon",
+      "expected": "refused: deadline not reached",
+      "got": "deadline not reached: the pool can still fill",
+      "hash": "DuwyU8SYobyqWPxxeWraBRC5tEuaghP1FtG1QSENVoyy",
+      "as_expected": true
+    },
+    {
+      "name": "7a a share after the deadline",
+      "expected": "refused: deadline passed",
+      "got": "deadline passed: the shares go back",
+      "hash": "Gnc9QuNU9s1DgehDDiNANopeLPXNLxfkh9Ne7DUCaEY6",
+      "as_expected": true
+    },
+    {
+      "name": "7b pool_refund",
+      "status": "Cancelled",
+      "closed_by": "dareskro-stranger.testnet",
+      "hash": "D9Bj7o5H8AKSSgtPwPYGa2cPk9xPKgQfuNbsKrhxhQkh"
+    },
+    {
+      "name": "7c refund twice",
+      "expected": "refused: nothing to return",
+      "got": "pool full or closed: nothing to return",
+      "hash": "FEqQJDgNv1MNXjsy5NdZjgVcSZi8iMqyPR5WRoRghLBk",
+      "as_expected": true
+    }
+  ],
+  "finished": "2026-11-02T21:45:33.062Z"
+}

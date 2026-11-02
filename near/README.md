@@ -25,7 +25,7 @@ measured on XRPL are written as code and measured again:
 | several payees, one signature, all or nothing | Batch (XLS-56) | `create_batch(items)`: amounts + storage must fit the deposit or nothing is created; surplus returned |
 | who holds the funds | the ledger | the contract account — **after `deploy_near.mjs lock` it has no keys left**: nobody can change the code or move the balance except through `create` / `finish` / `cancel`; the administrator account can only set the fee per act and withdraw what was charged |
 
-Two records live next to the escrows, both measured on 01/11 (table below):
+Three records live next to the escrows, the first two measured on 01/11, the third on 02/11 (tables below):
 
 - **The sealed payslip** (`issue_payslip`). The chain is public and permanent, so the payslip never goes on it in clear: [`scelle.mjs`](scelle.mjs)
   encrypts it (AES-256-GCM under a fresh content key, that key wrapped for each reader with X25519 + HKDF, the same scheme as dareskro's
@@ -39,9 +39,15 @@ Two records live next to the escrows, both measured on 01/11 (table below):
   to the beneficiary, the rest returns to the owner; **the vote that reaches the threshold pays both sides in the same call**; until then
   nothing moves, and a party may change its vote. Past the deadline with no decision, anyone returns everything to the owner. Memos carry
   the lease id and the sha256 of the inventories and quotes: the public trace a judge can read.
+- **The pool** (`pool_create` / `pool_fund` / `pool_finish` / `pool_refund`): an escrow with several payers — a deposit funded by the
+  tenant and a guarantor, a pay co-financed by two employers, a purchase by a group. The creator writes the target, the destination
+  and the dates; anyone brings a share (16 payers at most, one line per payer, a payer who comes back adds to its line) until the
+  target is reached — **the share that fills it is trimmed and the surplus returned in the same call** — and the pool locks: from then
+  on it is a payroll escrow, paid to the destination after `finish_after` by anyone, cancelled by nobody. Still open at `deadline`,
+  anyone returns every share to its payer, all in one call. Neither Solana nor XRPL has this in dareskro: there an escrow has one payer.
 
 **A fee per act** (`set_fee`, `withdraw_fees`, views `fee` / `fees`), added on 02/11 and measured below. The service may charge each
-act — an escrow, a line of a batch, a payslip, a deposit — a percentage of what is locked with a floor (the payslip locks nothing and
+act — an escrow, a line of a batch, a payslip, a deposit, a pool (on its target) — a percentage of what is locked with a floor (the payslip locks nothing and
 pays the floor). It is **zero unless the administrator account sets it** (`dareskro-oracle.testnet` here, `dareskro.near` on mainnet),
 and **bounded by constants compiled into the contract**: at most 1 % (`MAX_FEE_BPS`) and a floor of at most 0.1 NEAR (`MAX_FEE_MIN`),
 whoever the administrator is. The fee is taken from the act's deposit at creation, stays in the contract's balance (no extra transfer,
@@ -177,6 +183,32 @@ ceiling; back to zero, the desk and the demo are free again.**
 | 21:15:28 | 5c withdraw again → refused: nothing to withdraw | [Aw8hqECG…](https://testnet.nearblocks.io/txns/Aw8hqECGgbedqLhutZH72Pu8XsutrnkNd8gQpdSfiwiT) |
 | 21:15:29 | 6 schedule back to zero (0 bps / 0.0000 NEAR); total charged since deployment 0.0200 NEAR over 2 act(s) | [GAMw9tGX…](https://testnet.nearblocks.io/txns/GAMw9tGXdSP47y4vs3SteDTH3ASXNYsk5RRK6RMMRcBU) |
 
+## Measured on testnet, 02/11/2026 21:44 UTC — the pool with several payers
+
+Fourth deployment, `migrate()` ([CXSoo4ns…](https://testnet.nearblocks.io/txns/CXSoo4nsv3Bedj5YMqRBQYbJCVa4rK6cbYXPEbGKyk5w)): every record, the administrator and the schedule kept. Then `node pot_near.mjs`
+(`pot.log`, `pot.json`): **a 0.6 NEAR deposit for the landlord, opened by the tenant, funded by the guarantor (0.3), the tenant (0.2) and a
+third payer who brings 0.3 for the 0.09 missing — his share is trimmed, the surplus comes back in the same call, he actually spends 0.03 —
+and the pool locks; a finish before the date is refused; at the date a stranger pays the landlord exactly 0.6 NEAR. A second pool nobody
+fills: at the deadline a stranger returns the two shares to their payers in one call, and a share after the deadline is refused.**
+
+| UTC | step | tx |
+|---|---|---|
+| 21:44:09 | contract dareskro.testnet: 0 pool(s) before this run; landlord dareskro-employer.testnet has 4.7572 NEAR |  |
+| 21:44:12 | 1 pool #1 opened by the tenant for the landlord: target 0.6 NEAR, deadline +600 s, pay date +25 s; funded 0.0065 (1 line: the 0.01 attached minus the record's storage) | [7kj5Ccib…](https://testnet.nearblocks.io/txns/7kj5CcibgzEiBxgwKAFnCB5JpoW5oAUXGzhEJg7T7zD1) |
+| 21:44:14 | 2a the guarantor dareskro-oracle.testnet brings 0.3 → Open, funded 0.3061: dareskro-employee.testnet 0.0065, dareskro-oracle.testnet 0.2996 | [zgJJmZNz…](https://testnet.nearblocks.io/txns/zgJJmZNz3dVqNfeLMyaThpUFJJ5AZZRpdzqkTV8Tzvw) |
+| 21:44:16 | 2b the tenant brings 0.2 → Open, funded 0.5061: dareskro-employee.testnet 0.2065, dareskro-oracle.testnet 0.2996 | [AaQdCkca…](https://testnet.nearblocks.io/txns/AaQdCkcauj9HRUTCUus1HTv428DG4LCfTiwbgw9LtTGu) |
+| 21:44:18 | 3a finish while open → refused: pool not full yet | [r2YwBtRf…](https://testnet.nearblocks.io/txns/r2YwBtRft8XAFkf7wB3AVCjstNP94BRmNa4xB7s3Xs7) |
+| 21:44:21 | 3b refund before the deadline → refused: deadline not reached: the pool can still fill | [bEyvjhq5…](https://testnet.nearblocks.io/txns/bEyvjhq5Q2xvcoJu4q8h8P3dzyQNSziRuBgeMAd5Ves) |
+| 21:44:25 | 4 a third payer dareskro-stranger.testnet brings 0.3 → Locked, funded 0.6000 of 0.6000; the payer actually spent 0.0339 NEAR (share trimmed to what was missing, surplus returned): dareskro-employee.testnet 0.2065, dareskro-oracle.testnet 0.2996, dareskro-stranger.testnet 0.0939 | [9rn42p8C…](https://testnet.nearblocks.io/txns/9rn42p8CA4sbPHV2o6GoJibbZ6PCXqergNrfA4D4y6sn) |
+| 21:44:27 | 4b one more share once full → refused: pool already full or closed | [aca6Byyc…](https://testnet.nearblocks.io/txns/aca6ByyccHwTKMWKtUz5bA7GumJscSZtY53FGD1qtjq) |
+| 21:44:29 | 4c finish before the date → refused: too early: the contract's clock has not reached finish_after | [HQxAZHkv…](https://testnet.nearblocks.io/txns/HQxAZHkvSTFLGVsK3BvgtNmo7xgQGVmk9sKEyvA3bBjF) |
+| 21:44:40 | 5 dareskro-stranger.testnet finishes → Finished: landlord 4.7572 → 5.3572 NEAR (+0.6000), paid 0.6000 from three payers, closed by dareskro-stranger.testnet | [HS6YWZsH…](https://testnet.nearblocks.io/txns/HS6YWZsHzAyLp95cHhnzFc1tu7V24bRPtHKUsAx3aJUJ) |
+| 21:44:45 | 6 pool #2: target 1 NEAR, deadline +40 s; the guarantor brings 0.2 → Open, funded 0.2068: dareskro-employee.testnet 0.0072, dareskro-oracle.testnet 0.1996 | [5WnMRvYc…](https://testnet.nearblocks.io/txns/5WnMRvYc64KgUpEnrxQsWEaJayRtKgEjtcAXk1azyDCz) |
+| 21:44:47 | 6c refund too soon → refused: deadline not reached: the pool can still fill | [DuwyU8SY…](https://testnet.nearblocks.io/txns/DuwyU8SYobyqWPxxeWraBRC5tEuaghP1FtG1QSENVoyy) |
+| 21:45:25 | 7a a share after the deadline → refused: deadline passed: the shares go back | [Gnc9QuNU…](https://testnet.nearblocks.io/txns/Gnc9QuNU9s1DgehDDiNANopeLPXNLxfkh9Ne7DUCaEY6) |
+| 21:45:31 | 7b dareskro-stranger.testnet returns the shares → Cancelled: guarantor 9.6293 → 9.8289 NEAR, tenant 11.4160 → 11.4232 NEAR, closed by dareskro-stranger.testnet | [D9Bj7o5H…](https://testnet.nearblocks.io/txns/D9Bj7o5H8AKSSgtPwPYGa2cPk9xPKgQfuNbsKrhxhQkh) |
+| 21:45:33 | 7c refund twice → refused: pool full or closed: nothing to return | [FEqQJDgN…](https://testnet.nearblocks.io/txns/FEqQJDgNv1MNXjsy5NdZjgVcSZi8iMqyPR5WRoRghLBk) |
+
 ## Do X, see Y
 
 ```bash
@@ -185,9 +217,9 @@ brew install rustup near && rustup-init -y && rustup target add wasm32-unknown-u
 # on macOS 26 with a beta SDK, cargo may need: export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 
 cd near/contract
-cargo test --lib                      # 17 unit tests, 40 s the first time
-cargo test --test escrow              # 6 sandbox tests on a real local node (downloads near-sandbox once), ≈ 2 min
-cargo near build non-reproducible-wasm   # → target/near/dareskro_escrow.wasm, 285 KB
+cargo test --lib                      # 21 unit tests, 40 s the first time
+cargo test --test escrow              # 7 sandbox tests on a real local node (downloads near-sandbox once), ≈ 2 min
+cargo near build non-reproducible-wasm   # → target/near/dareskro_escrow.wasm, 311 KB
 
 cd ..
 npm install
@@ -200,6 +232,7 @@ node scelle.mjs init                  # the four readers' X25519 keys (near/cles
 node demo_near.mjs                    # the 10 steps above, ≈ 4 min; writes run.log and compte_rendu.json
 node scelle.mjs open <sealed.json> retraite   # the pension fund reads a sealed payslip with its key
 node frais_near.mjs                   # the fee per act: set by the administrator, charged, withdrawn, back to zero; frais.log
+node pot_near.mjs                     # the pool: three payers fill it, paid at the date; a second one returned at the deadline; pot.log
 node deploy_near.mjs lock --yes       # delete the contract's keys: nobody can change it any more (irreversible)
 node oracle_near.mjs watch            # the oracle as a service, every 10 s
 
@@ -214,15 +247,16 @@ names are taken, create your own with `DARESKRO_CONTRACT=<you>.testnet` and the 
 
 | file | what |
 |---|---|
-| `contract/src/lib.rs` | the contract: escrows (`create`, `create_batch`, `finish`, `cancel`), sealed payslips (`issue_payslip`, NEP-171/177 views, transfers refused), deposits (`vault_create`, `vault_vote`, `vault_timeout`), the fee per act (`set_fee`, `set_admin`, `withdraw_fees`, `fee`, `fees`), views; `migrate`; 17 unit tests |
-| `contract/tests/escrow.rs` | sandbox tests: payroll's one possible outcome, delivery by secret and refund at the deadline, batch all-or-nothing, the payslip token, the deposit decided 2 of 3 or returned at the deadline, the fee zero by default then set, charged, held and withdrawn |
+| `contract/src/lib.rs` | the contract: escrows (`create`, `create_batch`, `finish`, `cancel`), sealed payslips (`issue_payslip`, NEP-171/177 views, transfers refused), deposits (`vault_create`, `vault_vote`, `vault_timeout`), pools (`pool_create`, `pool_fund`, `pool_finish`, `pool_refund`), the fee per act (`set_fee`, `set_admin`, `withdraw_fees`, `fee`, `fees`), views; `migrate`; 21 unit tests |
+| `contract/tests/escrow.rs` | sandbox tests: payroll's one possible outcome, delivery by secret and refund at the deadline, batch all-or-nothing, the payslip token, the deposit decided 2 of 3 or returned at the deadline, the fee zero by default then set, charged, held and withdrawn, the pool filled by three payers and paid at the date or its shares returned at the deadline |
 | `scelle.mjs` | seals a payslip for its readers (X25519 + AES-256-GCM), opens it with a reader's key; `cles_publiques.json` holds the public keys |
 | `desk/desk_near.mjs`, `desk/enregistre.mjs` | the pay desk's NEAR service and the recorded run of the tab; `desk/sortie/` the records |
 | `../app/src/NearDesk.tsx`, `../app/src/near.ts` | the NEAR tab of the React desk |
 | `lib.mjs` | near-api-js 7 helpers: accounts from the legacy keychain, `call` that never throws on a panic, views |
 | `oracle_near.mjs` | the oracle: makes conditions (keeps the secret in `.oracle_near.json`, 0600), reads public facts, finishes and refunds |
-| `deploy_near.mjs` | deploy / migrate with `--admin`, list keys, **lock** |
+| `deploy_near.mjs` | deploy (`--admin`) / migrate, list keys, **lock** |
 | `frais_near.mjs` | the fee per act measured on testnet; `frais.log`, `frais.json` |
+| `pot_near.mjs` | the pool measured on testnet; `pot.log`, `pot.json` |
 | `demo_near.mjs` | the testnet run; `run.log`, `compte_rendu.json` |
 | `../presentation/video/scenarios/near.json` | the film's NEAR scenario, filled from `compte_rendu.json` (see `../presentation/video/README.md`) |
 

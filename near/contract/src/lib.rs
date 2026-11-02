@@ -16,8 +16,10 @@
 //!   the NEAR counterpart of the XLS-56 Batch dareskro used for net pay +
 //!   contributions + income tax.
 //!
-//! Two more records live here: the sealed payslip (a NEP-171 token nobody can transfer)
-//! and the shared deposit, a vault decided by a threshold of parties (the rental deposit).
+//! Three more records live here: the sealed payslip (a NEP-171 token nobody can transfer),
+//! the shared deposit, a vault decided by a threshold of parties (the rental deposit), and
+//! the pool, an escrow funded by several payers: shares until the target is reached, then
+//! locked and paid at the date; not reached by the deadline, every share goes back.
 //!
 //! The service may charge a fee per act (an escrow, a line of a batch, a payslip, a
 //! deposit), zero unless the administrator account sets it, and bounded by the code
@@ -92,6 +94,7 @@ enum StorageKey {
     Payslips,
     PayslipsByOwner,
     Vaults,
+    Pools,
 }
 
 #[near(contract_state)]
@@ -114,11 +117,14 @@ pub struct Contract {
     /// charged since the first deployment
     fees_total: NearToken,
     acts_charged: u64,
+    /// the pools, escrows funded by several payers
+    pools: IterableMap<u64, Pool>,
+    next_pool: u64,
 }
 
-/// The state before the fee existed (migrated 01/11/2026 21:54 UTC); `migrate` reads it.
+/// The state before the pool existed (migrated 02/11/2026 21:14 UTC); `migrate` reads it.
 #[near(serializers = [borsh])]
-pub struct ContractV2 {
+pub struct ContractV3 {
     escrows: IterableMap<u64, Escrow>,
     next_id: u64,
     payslips: IterableMap<String, Payslip>,
@@ -126,7 +132,65 @@ pub struct ContractV2 {
     payslips_by_owner: LookupMap<AccountId, Vec<String>>,
     vaults: IterableMap<u64, Vault>,
     next_vault: u64,
+    admin: AccountId,
+    fee: Fee,
+    fees_held: NearToken,
+    fees_total: NearToken,
+    acts_charged: u64,
 }
+
+// ------------------------------------------------------------------------------------------
+// The pool: an escrow with several payers. A deposit funded by the tenant and a guarantor, a
+// pay co-financed by two employers, a purchase by a group. The creator writes the target,
+// the destination and the dates; anyone brings a share until the target is reached — the
+// share that fills it is trimmed and the surplus returned — and the pool locks: from then on
+// it is a payroll escrow, paid to the destination after `finish_after` by anyone, cancelled
+// by nobody. Not filled by `deadline`, anyone returns every share to its payer.
+// ------------------------------------------------------------------------------------------
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, PartialEq)]
+pub enum PoolStatus {
+    /// collecting shares
+    Open,
+    /// the target is reached: waits for the date
+    Locked,
+    Finished,
+    /// the deadline passed before the target: the shares went back
+    Cancelled,
+}
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Share {
+    pub payer: AccountId,
+    pub amount: NearToken,
+}
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Pool {
+    pub creator: AccountId,
+    pub destination: AccountId,
+    /// what must be gathered; what the destination receives once reached
+    pub target: NearToken,
+    /// gathered so far
+    pub funded: NearToken,
+    /// one line per payer, in order of first share; a payer who comes back adds to its line
+    pub shares: Vec<Share>,
+    /// once locked, no finish before this time
+    pub finish_after: Option<U64>,
+    /// still open at this time: anyone returns every share
+    pub deadline: U64,
+    pub memos: Vec<String>,
+    pub status: PoolStatus,
+    pub created_at: U64,
+    pub filled_at: Option<U64>,
+    pub closed_at: Option<U64>,
+    pub closed_by: Option<AccountId>,
+}
+
+const MAX_PAYERS: usize = 16;
 
 // ------------------------------------------------------------------------------------------
 // The fee per act. A percentage of what is locked, with a floor; the payslip, which locks
@@ -317,15 +381,17 @@ impl Contract {
             fees_held: NearToken::from_yoctonear(0),
             fees_total: NearToken::from_yoctonear(0),
             acts_charged: 0,
+            pools: IterableMap::new(StorageKey::Pools),
+            next_pool: 1,
         }
     }
 
-    /// From the second deployment (escrows, payslips, deposits) to this one. Keeps every
-    /// record; the fee starts at zero.
+    /// From the third deployment (escrows, payslips, deposits, the fee) to this one. Keeps
+    /// every record, the administrator and the schedule.
     #[private]
     #[init(ignore_state)]
-    pub fn migrate(admin: AccountId) -> Self {
-        let old: ContractV2 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
+    pub fn migrate() -> Self {
+        let old: ContractV3 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
         Self {
             escrows: old.escrows,
             next_id: old.next_id,
@@ -334,11 +400,13 @@ impl Contract {
             payslips_by_owner: old.payslips_by_owner,
             vaults: old.vaults,
             next_vault: old.next_vault,
-            admin,
-            fee: Fee { bps: 0, min: NearToken::from_yoctonear(0) },
-            fees_held: NearToken::from_yoctonear(0),
-            fees_total: NearToken::from_yoctonear(0),
-            acts_charged: 0,
+            admin: old.admin,
+            fee: old.fee,
+            fees_held: old.fees_held,
+            fees_total: old.fees_total,
+            acts_charged: old.acts_charged,
+            pools: IterableMap::new(StorageKey::Pools),
+            next_pool: 1,
         }
     }
 
@@ -814,6 +882,191 @@ impl Contract {
         p.unwrap().then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_vault_paid(id))
     }
 
+    // ------------------------------------------------------------------ the pool
+
+    /// Open a pool for `destination`, to be filled up to `target` before `deadline`. The
+    /// caller is the creator; the attached deposit pays the record's storage and the fee,
+    /// and what remains is the creator's first share (it may be nothing).
+    #[payable]
+    pub fn pool_create(
+        &mut self,
+        destination: AccountId,
+        target: NearToken,
+        deadline: U64,
+        finish_after: Option<U64>,
+        memos: Option<Vec<String>>,
+    ) -> U64 {
+        let creator = env::predecessor_account_id();
+        let now = env::block_timestamp();
+        require!(target.as_yoctonear() > 0, "a pool of zero");
+        require!(destination != env::current_account_id(), "the pool cannot pay the contract itself");
+        require!(deadline.0 > now, "deadline already passed");
+        let deposit = env::attached_deposit();
+        let before = env::storage_usage();
+        let id = self.next_pool;
+        self.next_pool += 1;
+        self.pools.insert(
+            id,
+            Pool {
+                creator: creator.clone(),
+                destination,
+                target,
+                funded: NearToken::from_yoctonear(0),
+                shares: Vec::new(),
+                finish_after,
+                deadline,
+                memos: memos.unwrap_or_default(),
+                status: PoolStatus::Open,
+                created_at: U64(now),
+                filled_at: None,
+                closed_at: None,
+                closed_by: None,
+            },
+        );
+        self.pools.flush();
+        let storage = env::storage_byte_cost().saturating_mul((env::storage_usage() - before) as u128);
+        let fee = self.fee_for(target);
+        let needed = storage.saturating_add(fee);
+        require!(deposit >= needed, format!("attach at least {} for this record's storage and the fee {}", needed, fee));
+        let snapshot = self.pools.get(&id).unwrap().clone();
+        event("pool_create", json!({"id": U64(id), "pool": snapshot}));
+        self.charge("pool", &id.to_string(), fee);
+        let first = deposit.saturating_sub(needed);
+        if first.as_yoctonear() > 0 {
+            self.add_share(id, creator, first);
+        }
+        U64(id)
+    }
+
+    /// Bring a share. The attached deposit, minus the storage of a new payer's line, is the
+    /// share; what exceeds the target goes back to the payer, and the pool locks.
+    #[payable]
+    pub fn pool_fund(&mut self, id: U64) {
+        let payer = env::predecessor_account_id();
+        let deposit = env::attached_deposit();
+        let p = self.pools.get(&id.0).unwrap_or_else(|| env::panic_str("unknown pool"));
+        require!(p.status == PoolStatus::Open, "pool already full or closed");
+        require!(env::block_timestamp() < p.deadline.0, "deadline passed: the shares go back");
+        let new_payer = !p.shares.iter().any(|x| x.payer == payer);
+        require!(!new_payer || p.shares.len() < MAX_PAYERS, "16 payers at most");
+        let before = env::storage_usage();
+        if new_payer {
+            // write the line first to measure its storage; the amount is set below
+            let p = self.pools.get_mut(&id.0).unwrap();
+            p.shares.push(Share { payer: payer.clone(), amount: NearToken::from_yoctonear(0) });
+            self.pools.flush();
+        }
+        let storage = env::storage_byte_cost().saturating_mul((env::storage_usage() - before) as u128);
+        require!(deposit > storage, "deposit does not even cover the share's storage");
+        self.add_share(id.0, payer, deposit.saturating_sub(storage));
+    }
+
+    /// Locked and past `finish_after`: anyone pays the destination.
+    pub fn pool_finish(&mut self, id: U64) -> Promise {
+        let now = env::block_timestamp();
+        let caller = env::predecessor_account_id();
+        let p = self.pools.get_mut(&id.0).unwrap_or_else(|| env::panic_str("unknown pool"));
+        require!(p.status != PoolStatus::Open, "pool not full yet");
+        require!(p.status == PoolStatus::Locked, "pool already closed");
+        if let Some(f) = p.finish_after {
+            require!(now >= f.0, "too early: the contract's clock has not reached finish_after");
+        }
+        p.status = PoolStatus::Finished;
+        p.closed_at = Some(U64(now));
+        p.closed_by = Some(caller.clone());
+        let (destination, amount) = (p.destination.clone(), p.funded);
+        event("pool_finish", json!({"id": id, "by": caller, "to": destination, "amount": amount}));
+        Promise::new(destination).transfer(amount).then(
+            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_pool_paid(id),
+        )
+    }
+
+    /// Still open at the deadline: anyone returns every share to its payer.
+    pub fn pool_refund(&mut self, id: U64) -> PromiseOrValue<bool> {
+        let now = env::block_timestamp();
+        let caller = env::predecessor_account_id();
+        let p = self.pools.get_mut(&id.0).unwrap_or_else(|| env::panic_str("unknown pool"));
+        require!(p.status == PoolStatus::Open, "pool full or closed: nothing to return");
+        require!(now >= p.deadline.0, "deadline not reached: the pool can still fill");
+        p.status = PoolStatus::Cancelled;
+        p.closed_at = Some(U64(now));
+        p.closed_by = Some(caller.clone());
+        let shares = p.shares.clone();
+        event("pool_refund", json!({"id": id, "by": caller, "shares": shares, "funded": p.funded}));
+        let mut promise: Option<Promise> = None;
+        for s in shares.into_iter().filter(|s| s.amount.as_yoctonear() > 0) {
+            let q = Promise::new(s.payer).transfer(s.amount);
+            promise = Some(match promise {
+                Some(a) => a.and(q),
+                None => q,
+            });
+        }
+        match promise {
+            Some(pr) => PromiseOrValue::Promise(
+                pr.then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_pool_paid(id)),
+            ),
+            None => PromiseOrValue::Value(true),
+        }
+    }
+
+    /// After a payout: a failed leg (an account gone) is said on the ledger; the record
+    /// stays closed, the memo of the leg is the trace to act on.
+    #[private]
+    pub fn on_pool_paid(&mut self, id: U64) -> bool {
+        let mut ok = true;
+        for i in 0..env::promise_results_count() {
+            if !matches!(env::promise_result(i), PromiseResult::Successful(_)) {
+                ok = false;
+            }
+        }
+        if !ok {
+            event("pool_transfer_failed", json!({"id": id}));
+        }
+        ok
+    }
+
+    pub fn pool(&self, id: U64) -> Option<Pool> {
+        self.pools.get(&id.0).cloned()
+    }
+
+    pub fn pools(&self, from_index: Option<U64>, limit: Option<u32>) -> Vec<(U64, Pool)> {
+        let from = from_index.map(|v| v.0).unwrap_or(1);
+        let limit = limit.unwrap_or(50) as usize;
+        self.pools
+            .iter()
+            .filter(|(k, _)| **k >= from)
+            .take(limit)
+            .map(|(k, v)| (U64(*k), v.clone()))
+            .collect()
+    }
+
+    pub fn pool_count(&self) -> U64 {
+        U64(self.next_pool - 1)
+    }
+
+    /// Add `amount` to `payer`'s line, trimmed to what the target still needs; the surplus
+    /// goes back to the payer. Reaching the target locks the pool.
+    fn add_share(&mut self, id: u64, payer: AccountId, amount: NearToken) {
+        let p = self.pools.get_mut(&id).unwrap();
+        let missing = p.target.saturating_sub(p.funded);
+        let share = if amount > missing { missing } else { amount };
+        let surplus = amount.saturating_sub(share);
+        match p.shares.iter_mut().find(|x| x.payer == payer) {
+            Some(line) => line.amount = line.amount.saturating_add(share),
+            None => p.shares.push(Share { payer: payer.clone(), amount: share }),
+        }
+        p.funded = p.funded.saturating_add(share);
+        let full = p.funded >= p.target;
+        if full {
+            p.status = PoolStatus::Locked;
+            p.filled_at = Some(U64(env::block_timestamp()));
+        }
+        event("pool_fund", json!({"id": U64(id), "payer": payer, "share": share, "surplus": surplus, "funded": p.funded, "target": p.target, "full": full}));
+        if surplus.as_yoctonear() > 0 {
+            Promise::new(payer).transfer(surplus).detach();
+        }
+    }
+
     // ---------------------------------------------------------- the fee per act
 
     /// The administrator sets the schedule, within the code's ceiling. Zero and zero
@@ -1126,17 +1379,22 @@ mod unit {
         c.create_batch(vec![line(1), line(1)]);
         assert_eq!(c.fees().acts, U64(5));
         assert!(c.fees().held > NearToken::from_millinear(89));
+        // the pool pays on its target at creation: 0.5 % of 10 NEAR = 0.05
+        testing_env!(ctx(1, NearToken::from_millinear(60).as_yoctonear(), 5_500).build());
+        c.pool_create(accounts(2), NearToken::from_near(10), U64(900_000), None, None);
+        assert_eq!(c.fees().acts, U64(6));
+        assert!(c.fees().held > NearToken::from_millinear(139), "{}", c.fees().held);
         // withdrawn by the administrator: nothing held, the total stays
         testing_env!(ctx(5, 0, 6_000).build());
         let _ = c.withdraw_fees(None);
         assert_eq!(c.fees().held, NearToken::from_yoctonear(0));
-        assert!(c.fees().total > NearToken::from_millinear(89));
+        assert!(c.fees().total > NearToken::from_millinear(139));
         // back to zero: free again
         c.set_fee(0, NearToken::from_yoctonear(0));
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 7_000).build());
         let id = c.create(accounts(2), None, Some(U64(900_000)), None, None);
         assert!(c.get(id).unwrap().amount > NearToken::from_millinear(990));
-        assert_eq!(c.fees().acts, U64(5));
+        assert_eq!(c.fees().acts, U64(6));
     }
 
     #[test]
@@ -1161,6 +1419,86 @@ mod unit {
         testing_env!(ctx(5, 0, 1_000).build());
         let mut c = Contract::new(accounts(5));
         let _ = c.withdraw_fees(None);
+    }
+
+    fn pool_1_near(deadline: u64) -> (Contract, U64) {
+        testing_env!(ctx(1, NearToken::from_millinear(10).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        // the creator's 0.01 NEAR covers the storage; the rest is its first share (a few millinear)
+        let id = c.pool_create(accounts(2), NearToken::from_near(1), U64(deadline), Some(U64(50_000)), Some(vec!["lease:L-9 guarantor".into()]));
+        (c, id)
+    }
+
+    #[test]
+    fn pool_fills_from_several_payers_then_pays_at_the_date() {
+        let (mut c, id) = pool_1_near(900_000);
+        let p = c.pool(id).unwrap();
+        assert_eq!(p.status, PoolStatus::Open);
+        assert_eq!(p.shares.len(), 1);
+        assert_eq!(p.shares[0].payer, accounts(1));
+        // the tenant brings 0.5, the guarantor 0.3: open
+        testing_env!(ctx(3, NearToken::from_millinear(500).as_yoctonear(), 2_000).build());
+        c.pool_fund(id);
+        testing_env!(ctx(4, NearToken::from_millinear(300).as_yoctonear(), 3_000).build());
+        c.pool_fund(id);
+        let p = c.pool(id).unwrap();
+        assert_eq!(p.status, PoolStatus::Open);
+        assert_eq!(p.shares.len(), 3);
+        // the tenant comes back with 0.5: the share is trimmed to what is missing, the pool locks
+        testing_env!(ctx(3, NearToken::from_millinear(500).as_yoctonear(), 4_000).build());
+        c.pool_fund(id);
+        let p = c.pool(id).unwrap();
+        assert_eq!(p.status, PoolStatus::Locked);
+        assert_eq!(p.funded, NearToken::from_near(1));
+        assert_eq!(p.shares.len(), 3);
+        assert!(p.shares[1].amount > NearToken::from_millinear(690) && p.shares[1].amount < NearToken::from_millinear(700), "{}", p.shares[1].amount);
+        assert_eq!(p.filled_at, Some(U64(4_000)));
+        // too early, then paid by anyone
+        testing_env!(ctx(4, 0, 5_000).build());
+        let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| c.pool_finish(id)));
+        assert!(r.is_err());
+        testing_env!(ctx(4, 0, 50_000).build());
+        let _ = c.pool_finish(id);
+        let p = c.pool(id).unwrap();
+        assert_eq!(p.status, PoolStatus::Finished);
+        assert_eq!(p.closed_by.unwrap(), accounts(4));
+        assert_eq!(c.pool_count(), U64(1));
+    }
+
+    #[test]
+    #[should_panic(expected = "already full or closed")]
+    fn pool_full_takes_no_more_shares() {
+        let (mut c, id) = pool_1_near(900_000);
+        testing_env!(ctx(3, NearToken::from_near(2).as_yoctonear(), 2_000).build());
+        c.pool_fund(id);
+        assert_eq!(c.pool(id).unwrap().status, PoolStatus::Locked);
+        testing_env!(ctx(4, NearToken::from_millinear(300).as_yoctonear(), 3_000).build());
+        c.pool_fund(id);
+    }
+
+    #[test]
+    #[should_panic(expected = "deadline not reached")]
+    fn pool_refund_waits_for_the_deadline() {
+        let (mut c, id) = pool_1_near(900_000);
+        testing_env!(ctx(4, 0, 2_000).build());
+        let _ = c.pool_refund(id);
+    }
+
+    #[test]
+    fn pool_not_filled_returns_every_share_at_the_deadline() {
+        let (mut c, id) = pool_1_near(10_000);
+        testing_env!(ctx(3, NearToken::from_millinear(500).as_yoctonear(), 2_000).build());
+        c.pool_fund(id);
+        testing_env!(ctx(4, 0, 10_000).build());
+        assert!(matches!(c.pool_refund(id), PromiseOrValue::Promise(_)));
+        let p = c.pool(id).unwrap();
+        assert_eq!(p.status, PoolStatus::Cancelled);
+        assert_eq!(p.closed_by.unwrap(), accounts(4));
+        assert_eq!(p.shares.len(), 2);
+        // nothing can be brought or paid any more
+        testing_env!(ctx(3, NearToken::from_millinear(100).as_yoctonear(), 11_000).build());
+        let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| c.pool_fund(id)));
+        assert!(r.is_err());
     }
 
     #[test]

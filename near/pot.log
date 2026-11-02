@@ -1,0 +1,18 @@
+2026-11-02 21:44:09 UTC  contract dareskro.testnet: 0 pool(s) before this run; landlord dareskro-employer.testnet has 4.7572 NEAR
+2026-11-02 21:44:12 UTC  1 pool #1 opened by the tenant for the landlord: target 0.6 NEAR, deadline +600 s, pay date +25 s; funded 0.0065 (1 line: the 0.01 attached minus the record's storage)  https://testnet.nearblocks.io/txns/7kj5CcibgzEiBxgwKAFnCB5JpoW5oAUXGzhEJg7T7zD1
+2026-11-02 21:44:14 UTC  2a the guarantor dareskro-oracle.testnet brings 0.3 → Open, funded 0.3061: dareskro-employee.testnet 0.0065, dareskro-oracle.testnet 0.2996  https://testnet.nearblocks.io/txns/zgJJmZNz3dVqNfeLMyaThpUFJJ5AZZRpdzqkTV8Tzvw
+2026-11-02 21:44:16 UTC  2b the tenant brings 0.2 → Open, funded 0.5061: dareskro-employee.testnet 0.2065, dareskro-oracle.testnet 0.2996  https://testnet.nearblocks.io/txns/AaQdCkcauj9HRUTCUus1HTv428DG4LCfTiwbgw9LtTGu
+2026-11-02 21:44:18 UTC  3a finish while open → refused: pool not full yet  https://testnet.nearblocks.io/txns/r2YwBtRft8XAFkf7wB3AVCjstNP94BRmNa4xB7s3Xs7
+2026-11-02 21:44:21 UTC  3b refund before the deadline → refused: deadline not reached: the pool can still fill  https://testnet.nearblocks.io/txns/bEyvjhq5Q2xvcoJu4q8h8P3dzyQNSziRuBgeMAd5Ves
+2026-11-02 21:44:25 UTC  4 a third payer dareskro-stranger.testnet brings 0.3 → Locked, funded 0.6000 of 0.6000; the payer actually spent 0.0339 NEAR (share trimmed to what was missing, surplus returned): dareskro-employee.testnet 0.2065, dareskro-oracle.testnet 0.2996, dareskro-stranger.testnet 0.0939  https://testnet.nearblocks.io/txns/9rn42p8CA4sbPHV2o6GoJibbZ6PCXqergNrfA4D4y6sn
+2026-11-02 21:44:27 UTC  4b one more share once full → refused: pool already full or closed  https://testnet.nearblocks.io/txns/aca6ByyccHwTKMWKtUz5bA7GumJscSZtY53FGD1qtjq
+2026-11-02 21:44:29 UTC  4c finish before the date → refused: too early: the contract's clock has not reached finish_after  https://testnet.nearblocks.io/txns/HQxAZHkvSTFLGVsK3BvgtNmo7xgQGVmk9sKEyvA3bBjF
+2026-11-02 21:44:29 UTC  5 waiting 6 s for the pay date
+2026-11-02 21:44:40 UTC  5 dareskro-stranger.testnet finishes → Finished: landlord 4.7572 → 5.3572 NEAR (+0.6000), paid 0.6000 from three payers, closed by dareskro-stranger.testnet  https://testnet.nearblocks.io/txns/HS6YWZsHzAyLp95cHhnzFc1tu7V24bRPtHKUsAx3aJUJ
+2026-11-02 21:44:45 UTC  6 pool #2: target 1 NEAR, deadline +40 s; the guarantor brings 0.2 → Open, funded 0.2068: dareskro-employee.testnet 0.0072, dareskro-oracle.testnet 0.1996  https://testnet.nearblocks.io/txns/5WnMRvYc64KgUpEnrxQsWEaJayRtKgEjtcAXk1azyDCz
+2026-11-02 21:44:47 UTC  6c refund too soon → refused: deadline not reached: the pool can still fill  https://testnet.nearblocks.io/txns/DuwyU8SYobyqWPxxeWraBRC5tEuaghP1FtG1QSENVoyy
+2026-11-02 21:44:47 UTC  7 waiting 35 s for the deadline
+2026-11-02 21:45:25 UTC  7a a share after the deadline → refused: deadline passed: the shares go back  https://testnet.nearblocks.io/txns/Gnc9QuNU9s1DgehDDiNANopeLPXNLxfkh9Ne7DUCaEY6
+2026-11-02 21:45:31 UTC  7b dareskro-stranger.testnet returns the shares → Cancelled: guarantor 9.6293 → 9.8289 NEAR, tenant 11.4160 → 11.4232 NEAR, closed by dareskro-stranger.testnet  https://testnet.nearblocks.io/txns/D9Bj7o5H8AKSSgtPwPYGa2cPk9xPKgQfuNbsKrhxhQkh
+2026-11-02 21:45:33 UTC  7c refund twice → refused: pool full or closed: nothing to return  https://testnet.nearblocks.io/txns/FEqQJDgNv1MNXjsy5NdZjgVcSZi8iMqyPR5WRoRghLBk
+2026-11-02 21:45:33 UTC  done

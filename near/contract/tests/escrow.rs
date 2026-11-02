@@ -298,3 +298,69 @@ async fn fee_per_act_zero_by_default_set_by_the_administrator_held_and_withdrawn
     assert_eq!(amount_of(&contract, &id3).await?, free);
     Ok(())
 }
+
+#[tokio::test]
+async fn pool_filled_by_three_payers_paid_at_the_date_or_shares_returned() -> anyhow::Result<()> {
+    let (worker, contract, tenant, guarantor, stranger) = setup().await?;
+    let landlord = worker.dev_create_account().await?;
+    let half = NearToken::from_millinear(500);
+    let date = now_ns(&contract).await? + 15_000_000_000;
+    let far = (now_ns(&contract).await? + 3_600_000_000_000).to_string();
+    // the tenant opens a 1 NEAR pool for the landlord, 0.01 for the record, no share yet
+    let id: Value = tenant
+        .call(contract.id(), "pool_create")
+        .args_json(json!({"destination": landlord.id(), "target": NearToken::from_near(1), "deadline": far,
+                          "finish_after": date.to_string(), "memos": ["lease:L-9", "deposit shared with a guarantor"]}))
+        .deposit(NearToken::from_millinear(10))
+        .transact()
+        .await?
+        .json()?;
+    // the guarantor brings 0.5, the tenant 0.3 on top of its first few millinear: ≈ 0.81, still open, two lines
+    guarantor.call(contract.id(), "pool_fund").args_json(json!({"id": id})).deposit(half).transact().await?.into_result()?;
+    tenant.call(contract.id(), "pool_fund").args_json(json!({"id": id})).deposit(NearToken::from_millinear(300)).transact().await?.into_result()?;
+    let p: Value = contract.view("pool").args_json(json!({"id": id})).await?.json()?;
+    assert_eq!(p["status"], "Open");
+    assert_eq!(p["shares"].as_array().unwrap().len(), 2);
+    // nothing to return before the deadline, nothing to pay before it is full
+    err_contains(stranger.call(contract.id(), "pool_refund").args_json(json!({"id": id})).transact().await?, "deadline not reached");
+    err_contains(stranger.call(contract.id(), "pool_finish").args_json(json!({"id": id})).transact().await?, "not full yet");
+    // a stranger fills it with 0.5 for the ≈ 0.19 missing: trimmed, the surplus comes back, the pool locks
+    let before = stranger.view_account().await?.balance;
+    stranger.call(contract.id(), "pool_fund").args_json(json!({"id": id})).deposit(half).transact().await?.into_result()?;
+    let spent = before.saturating_sub(stranger.view_account().await?.balance);
+    assert!(spent > NearToken::from_millinear(150) && spent < NearToken::from_millinear(250), "the stranger spent {spent}: the surplus did not come back");
+    let p: Value = contract.view("pool").args_json(json!({"id": id})).await?.json()?;
+    assert_eq!(p["status"], "Locked");
+    assert_eq!(p["funded"], NearToken::from_near(1).as_yoctonear().to_string());
+    assert_eq!(p["shares"].as_array().unwrap().len(), 3);
+    err_contains(guarantor.call(contract.id(), "pool_fund").args_json(json!({"id": id})).deposit(half).transact().await?, "already full");
+    err_contains(stranger.call(contract.id(), "pool_finish").args_json(json!({"id": id})).transact().await?, "too early");
+    // at the date, anyone pays the landlord
+    wait_until(&worker, &contract, date).await?;
+    let before = landlord.view_account().await?.balance;
+    stranger.call(contract.id(), "pool_finish").args_json(json!({"id": id})).transact().await?.into_result()?;
+    let got = landlord.view_account().await?.balance.saturating_sub(before);
+    assert_eq!(got, NearToken::from_near(1), "landlord got {got}");
+
+    // a second pool nobody fills: at the deadline a passer-by returns every share
+    let deadline = now_ns(&contract).await? + 10_000_000_000;
+    let id2: Value = tenant
+        .call(contract.id(), "pool_create")
+        .args_json(json!({"destination": landlord.id(), "target": NearToken::from_near(2), "deadline": deadline.to_string()}))
+        .deposit(NearToken::from_millinear(10))
+        .transact()
+        .await?
+        .json()?;
+    guarantor.call(contract.id(), "pool_fund").args_json(json!({"id": id2})).deposit(half).transact().await?.into_result()?;
+    wait_until(&worker, &contract, deadline).await?;
+    err_contains(tenant.call(contract.id(), "pool_fund").args_json(json!({"id": id2})).deposit(half).transact().await?, "deadline passed");
+    let before = guarantor.view_account().await?.balance;
+    stranger.call(contract.id(), "pool_refund").args_json(json!({"id": id2})).transact().await?.into_result()?;
+    let back = guarantor.view_account().await?.balance.saturating_sub(before);
+    assert!(back > NearToken::from_millinear(490) && back <= half, "guarantor got back {back}");
+    let p: Value = contract.view("pool").args_json(json!({"id": id2})).await?.json()?;
+    assert_eq!(p["status"], "Cancelled");
+    assert_eq!(p["closed_by"], json!(stranger.id()));
+    err_contains(stranger.call(contract.id(), "pool_refund").args_json(json!({"id": id2})).transact().await?, "nothing to return");
+    Ok(())
+}
