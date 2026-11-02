@@ -8,6 +8,8 @@ repository is the XRPL product built for the New York hackathon of 24–25 Octob
 > The agent reads the evidence. The code computes the amount. A human signs. The contract pays at the date.
 > Nobody holds the funds in between — on NEAR, not even the people who deployed the contract.
 
+Developer feedback for the NEAR team, every item pinned to a line of code or a transaction: [`FEEDBACK.md`](FEEDBACK.md).
+
 ## What changes when the ledger has no escrow
 
 On the XRP Ledger `EscrowCreate` is a native transaction: the ledger itself holds the money and enforces the date. NEAR has no native

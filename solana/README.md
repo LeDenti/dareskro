@@ -9,6 +9,8 @@
 > A Solana program pays at the date, or when the proof is public. Nobody holds the
 > funds in between — not the employer, not the oracle, not us.
 
+Developer feedback for the Solana and Aurora teams, every item pinned to a line of code or a transaction: [`FEEDBACK.md`](FEEDBACK.md).
+
 ## What existed before, what is built here
 
 dareskro was built on the XRP Ledger at the XRPL hackathon in New York (24–25

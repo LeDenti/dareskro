@@ -1,0 +1,14 @@
+# dareskro × NEAR — Developer feedback
+
+Context: Rust contract `contract/src/lib.rs` (near-sdk 5.30) with escrows, non-transferable NEP-171/177 payslips and a 2-of-3 deposit vault. Testnet run on 2026-11-01 (21:54–21:58 UTC). 12 unit tests and 5 near-workspaces tests. Every item cites code or logs.
+
+1. **No native escrow.** The contract itself is the escrow ([l.3-4](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/contract/src/lib.rs#L3-L4)). Proposal: an audited reference escrow contract.
+2. **`store::` collections write lazily.** You must call `flush()` before `storage_usage()` or the storage cost is mis-measured ([l.298](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/contract/src/lib.rs#L298), [325](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/contract/src/lib.rs#L325), [483-484](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/contract/src/lib.rs#L483-L484), [635](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/contract/src/lib.rs#L635)). Proposal: a prominent doc note or a `measure_storage` helper.
+3. **No way to tell which leg of `Promise::and` failed.** In [`on_vault_paid` (l.693-704)](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/contract/src/lib.rs#L693-L704) a failed leg leaves funds stranded in the contract. Proposal: named result indices, or a split-payout example with recovery.
+4. **Client errors parsed by regex** ([`lib.mjs` l.42](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/lib.mjs#L42)). Proposal: structured errors in near-api-js.
+5. **Read-after-write retries** (`viewSure`, [`demo_near.mjs` l.51](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/demo_near.mjs#L51)). Root cause unconfirmed. Proposal: document which finality to request.
+6. **Caller-funded storage must be pre-computed** ([README l.92](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/README.md#L92), tx [HF5jND7a…](https://testnet.nearblocks.io/txns/HF5jND7aM3Dbxo5af8AS5vGuCCrSWmXdXroN3tucJuUa)). Proposal: a standard storage estimator.
+
+## References
+- Repository: <https://github.com/LeDenti/dareskro>, folder `near/`, MIT. Every cited line refers to commit `58228d1` (`58228d15b0f737d89088819512e4e380a86c774b`) on `main`, 2 November 2026.
+- Contract: `dareskro.testnet` ([deploy](https://testnet.nearblocks.io/txns/AwuuUYFBTqtMktFrDVCtrMhN52nPk4XTKxc3gT9ScwSv)); the full run table of 1 November, with every transaction, is in [`near/README.md` l.73-118](https://github.com/LeDenti/dareskro/blob/58228d15b0f737d89088819512e4e380a86c774b/near/README.md#L73).
