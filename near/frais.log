@@ -1,0 +1,12 @@
+2026-11-02 21:15:06 UTC  contract dareskro.testnet: administrator dareskro-oracle.testnet, fee 0 bps / floor 0.0000 NEAR, held 0.0000, total 0.0000, 0 act(s) charged; ceiling 100 bps / 0.1000 NEAR
+2026-11-02 21:15:09 UTC  1 escrow #20 at zero: 1 NEAR in, 0.9974 NEAR locked (storage only)  https://testnet.nearblocks.io/txns/7ZpQ95cxFGs6d9wFsdu9k4HtdM56vEKpLaUrxoQTkAWc
+2026-11-02 21:15:10 UTC  2a stranger set_fee → refused: only the administrator may do this  https://testnet.nearblocks.io/txns/6xxe8SFWS7HyYbZqsHYiCZ4x7mDxdidrM4zhSFbg4VW9
+2026-11-02 21:15:12 UTC  2b administrator above the ceiling → refused: the fee is at most 100 basis points  https://testnet.nearblocks.io/txns/JBYxeP5Xfqd5vZHceXUFxdykV3jngtCquupFmd2hAa9V
+2026-11-02 21:15:13 UTC  2c administrator dareskro-oracle.testnet sets 50 bps (0.5 %) with a floor of 0.01 NEAR  https://testnet.nearblocks.io/txns/A1aitXsvGAhJQmytSBeLbyKi2XX5Gw2GT2yRrtzBxYUC
+2026-11-02 21:15:15 UTC  3 escrow #21 with the schedule: 1 NEAR in, 0.9874 NEAR locked, fee 0.0100 NEAR (0.5 % of 1 NEAR is under the floor), held 0.0100  https://testnet.nearblocks.io/txns/FVYKKC54zorBwdPk1wHzJk1ftgo66CuCSMsdYP4nzaSo
+2026-11-02 21:15:18 UTC  4 payslip payslip-3 issued: the floor 0.01 NEAR charged, held 0.0200, 2 acts  https://testnet.nearblocks.io/txns/H8Zs1H2hkHVppvsTWyvvNReKXf7P9NUsu7JvYERhBkLC
+2026-11-02 21:15:20 UTC  5a stranger withdraw_fees → refused: only the administrator may do this  https://testnet.nearblocks.io/txns/5doAT13uzvQWEDrB3cfr1SXtRJR63MuAdT8Mw9WWUqKY
+2026-11-02 21:15:26 UTC  5b administrator withdraws: 10.1107 → 10.1303 NEAR (+0.0196 after gas), held 0.0000, total 0.0200  https://testnet.nearblocks.io/txns/5qr7U9wBgdnKKBQmEceTy8CSUDShHXGwWy7AfJTxfbQ8
+2026-11-02 21:15:28 UTC  5c withdraw again → refused: nothing to withdraw  https://testnet.nearblocks.io/txns/Aw8hqECGgbedqLhutZH72Pu8XsutrnkNd8gQpdSfiwiT
+2026-11-02 21:15:29 UTC  6 schedule back to zero (0 bps / 0.0000 NEAR); total charged since deployment 0.0200 NEAR over 2 act(s)  https://testnet.nearblocks.io/txns/GAMw9tGXdSP47y4vs3SteDTH3ASXNYsk5RRK6RMMRcBU
+2026-11-02 21:15:29 UTC  done

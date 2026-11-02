@@ -19,9 +19,16 @@
 //! Two more records live here: the sealed payslip (a NEP-171 token nobody can transfer)
 //! and the shared deposit, a vault decided by a threshold of parties (the rental deposit).
 //!
+//! The service may charge a fee per act (an escrow, a line of a batch, a payslip, a
+//! deposit), zero unless the administrator account sets it, and bounded by the code
+//! whoever the administrator is: at most 1 % of what is locked, with a floor of at most
+//! 0.1 NEAR. It is taken from the deposit at creation, stays in the contract's balance
+//! and is withdrawn by the administrator in one call; releasing, cancelling, voting and
+//! the deadline cost nothing. The administrator can change the schedule and nothing else.
+//!
 //! Who holds the funds: this contract account. Deploy it, then delete its
 //! full-access keys (`near account delete-keys`): from then on nobody can change
-//! the code or take the balance, and the only moves left are the four methods.
+//! the code or take the balance beyond the fees already charged.
 //!
 //! Times are nanoseconds since the Unix epoch, as `env::block_timestamp()`.
 use near_sdk::json_types::{Base64VecU8, U64, U128};
@@ -99,14 +106,59 @@ pub struct Contract {
     /// the shared deposits, decided by a threshold of parties
     vaults: IterableMap<u64, Vault>,
     next_vault: u64,
+    /// the only account that may set the fee and withdraw it (dareskro.near on mainnet)
+    admin: AccountId,
+    fee: Fee,
+    /// charged and not yet withdrawn: part of this account's balance
+    fees_held: NearToken,
+    /// charged since the first deployment
+    fees_total: NearToken,
+    acts_charged: u64,
 }
 
-/// The state before payslips existed (deployed 31/10/2026 07:5x UTC); `migrate` reads it.
+/// The state before the fee existed (migrated 01/11/2026 21:54 UTC); `migrate` reads it.
 #[near(serializers = [borsh])]
-pub struct ContractV1 {
+pub struct ContractV2 {
     escrows: IterableMap<u64, Escrow>,
     next_id: u64,
+    payslips: IterableMap<String, Payslip>,
+    next_payslip: u64,
+    payslips_by_owner: LookupMap<AccountId, Vec<String>>,
+    vaults: IterableMap<u64, Vault>,
+    next_vault: u64,
 }
+
+// ------------------------------------------------------------------------------------------
+// The fee per act. A percentage of what is locked, with a floor; the payslip, which locks
+// nothing, pays the floor. Both are bounded by constants compiled into the contract, so a
+// user reading the code knows the most the service can ever take, whoever administers it.
+// ------------------------------------------------------------------------------------------
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct Fee {
+    /// basis points of the amount locked: 1 = 0.01 %, 100 = 1 %
+    pub bps: u16,
+    /// the least charged per act, in yoctoNEAR
+    pub min: NearToken,
+}
+
+/// What `fees` returns.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct Fees {
+    pub admin: AccountId,
+    pub fee: Fee,
+    pub held: NearToken,
+    pub total: NearToken,
+    pub acts: U64,
+    pub max_bps: u16,
+    pub max_min: NearToken,
+}
+
+/// The ceiling of the schedule: the administrator cannot go above 1 % or a floor of 0.1 NEAR.
+const MAX_FEE_BPS: u16 = 100;
+const MAX_FEE_MIN: NearToken = NearToken::from_millinear(100);
 
 // ------------------------------------------------------------------------------------------
 // The sealed payslip. The chain is public and permanent, so the payslip never goes on it in
@@ -249,8 +301,9 @@ fn check_shape(e: &NewEscrow) {
 
 #[near]
 impl Contract {
+    /// `admin` is the account that will set the fee and withdraw it. The fee starts at zero.
     #[init]
-    pub fn new() -> Self {
+    pub fn new(admin: AccountId) -> Self {
         Self {
             escrows: IterableMap::new(StorageKey::Escrows),
             next_id: 1,
@@ -259,22 +312,33 @@ impl Contract {
             payslips_by_owner: LookupMap::new(StorageKey::PayslipsByOwner),
             vaults: IterableMap::new(StorageKey::Vaults),
             next_vault: 1,
+            admin,
+            fee: Fee { bps: 0, min: NearToken::from_yoctonear(0) },
+            fees_held: NearToken::from_yoctonear(0),
+            fees_total: NearToken::from_yoctonear(0),
+            acts_charged: 0,
         }
     }
 
-    /// From the first deployment (escrows only) to this one. Keeps every escrow.
+    /// From the second deployment (escrows, payslips, deposits) to this one. Keeps every
+    /// record; the fee starts at zero.
     #[private]
     #[init(ignore_state)]
-    pub fn migrate() -> Self {
-        let old: ContractV1 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
+    pub fn migrate(admin: AccountId) -> Self {
+        let old: ContractV2 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
         Self {
             escrows: old.escrows,
             next_id: old.next_id,
-            payslips: IterableMap::new(StorageKey::Payslips),
-            next_payslip: 1,
-            payslips_by_owner: LookupMap::new(StorageKey::PayslipsByOwner),
-            vaults: IterableMap::new(StorageKey::Vaults),
-            next_vault: 1,
+            payslips: old.payslips,
+            next_payslip: old.next_payslip,
+            payslips_by_owner: old.payslips_by_owner,
+            vaults: old.vaults,
+            next_vault: old.next_vault,
+            admin,
+            fee: Fee { bps: 0, min: NearToken::from_yoctonear(0) },
+            fees_held: NearToken::from_yoctonear(0),
+            fees_total: NearToken::from_yoctonear(0),
+            acts_charged: 0,
         }
     }
 
@@ -299,11 +363,14 @@ impl Contract {
         let storage = env::storage_byte_cost()
             .saturating_mul((env::storage_usage() - before) as u128);
         require!(deposit > storage, "deposit does not even cover the record's storage");
-        let amount = deposit.saturating_sub(storage);
+        let fee = self.fee_for(deposit.saturating_sub(storage));
+        require!(deposit > storage.saturating_add(fee), format!("deposit does not cover the fee of {fee}"));
+        let amount = deposit.saturating_sub(storage).saturating_sub(fee);
         let e = self.escrows.get_mut(&id).unwrap();
         e.amount = amount;
         let snapshot = e.clone();
         event("create", json!({"id": U64(id), "escrow": snapshot}));
+        self.charge("escrow", &id.to_string(), fee);
         U64(id)
     }
 
@@ -316,23 +383,27 @@ impl Contract {
         let deposit = env::attached_deposit();
         let before = env::storage_usage();
         let mut total = NearToken::from_yoctonear(0);
+        let mut fees = NearToken::from_yoctonear(0);
         let mut ids = Vec::with_capacity(items.len());
         for item in &items {
             require!(item.amount.as_yoctonear() > 0, "an escrow of zero");
             total = total.saturating_add(item.amount);
+            fees = fees.saturating_add(self.fee_for(item.amount));
             ids.push(self.insert(item));
         }
         self.escrows.flush();
         let storage = env::storage_byte_cost()
             .saturating_mul((env::storage_usage() - before) as u128);
-        let needed = total.saturating_add(storage);
+        let needed = total.saturating_add(storage).saturating_add(fees);
         require!(
             deposit >= needed,
-            format!("deposit {} does not cover the batch: {} + storage {}", deposit, total, storage)
+            format!("deposit {} does not cover the batch: {} + storage {} + fees {}", deposit, total, storage, fees)
         );
         for id in &ids {
             let e = self.escrows.get(id).unwrap().clone();
             event("create", json!({"id": U64(*id), "escrow": e}));
+            let fee = self.fee_for(e.amount);
+            self.charge("escrow", &id.to_string(), fee);
         }
         let surplus = deposit.saturating_sub(needed);
         if surplus.as_yoctonear() > 0 {
@@ -483,8 +554,10 @@ impl Contract {
         self.payslips.flush();
         self.payslips_by_owner.flush();
         let storage = env::storage_byte_cost().saturating_mul((env::storage_usage() - before) as u128);
-        require!(deposit >= storage, format!("attach at least {} for this record's storage", storage));
-        let surplus = deposit.saturating_sub(storage);
+        let fee = self.fee_for(NearToken::from_yoctonear(0)); // nothing is locked: the floor
+        let needed = storage.saturating_add(fee);
+        require!(deposit >= needed, format!("attach at least {} for this record's storage and the fee {}", needed, fee));
+        let surplus = deposit.saturating_sub(needed);
         if surplus.as_yoctonear() > 0 {
             Promise::new(env::predecessor_account_id()).transfer(surplus).detach();
         }
@@ -494,6 +567,7 @@ impl Contract {
                    "data": [{"owner_id": owner_id, "token_ids": [token_id]}]})
         ));
         event("payslip", json!({"token_id": token_id, "owner_id": owner_id, "sha256": sha256, "storage": storage}));
+        self.charge("payslip", &token_id, fee);
         self.token(&token_id).unwrap()
     }
 
@@ -635,10 +709,13 @@ impl Contract {
         self.vaults.flush();
         let storage = env::storage_byte_cost().saturating_mul((env::storage_usage() - before) as u128);
         require!(deposit > storage, "deposit does not even cover the record's storage");
+        let fee = self.fee_for(deposit.saturating_sub(storage));
+        require!(deposit > storage.saturating_add(fee), format!("deposit does not cover the fee of {fee}"));
         let v = self.vaults.get_mut(&id).unwrap();
-        v.amount = deposit.saturating_sub(storage);
+        v.amount = deposit.saturating_sub(storage).saturating_sub(fee);
         let snapshot = v.clone();
         event("vault_create", json!({"id": U64(id), "vault": snapshot}));
+        self.charge("vault", &id.to_string(), fee);
         U64(id)
     }
 
@@ -737,6 +814,89 @@ impl Contract {
         p.unwrap().then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_vault_paid(id))
     }
 
+    // ---------------------------------------------------------- the fee per act
+
+    /// The administrator sets the schedule, within the code's ceiling. Zero and zero
+    /// makes every act free again.
+    pub fn set_fee(&mut self, bps: u16, min: NearToken) -> Fee {
+        self.only_admin();
+        require!(bps <= MAX_FEE_BPS, format!("the fee is at most {MAX_FEE_BPS} basis points"));
+        require!(min <= MAX_FEE_MIN, format!("the floor is at most {MAX_FEE_MIN}"));
+        self.fee = Fee { bps, min };
+        event("fee_set", json!({"by": env::predecessor_account_id(), "fee": self.fee}));
+        self.fee.clone()
+    }
+
+    /// The administrator hands the role to another account.
+    pub fn set_admin(&mut self, admin: AccountId) {
+        self.only_admin();
+        event("admin_set", json!({"by": env::predecessor_account_id(), "admin": admin}));
+        self.admin = admin;
+    }
+
+    /// Everything charged and not yet withdrawn goes to `to` (the administrator by default).
+    pub fn withdraw_fees(&mut self, to: Option<AccountId>) -> Promise {
+        self.only_admin();
+        let amount = self.fees_held;
+        require!(amount.as_yoctonear() > 0, "nothing to withdraw");
+        let to = to.unwrap_or_else(|| self.admin.clone());
+        self.fees_held = NearToken::from_yoctonear(0);
+        event("fees_withdrawn", json!({"by": env::predecessor_account_id(), "to": to, "amount": amount}));
+        Promise::new(to).transfer(amount).then(
+            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_fees_withdrawn(amount),
+        )
+    }
+
+    /// If the transfer failed (the account is gone), the fees are held again.
+    #[private]
+    pub fn on_fees_withdrawn(&mut self, amount: NearToken, #[callback_result] result: Result<(), PromiseError>) -> bool {
+        match result {
+            Ok(()) => true,
+            Err(_) => {
+                self.fees_held = self.fees_held.saturating_add(amount);
+                event("fees_withdraw_failed", json!({"amount": amount}));
+                false
+            }
+        }
+    }
+
+    pub fn fee(&self) -> Fee {
+        self.fee.clone()
+    }
+
+    pub fn fees(&self) -> Fees {
+        Fees {
+            admin: self.admin.clone(),
+            fee: self.fee.clone(),
+            held: self.fees_held,
+            total: self.fees_total,
+            acts: U64(self.acts_charged),
+            max_bps: MAX_FEE_BPS,
+            max_min: MAX_FEE_MIN,
+        }
+    }
+
+    fn only_admin(&self) {
+        require!(env::predecessor_account_id() == self.admin, "only the administrator may do this");
+    }
+
+    /// The fee for an act that locks `base`: the percentage, never under the floor.
+    fn fee_for(&self, base: NearToken) -> NearToken {
+        let pct = base.saturating_mul(self.fee.bps as u128).saturating_div(10_000);
+        if pct > self.fee.min { pct } else { self.fee.min }
+    }
+
+    /// Book a fee taken from the act's deposit; it stays in this account's balance.
+    fn charge(&mut self, act: &str, id: &str, fee: NearToken) {
+        if fee.as_yoctonear() == 0 {
+            return;
+        }
+        self.fees_held = self.fees_held.saturating_add(fee);
+        self.fees_total = self.fees_total.saturating_add(fee);
+        self.acts_charged += 1;
+        event("fee", json!({"act": act, "id": id, "fee": fee, "held": self.fees_held}));
+    }
+
     // --------------------------------------------------------------- internals
 
     fn insert(&mut self, item: &NewEscrow) -> u64 {
@@ -782,7 +942,7 @@ mod unit {
     #[test]
     fn payroll_shape_rules() {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let id = c.create(accounts(2), Some(U64(5_000)), None, None, Some(vec!["sha256:abc".into()]));
         let e = c.get(id).unwrap();
         assert_eq!(e.status, Status::Locked);
@@ -795,7 +955,7 @@ mod unit {
     #[should_panic(expected = "too early")]
     fn finish_before_date_is_refused() {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let id = c.create(accounts(2), Some(U64(5_000)), None, None, None);
         testing_env!(ctx(3, 0, 2_000).build());
         let _ = c.finish(id, None);
@@ -805,7 +965,7 @@ mod unit {
     #[should_panic(expected = "nobody can cancel")]
     fn payroll_cannot_be_cancelled_by_owner() {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let id = c.create(accounts(2), Some(U64(5_000)), None, None, None);
         testing_env!(ctx(1, 0, 9_000).build());
         let _ = c.cancel(id);
@@ -815,7 +975,7 @@ mod unit {
     #[should_panic(expected = "does not match")]
     fn wrong_secret_is_refused() {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let cond = hex::encode(env::sha256(b"the right key"));
         let id = c.create(accounts(2), None, Some(U64(900_000)), Some(cond), None);
         testing_env!(ctx(3, 0, 2_000).build());
@@ -825,7 +985,7 @@ mod unit {
     #[test]
     fn right_secret_releases_and_is_recorded() {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let cond = hex::encode(env::sha256(b"the right key"));
         let id = c.create(accounts(2), None, Some(U64(900_000)), Some(cond), None);
         testing_env!(ctx(3, 0, 2_000).build());
@@ -839,7 +999,7 @@ mod unit {
     #[test]
     fn payslip_is_issued_and_listed() {
         testing_env!(ctx(1, NearToken::from_millinear(50).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let sha = hex::encode(env::sha256(b"the clear statement"));
         let t = c.issue_payslip(accounts(2), None, "2026-10".into(), sha.clone(), vec!["employee".into(), "retraite".into()], "sealed…".into());
         assert_eq!(t.token_id, "payslip-1");
@@ -855,7 +1015,7 @@ mod unit {
     #[should_panic(expected = "not transferable")]
     fn payslip_cannot_be_transferred() {
         testing_env!(ctx(1, NearToken::from_millinear(50).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let sha = hex::encode(env::sha256(b"x"));
         c.issue_payslip(accounts(2), None, "2026-10".into(), sha, vec!["employee".into()], "s".into());
         testing_env!(ctx(2, 1, 2_000).build());
@@ -864,7 +1024,7 @@ mod unit {
 
     fn vault_2_of_3() -> (Contract, U64) {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let id = c.vault_create(accounts(2), vec![accounts(1), accounts(2), accounts(3)], 2, Some(U64(900_000)), Some(vec!["lease:L-1".into()]));
         (c, id)
     }
@@ -920,10 +1080,94 @@ mod unit {
     }
 
     #[test]
+    fn fee_is_zero_unless_the_administrator_sets_it() {
+        testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        let f = c.fees();
+        assert_eq!(f.admin, accounts(5));
+        assert_eq!(f.fee, Fee { bps: 0, min: NearToken::from_yoctonear(0) });
+        let id = c.create(accounts(2), None, Some(U64(900_000)), None, None);
+        assert!(c.get(id).unwrap().amount > NearToken::from_millinear(990));
+        assert_eq!(c.fees().held, NearToken::from_yoctonear(0));
+        assert_eq!(c.fees().acts, U64(0));
+    }
+
+    #[test]
+    fn fee_percentage_with_a_floor_held_then_withdrawn() {
+        testing_env!(ctx(5, 0, 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        c.set_fee(50, NearToken::from_millinear(10)); // 0.5 %, floor 0.01 NEAR
+        // 1 NEAR locked: 0.5 % is under the floor → 0.01
+        testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 2_000).build());
+        let id = c.create(accounts(2), None, Some(U64(900_000)), None, None);
+        let amount = c.get(id).unwrap().amount;
+        assert!(amount < NearToken::from_millinear(990) && amount > NearToken::from_millinear(985), "{amount}");
+        assert_eq!(c.fees().held, NearToken::from_millinear(10));
+        // 10 NEAR locked: 0.5 % is above the floor → ≈ 0.05
+        testing_env!(ctx(1, NearToken::from_near(10).as_yoctonear(), 3_000).build());
+        c.create(accounts(2), None, Some(U64(900_000)), None, None);
+        let held = c.fees().held;
+        assert!(held > NearToken::from_millinear(59) && held <= NearToken::from_millinear(60), "{held}");
+        // the payslip locks nothing: it pays the floor
+        testing_env!(ctx(1, NearToken::from_millinear(50).as_yoctonear(), 4_000).build());
+        c.issue_payslip(accounts(2), None, "2026-10".into(), hex::encode(env::sha256(b"x")), vec!["employee".into()], "s".into());
+        assert!(c.fees().held > NearToken::from_millinear(69));
+        assert_eq!(c.fees().acts, U64(3));
+        // the batch: one fee per line
+        testing_env!(ctx(1, NearToken::from_near(3).as_yoctonear(), 5_000).build());
+        let line = |a: u128| NewEscrow {
+            destination: accounts(2),
+            amount: NearToken::from_near(a),
+            finish_after: Some(U64(9_000)),
+            cancel_after: None,
+            condition: None,
+            memos: None,
+        };
+        c.create_batch(vec![line(1), line(1)]);
+        assert_eq!(c.fees().acts, U64(5));
+        assert!(c.fees().held > NearToken::from_millinear(89));
+        // withdrawn by the administrator: nothing held, the total stays
+        testing_env!(ctx(5, 0, 6_000).build());
+        let _ = c.withdraw_fees(None);
+        assert_eq!(c.fees().held, NearToken::from_yoctonear(0));
+        assert!(c.fees().total > NearToken::from_millinear(89));
+        // back to zero: free again
+        c.set_fee(0, NearToken::from_yoctonear(0));
+        testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 7_000).build());
+        let id = c.create(accounts(2), None, Some(U64(900_000)), None, None);
+        assert!(c.get(id).unwrap().amount > NearToken::from_millinear(990));
+        assert_eq!(c.fees().acts, U64(5));
+    }
+
+    #[test]
+    #[should_panic(expected = "only the administrator")]
+    fn fee_set_by_a_stranger_is_refused() {
+        testing_env!(ctx(1, 0, 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        c.set_fee(1, NearToken::from_yoctonear(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "at most")]
+    fn fee_above_the_ceiling_is_refused() {
+        testing_env!(ctx(5, 0, 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        c.set_fee(MAX_FEE_BPS + 1, NearToken::from_yoctonear(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "nothing to withdraw")]
+    fn withdraw_with_nothing_held_is_refused() {
+        testing_env!(ctx(5, 0, 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        let _ = c.withdraw_fees(None);
+    }
+
+    #[test]
     #[should_panic(expected = "does not cover the batch")]
     fn batch_is_all_or_nothing() {
         testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
-        let mut c = Contract::new();
+        let mut c = Contract::new(accounts(5));
         let line = |a: u128| NewEscrow {
             destination: accounts(2),
             amount: NearToken::from_millinear(a),

@@ -23,7 +23,7 @@ measured on XRPL are written as code and measured again:
 | nobody takes it back | no `CancelAfter` → `EscrowCancel` always refused | no `cancel_after` → `cancel()` panics `nobody can cancel it`, owner included |
 | release by a secret | `Condition` / `Fulfillment` (PREIMAGE-SHA-256) | `condition` = sha256 hex; `finish(id, fulfillment)` checks it and **records the secret on chain** |
 | several payees, one signature, all or nothing | Batch (XLS-56) | `create_batch(items)`: amounts + storage must fit the deposit or nothing is created; surplus returned |
-| who holds the funds | the ledger | the contract account — **after `deploy_near.mjs lock` it has no keys left**: nobody can change the code or move the balance except through `create` / `finish` / `cancel` |
+| who holds the funds | the ledger | the contract account — **after `deploy_near.mjs lock` it has no keys left**: nobody can change the code or move the balance except through `create` / `finish` / `cancel`; the administrator account can only set the fee per act and withdraw what was charged |
 
 Two records live next to the escrows, both measured on 01/11 (table below):
 
@@ -39,6 +39,14 @@ Two records live next to the escrows, both measured on 01/11 (table below):
   to the beneficiary, the rest returns to the owner; **the vote that reaches the threshold pays both sides in the same call**; until then
   nothing moves, and a party may change its vote. Past the deadline with no decision, anyone returns everything to the owner. Memos carry
   the lease id and the sha256 of the inventories and quotes: the public trace a judge can read.
+
+**A fee per act** (`set_fee`, `withdraw_fees`, views `fee` / `fees`), added on 02/11 and measured below. The service may charge each
+act — an escrow, a line of a batch, a payslip, a deposit — a percentage of what is locked with a floor (the payslip locks nothing and
+pays the floor). It is **zero unless the administrator account sets it** (`dareskro-oracle.testnet` here, `dareskro.near` on mainnet),
+and **bounded by constants compiled into the contract**: at most 1 % (`MAX_FEE_BPS`) and a floor of at most 0.1 NEAR (`MAX_FEE_MIN`),
+whoever the administrator is. The fee is taken from the act's deposit at creation, stays in the contract's balance (no extra transfer,
+so an act costs no more gas) and is withdrawn by the administrator in one call; releasing, cancelling, voting and the deadline cost
+nothing. `lock` deletes the contract's keys, not this role: the schedule stays adjustable, the code does not.
 
 Four shapes, as on XRPL: **payroll** (`finish_after` only), **delivery** (`condition` + `cancel_after`), **presence** (`condition` +
 `finish_after` + `cancel_after`), **affiliate** (`condition` + `cancel_after`, the merchant brings the secret). The record's storage
@@ -147,6 +155,28 @@ Recorded on 01/11/2026 22:01–22:02 UTC: 91 s of film, 11 screenshots, 12 trans
 | 22:02:35 | vault #5 deadline call → returned to the tenant | dareskro-stranger | [7HmvfdCu…](https://testnet.nearblocks.io/txns/7HmvfdCuGfuH8ZBhud1nRhL5V82DA2ux3Tan7ud6bTx6) |
 
 
+## Measured on testnet, 02/11/2026 21:15 UTC — the fee per act
+
+Third deployment, `migrate(admin)` ([DbJRT7QN…](https://testnet.nearblocks.io/txns/DbJRT7QNTa4jRgH7H5Afqfmm6g6B3Ku9Rx2UTCUvDJHc)): the 19 escrows,
+5 deposits and 2 payslips are kept, the fee starts at zero. Then `node frais_near.mjs` (`frais.log`, `frais.json`): **an act at zero locks
+0.9974 of 1 NEAR (storage only); at 0.5 % with a 0.01 NEAR floor the same act locks 0.9874, the floor taken from the deposit; the payslip
+pays the floor; the administrator withdraws 0.02 NEAR in one call; a stranger is refused at every step, and so is a schedule above the
+ceiling; back to zero, the desk and the demo are free again.**
+
+| UTC | step | tx |
+|---|---|---|
+| 21:15:06 | contract dareskro.testnet: administrator dareskro-oracle.testnet, fee 0 bps / floor 0.0000 NEAR, held 0.0000, total 0.0000, 0 act(s) charged; ceiling 100 bps / 0.1000 NEAR |  |
+| 21:15:09 | 1 escrow #20 at zero: 1 NEAR in, 0.9974 NEAR locked (storage only) | [7ZpQ95cx…](https://testnet.nearblocks.io/txns/7ZpQ95cxFGs6d9wFsdu9k4HtdM56vEKpLaUrxoQTkAWc) |
+| 21:15:10 | 2a stranger set_fee → refused: only the administrator may do this | [6xxe8SFW…](https://testnet.nearblocks.io/txns/6xxe8SFWS7HyYbZqsHYiCZ4x7mDxdidrM4zhSFbg4VW9) |
+| 21:15:12 | 2b administrator above the ceiling → refused: the fee is at most 100 basis points | [JBYxeP5X…](https://testnet.nearblocks.io/txns/JBYxeP5Xfqd5vZHceXUFxdykV3jngtCquupFmd2hAa9V) |
+| 21:15:13 | 2c administrator dareskro-oracle.testnet sets 50 bps (0.5 %) with a floor of 0.01 NEAR | [A1aitXsv…](https://testnet.nearblocks.io/txns/A1aitXsvGAhJQmytSBeLbyKi2XX5Gw2GT2yRrtzBxYUC) |
+| 21:15:15 | 3 escrow #21 with the schedule: 1 NEAR in, 0.9874 NEAR locked, fee 0.0100 NEAR (0.5 % of 1 NEAR is under the floor), held 0.0100 | [FVYKKC54…](https://testnet.nearblocks.io/txns/FVYKKC54zorBwdPk1wHzJk1ftgo66CuCSMsdYP4nzaSo) |
+| 21:15:18 | 4 payslip payslip-3 issued: the floor 0.01 NEAR charged, held 0.0200, 2 acts | [H8Zs1H2h…](https://testnet.nearblocks.io/txns/H8Zs1H2hkHVppvsTWyvvNReKXf7P9NUsu7JvYERhBkLC) |
+| 21:15:20 | 5a stranger withdraw_fees → refused: only the administrator may do this | [5doAT13u…](https://testnet.nearblocks.io/txns/5doAT13uzvQWEDrB3cfr1SXtRJR63MuAdT8Mw9WWUqKY) |
+| 21:15:26 | 5b administrator withdraws: 10.1107 → 10.1303 NEAR (+0.0196 after gas), held 0.0000, total 0.0200 | [5qr7U9wB…](https://testnet.nearblocks.io/txns/5qr7U9wBgdnKKBQmEceTy8CSUDShHXGwWy7AfJTxfbQ8) |
+| 21:15:28 | 5c withdraw again → refused: nothing to withdraw | [Aw8hqECG…](https://testnet.nearblocks.io/txns/Aw8hqECGgbedqLhutZH72Pu8XsutrnkNd8gQpdSfiwiT) |
+| 21:15:29 | 6 schedule back to zero (0 bps / 0.0000 NEAR); total charged since deployment 0.0200 NEAR over 2 act(s) | [GAMw9tGX…](https://testnet.nearblocks.io/txns/GAMw9tGXdSP47y4vs3SteDTH3ASXNYsk5RRK6RMMRcBU) |
+
 ## Do X, see Y
 
 ```bash
@@ -155,9 +185,9 @@ brew install rustup near && rustup-init -y && rustup target add wasm32-unknown-u
 # on macOS 26 with a beta SDK, cargo may need: export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 
 cd near/contract
-cargo test --lib                      # 12 unit tests, 40 s the first time
-cargo test --test escrow              # 5 sandbox tests on a real local node (downloads near-sandbox once), ≈ 2 min
-cargo near build non-reproducible-wasm   # → target/near/dareskro_escrow.wasm, 266 KB
+cargo test --lib                      # 17 unit tests, 40 s the first time
+cargo test --test escrow              # 6 sandbox tests on a real local node (downloads near-sandbox once), ≈ 2 min
+cargo near build non-reproducible-wasm   # → target/near/dareskro_escrow.wasm, 285 KB
 
 cd ..
 npm install
@@ -165,10 +195,11 @@ npm install
 for a in dareskro dareskro-employer dareskro-employee dareskro-oracle dareskro-stranger; do
   near account create-account sponsor-by-faucet-service $a.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
 done
-node deploy_near.mjs deploy           # deploy + new() on dareskro.testnet (DARESKRO_CONTRACT to change the name)
+node deploy_near.mjs deploy --admin dareskro-oracle.testnet   # deploy + new(admin) on dareskro.testnet (DARESKRO_CONTRACT to change the name)
 node scelle.mjs init                  # the four readers' X25519 keys (near/cles/, never in this repo) and cles_publiques.json
 node demo_near.mjs                    # the 10 steps above, ≈ 4 min; writes run.log and compte_rendu.json
 node scelle.mjs open <sealed.json> retraite   # the pension fund reads a sealed payslip with its key
+node frais_near.mjs                   # the fee per act: set by the administrator, charged, withdrawn, back to zero; frais.log
 node deploy_near.mjs lock --yes       # delete the contract's keys: nobody can change it any more (irreversible)
 node oracle_near.mjs watch            # the oracle as a service, every 10 s
 
@@ -183,14 +214,15 @@ names are taken, create your own with `DARESKRO_CONTRACT=<you>.testnet` and the 
 
 | file | what |
 |---|---|
-| `contract/src/lib.rs` | the contract: escrows (`create`, `create_batch`, `finish`, `cancel`), sealed payslips (`issue_payslip`, NEP-171/177 views, transfers refused), deposits (`vault_create`, `vault_vote`, `vault_timeout`), views; `migrate`; 12 unit tests |
-| `contract/tests/escrow.rs` | sandbox tests: payroll's one possible outcome, delivery by secret and refund at the deadline, batch all-or-nothing, the payslip token, the deposit decided 2 of 3 or returned at the deadline |
+| `contract/src/lib.rs` | the contract: escrows (`create`, `create_batch`, `finish`, `cancel`), sealed payslips (`issue_payslip`, NEP-171/177 views, transfers refused), deposits (`vault_create`, `vault_vote`, `vault_timeout`), the fee per act (`set_fee`, `set_admin`, `withdraw_fees`, `fee`, `fees`), views; `migrate`; 17 unit tests |
+| `contract/tests/escrow.rs` | sandbox tests: payroll's one possible outcome, delivery by secret and refund at the deadline, batch all-or-nothing, the payslip token, the deposit decided 2 of 3 or returned at the deadline, the fee zero by default then set, charged, held and withdrawn |
 | `scelle.mjs` | seals a payslip for its readers (X25519 + AES-256-GCM), opens it with a reader's key; `cles_publiques.json` holds the public keys |
 | `desk/desk_near.mjs`, `desk/enregistre.mjs` | the pay desk's NEAR service and the recorded run of the tab; `desk/sortie/` the records |
 | `../app/src/NearDesk.tsx`, `../app/src/near.ts` | the NEAR tab of the React desk |
 | `lib.mjs` | near-api-js 7 helpers: accounts from the legacy keychain, `call` that never throws on a panic, views |
 | `oracle_near.mjs` | the oracle: makes conditions (keeps the secret in `.oracle_near.json`, 0600), reads public facts, finishes and refunds |
-| `deploy_near.mjs` | deploy, list keys, **lock** |
+| `deploy_near.mjs` | deploy / migrate with `--admin`, list keys, **lock** |
+| `frais_near.mjs` | the fee per act measured on testnet; `frais.log`, `frais.json` |
 | `demo_near.mjs` | the testnet run; `run.log`, `compte_rendu.json` |
 | `../presentation/video/scenarios/near.json` | the film's NEAR scenario, filled from `compte_rendu.json` (see `../presentation/video/README.md`) |
 
@@ -206,6 +238,9 @@ of dareskro; the code was run and measured as reported above.
 - A vault's payout is two transfers to accounts that exist; if one disappeared meanwhile the callback logs `vault_transfer_failed`
   and the record stays decided — the failed leg is a trace to act on, not a reopen.
 - `cargo near build reproducible-wasm` (Docker) is not set up; the wasm's sha256 is printed by the non-reproducible build.
+- The fee is charged in NEAR and held by the contract; invoicing it, its VAT and whether charging it makes dareskro a crypto-asset
+  service provider under MiCA (the contract never holds the parties' funds beyond the act, only its own fee) are questions for counsel,
+  not for code. The schedule on testnet is back at zero.
 - Stablecoins: the demo locks NEAR. A NEP-141 variant (USDC on NEAR via `ft_transfer_call`) is the natural next step for track 08.
 
 Submission account (prize payout, mainnet): `dareskro.near`.

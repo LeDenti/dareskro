@@ -7,15 +7,22 @@ use sha2::{Digest, Sha256};
 
 const ONE: NearToken = NearToken::from_near(1);
 
-async fn setup() -> anyhow::Result<(Worker<Sandbox>, Contract, Account, Account, Account)> {
+/// The contract, its administrator (the account that sets the fee) and three users.
+async fn setup_with_admin() -> anyhow::Result<(Worker<Sandbox>, Contract, Account, Account, Account, Account)> {
     let wasm = near_workspaces::compile_project("./").await?;
     let worker = near_workspaces::sandbox().await?;
     let contract = worker.dev_deploy(&wasm).await?;
-    contract.call("new").transact().await?.into_result()?;
+    let admin = worker.dev_create_account().await?;
+    contract.call("new").args_json(json!({"admin": admin.id()})).transact().await?.into_result()?;
     let employer = worker.dev_create_account().await?;
     let employee = worker.dev_create_account().await?;
     let stranger = worker.dev_create_account().await?;
-    Ok((worker, contract, employer, employee, stranger))
+    Ok((worker, contract, admin, employer, employee, stranger))
+}
+
+async fn setup() -> anyhow::Result<(Worker<Sandbox>, Contract, Account, Account, Account)> {
+    let (worker, contract, _admin, a, b, c) = setup_with_admin().await?;
+    Ok((worker, contract, a, b, c))
 }
 
 async fn now_ns(contract: &Contract) -> anyhow::Result<u64> {
@@ -221,5 +228,73 @@ async fn deposit_decided_by_two_of_three_or_returned_at_the_deadline() -> anyhow
     assert_eq!(v["closed_by"], json!(passerby.id()));
     let back = tenant.view_account().await?.balance.saturating_sub(before);
     assert!(back > NearToken::from_millinear(990), "tenant got back {back}");
+    Ok(())
+}
+
+#[tokio::test]
+async fn fee_per_act_zero_by_default_set_by_the_administrator_held_and_withdrawn() -> anyhow::Result<()> {
+    let (_worker, contract, admin, employer, employee, stranger) = setup_with_admin().await?;
+    let far = (now_ns(&contract).await? + 3_600_000_000_000).to_string();
+    let create = |who: &Account| {
+        who.call(contract.id(), "create")
+            .args_json(json!({"destination": employee.id(), "cancel_after": &far}))
+            .deposit(ONE)
+    };
+    async fn amount_of(contract: &Contract, id: &Value) -> anyhow::Result<u128> {
+        let e: Value = contract.view("get").args_json(json!({"id": id})).await?.json()?;
+        Ok(e["amount"].as_str().unwrap().parse::<u128>()?)
+    }
+    async fn fees_of(contract: &Contract) -> anyhow::Result<Value> {
+        Ok(contract.view("fees").await?.json()?)
+    }
+    let floor = NearToken::from_millinear(10).as_yoctonear().to_string();
+
+    // zero by default: 1 NEAR in, more than 0.99 locked
+    let id: Value = create(&employer).transact().await?.json()?;
+    let free = amount_of(&contract, &id).await?;
+    assert!(free > NearToken::from_millinear(990).as_yoctonear());
+    assert_eq!(fees_of(&contract).await?["acts"], "0");
+
+    // a stranger cannot set the schedule; the administrator cannot go above the ceiling
+    err_contains(stranger.call(contract.id(), "set_fee").args_json(json!({"bps": 50, "min": floor})).transact().await?, "only the administrator");
+    err_contains(admin.call(contract.id(), "set_fee").args_json(json!({"bps": 101, "min": "0"})).transact().await?, "at most");
+    admin.call(contract.id(), "set_fee").args_json(json!({"bps": 50, "min": floor})).transact().await?.into_result()?;
+
+    // 1 NEAR locked at 0.5 % with a 0.01 floor: the floor, taken from the deposit
+    let id2: Value = create(&employer).transact().await?.json()?;
+    let charged = amount_of(&contract, &id2).await?;
+    assert_eq!(free - charged, NearToken::from_millinear(10).as_yoctonear());
+    let f = fees_of(&contract).await?;
+    assert_eq!(f["held"], floor);
+    assert_eq!(f["acts"], "1");
+
+    // the payslip locks nothing: it pays the floor too
+    employer
+        .call(contract.id(), "issue_payslip")
+        .args_json(json!({"owner_id": employee.id(), "period": "2026-10", "sha256": hex::encode(Sha256::digest(b"s")),
+                          "readers": ["employee"], "sealed": "sealed"}))
+        .deposit(NearToken::from_millinear(50))
+        .transact()
+        .await?
+        .into_result()?;
+    let f = fees_of(&contract).await?;
+    assert_eq!(f["held"], NearToken::from_millinear(20).as_yoctonear().to_string());
+    assert_eq!(f["acts"], "2");
+
+    // the administrator withdraws: the fees leave the contract, the total stays
+    let before = admin.view_account().await?.balance;
+    admin.call(contract.id(), "withdraw_fees").args_json(json!({})).transact().await?.into_result()?;
+    let got = admin.view_account().await?.balance.saturating_sub(before);
+    // the sandbox refunds gas later than it burns it: what shows at once is the fees minus the call
+    assert!(got > NearToken::from_millinear(5) && got <= NearToken::from_millinear(20), "administrator got {got}");
+    let f = fees_of(&contract).await?;
+    assert_eq!(f["held"], "0");
+    assert_eq!(f["total"], NearToken::from_millinear(20).as_yoctonear().to_string());
+    err_contains(admin.call(contract.id(), "withdraw_fees").args_json(json!({})).transact().await?, "nothing to withdraw");
+
+    // back to zero: the next act is free again
+    admin.call(contract.id(), "set_fee").args_json(json!({"bps": 0, "min": "0"})).transact().await?.into_result()?;
+    let id3: Value = create(&employer).transact().await?.json()?;
+    assert_eq!(amount_of(&contract, &id3).await?, free);
     Ok(())
 }

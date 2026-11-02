@@ -1,0 +1,99 @@
+{
+  "network": "testnet",
+  "contract": "dareskro.testnet",
+  "admin": "dareskro-oracle.testnet",
+  "started": "2026-11-02T21:15:06.754Z",
+  "steps": [
+    {
+      "name": "0 before",
+      "admin": "dareskro-oracle.testnet",
+      "fee": {
+        "bps": 0,
+        "min": "0"
+      },
+      "held": "0",
+      "total": "0",
+      "acts": "0",
+      "max_bps": 100,
+      "max_min": "100000000000000000000000",
+      "held_near": "0.0000",
+      "total_near": "0.0000"
+    },
+    {
+      "name": "1 escrow at zero",
+      "id": "20",
+      "amount": "997360000000000000000000",
+      "hash": "7ZpQ95cxFGs6d9wFsdu9k4HtdM56vEKpLaUrxoQTkAWc"
+    },
+    {
+      "name": "2a stranger set_fee",
+      "expected": "refused: only the administrator",
+      "got": "only the administrator may do this",
+      "hash": "6xxe8SFWS7HyYbZqsHYiCZ4x7mDxdidrM4zhSFbg4VW9",
+      "as_expected": true
+    },
+    {
+      "name": "2b administrator above the ceiling",
+      "expected": "refused: at most",
+      "got": "the fee is at most 100 basis points",
+      "hash": "JBYxeP5Xfqd5vZHceXUFxdykV3jngtCquupFmd2hAa9V",
+      "as_expected": true
+    },
+    {
+      "name": "2c set_fee",
+      "fee": {
+        "bps": 50,
+        "min": "10000000000000000000000"
+      },
+      "hash": "A1aitXsvGAhJQmytSBeLbyKi2XX5Gw2GT2yRrtzBxYUC"
+    },
+    {
+      "name": "3 escrow charged",
+      "id": "21",
+      "amount": "987360000000000000000000",
+      "fee": "10000000000000000000000",
+      "held": "10000000000000000000000",
+      "hash": "FVYKKC54zorBwdPk1wHzJk1ftgo66CuCSMsdYP4nzaSo"
+    },
+    {
+      "name": "4 payslip charged",
+      "token_id": "payslip-3",
+      "held": "20000000000000000000000",
+      "acts": "2",
+      "hash": "H8Zs1H2hkHVppvsTWyvvNReKXf7P9NUsu7JvYERhBkLC"
+    },
+    {
+      "name": "5a stranger withdraw_fees",
+      "expected": "refused: only the administrator",
+      "got": "only the administrator may do this",
+      "hash": "5doAT13uzvQWEDrB3cfr1SXtRJR63MuAdT8Mw9WWUqKY",
+      "as_expected": true
+    },
+    {
+      "name": "5b withdrawn",
+      "before": "10110744588468212900000000",
+      "after": "10130320974695531900000000",
+      "held": "0",
+      "total": "20000000000000000000000",
+      "hash": "5qr7U9wBgdnKKBQmEceTy8CSUDShHXGwWy7AfJTxfbQ8"
+    },
+    {
+      "name": "5c withdraw again",
+      "expected": "refused: nothing to withdraw",
+      "got": "nothing to withdraw",
+      "hash": "Aw8hqECGgbedqLhutZH72Pu8XsutrnkNd8gQpdSfiwiT",
+      "as_expected": true
+    },
+    {
+      "name": "6 set_fee zero",
+      "fee": {
+        "bps": 0,
+        "min": "0"
+      },
+      "total": "20000000000000000000000",
+      "acts": "2",
+      "hash": "GAMw9tGXdSP47y4vs3SteDTH3ASXNYsk5RRK6RMMRcBU"
+    }
+  ],
+  "finished": "2026-11-02T21:15:29.953Z"
+}
