@@ -100,6 +100,28 @@ import { observe } from "../placements/presence.mjs";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const IDENTITY = path.join(HERE, ".oracle.json");
 const REGISTRY = path.join(HERE, "registry.json");
+/**
+ * The fee per act on XRPL (tarif.json, public): drops the oracle asks of the escrow's owner before it
+ * signs the release of a CONDITIONED escrow registered from now on — a Payment to the oracle's own
+ * account with memo type "dareskro/fee" and data "<owner>:<sequence>". The ledger has no field for it
+ * (EscrowCreate carries no commission, and the Batch that would bind escrow + payment is not signable
+ * on a Ledger's XRP app), so the gate is the oracle's constat itself: no fee, no fulfillment, and the
+ * refund at CancelAfter still happens. A payroll escrow (date only) has no gate: anyone can finish it.
+ * Zero by default; an entry keeps the drops in force when it was registered (feeDrops).
+ */
+const TARIF = path.join(HERE, "tarif.json");
+const FEE_MEMO_TYPE = "dareskro/fee";
+function loadTarif() {
+  try {
+    const t = JSON.parse(readFileSync(TARIF, "utf8"));
+    return { drops: Number.isInteger(t.drops) && t.drops > 0 ? t.drops : 0 };
+  } catch {
+    return { drops: 0 };
+  }
+}
+/** What an owner must pay for the oracle to sign this entry's release, or null. */
+const feeOf = (e, payTo) =>
+  e.feeDrops > 0 ? { drops: e.feeDrops, payTo, memoType: FEE_MEMO_TYPE, memoData: `${e.owner}:${e.sequence}` } : null;
 /** The secrets of conditional escrows (delivery, presence, affiliate token hashes): 0600, never committed. */
 const SECRETS = path.join(HERE, ".deliveries.json");
 const TESTNET = process.env.XRPL_WSS || "wss://testnet.xrpl-labs.com";
@@ -397,6 +419,14 @@ async function tickConditional(e, wallet) {
     e.lastWhy = check.why;
     return true;
   }
+  // the fee per act: the proof is there, the owner still owes the service — no fee, no signature
+  if (!(await feePaid(c, e, wallet))) {
+    const why = `${check.why}; the service fee is not paid: ${e.feeDrops} drops to ${wallet.classicAddress}, memo ${FEE_MEMO_TYPE} "${e.owner}:${e.sequence}"`;
+    if (e.lastWhy === why) return kind.polls !== false;
+    log(`${label}: not signing — ${why}`);
+    e.lastWhy = why;
+    return true;
+  }
   const secret = loadSecrets()[e.deliveryId];
   if (!secret) {
     e.status = "failed";
@@ -446,6 +476,37 @@ async function tickConditional(e, wallet) {
     log(`${label}: finish ${code}, giving up`);
   }
   return true;
+}
+
+/**
+ * Has the owner paid this entry's fee? A validated Payment from the owner to the oracle, delivering at
+ * least feeDrops, with memo dareskro/fee "<owner>:<sequence>". Looked up on the oracle's own account
+ * (account_tx, newest first); remembered on the entry once seen.
+ */
+async function feePaid(c, e, wallet) {
+  if (!(e.feeDrops > 0) || e.feePaid) return true;
+  const want = `${e.owner}:${e.sequence}`;
+  let marker;
+  for (let page = 0; page < 5; page++) {
+    const r = await c.request({ command: "account_tx", account: wallet.classicAddress, ledger_index_min: -1, ledger_index_max: -1, limit: 200, forward: false, ...(marker ? { marker } : {}) });
+    for (const x of r.result.transactions ?? []) {
+      const t = x.tx_json ?? x.tx;
+      const meta = x.meta;
+      if (!t || typeof meta !== "object" || !x.validated) continue;
+      if (t.TransactionType !== "Payment" || t.Account !== e.owner || t.Destination !== wallet.classicAddress || meta.TransactionResult !== "tesSUCCESS") continue;
+      const delivered = typeof meta.delivered_amount === "string" ? Number(meta.delivered_amount) : 0;
+      if (delivered < e.feeDrops) continue;
+      const memos = (t.Memos ?? []).map((m) => m.Memo ?? {});
+      const hit = memos.some((m) => (m.MemoType ?? "").toUpperCase() === toHex(FEE_MEMO_TYPE) && (m.MemoData ?? "").toUpperCase() === toHex(want));
+      if (!hit) continue;
+      e.feePaid = { hash: x.hash ?? t.hash, drops: delivered, at: new Date().toISOString() };
+      log(`${e.kind} #${e.sequence}: fee paid — ${delivered} drops from ${e.owner} — ${explorerTx(e.feePaid.hash)}`);
+      return true;
+    }
+    marker = r.result.marker;
+    if (!marker) break;
+  }
+  return false;
 }
 
 /** The name the README cites: the conditional handler, whatever the kind. */
@@ -626,7 +687,12 @@ function serve(identity) {
   const server = createServer(async (req, res) => {
     if (req.method === "OPTIONS") return json(res, 204, {});
     if (req.method === "GET" && req.url === "/identity") {
-      return json(res, 200, { ...identity, watching: loadRegistry().escrows.filter((e) => e.status === "waiting").length });
+      return json(res, 200, { ...identity, watching: loadRegistry().escrows.filter((e) => e.status === "waiting").length, fee: { ...loadTarif(), payTo: identity.address, memoType: FEE_MEMO_TYPE, memoData: "<owner>:<sequence>" } });
+    }
+    if (req.method === "GET" && req.url === "/fee") {
+      // the schedule in force for the next conditioned escrow; entries keep the drops of their registration
+      const t = loadTarif();
+      return json(res, 200, { ...t, payTo: identity.address, memoType: FEE_MEMO_TYPE, memoData: "<owner>:<sequence>", appliesTo: "conditioned escrows (delivery, presence, affiliate) registered from now on; a payroll escrow has no gate", note: t.drops ? `the oracle signs the release only after a Payment of ${t.drops} drops from the owner with that memo; the refund at CancelAfter does not depend on it` : "zero: the oracle signs as soon as the proof is there" });
     }
     if (req.method === "GET" && req.url === "/escrows") return json(res, 200, loadRegistry());
     if (req.method === "GET" && req.url.startsWith("/observations/")) {
@@ -750,14 +816,17 @@ function serve(identity) {
         if (reg.escrows.some((x) => x.owner === e.owner && x.sequence === e.sequence)) {
           return json(res, 200, { ok: true, note: "already watching" });
         }
+        const drops = spec ? loadTarif().drops : 0; // a payroll escrow has no gate
+        if (drops > 0) e.feeDrops = drops;
         reg.escrows.push({ ...e, status: "waiting", registered: new Date().toISOString() });
         saveRegistry(reg);
+        const fee = feeOf(e, identity.address);
         if (spec) {
-          log(`watching ${e.kind} #${e.sequence} of ${e.owner}: ${spec.watching(e)}`);
+          log(`watching ${e.kind} #${e.sequence} of ${e.owner}: ${spec.watching(e)}${fee ? ` — fee ${fee.drops} drops before signing` : ""}`);
         } else {
           log(`watching escrow #${e.sequence} of ${e.owner}: ${e.amountXrp ?? "?"} XRP to ${e.destination}, payable at ripple time ${e.finishAfter}`);
         }
-        json(res, 201, { ok: true });
+        json(res, 201, { ok: true, fee });
       });
     }
     json(res, 404, { error: "not found" });

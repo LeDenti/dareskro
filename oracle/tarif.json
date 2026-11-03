@@ -1,0 +1,4 @@
+{
+  "_": "fee per conditioned escrow, in drops, asked by the oracle before it signs the release; 0 = none; read at /watch time",
+  "drops": 0
+}
