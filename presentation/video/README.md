@@ -13,8 +13,9 @@ The whole film is **one file**, `film.html`: a canvas and a function
 | the screen he reads on the device before pressing | `XRP 466.57 · after 2026-10-31 · to r3kiDtPb…` | the amount, date and payee of the real testnet run |
 | the verification caption while the coins run | the oracle's `EscrowFinish` on testnet.xrpl.org | the oracle's `finish()` on testnet.nearblocks.io |
 | the end card | XRP Ledger testnet · Ledger Nano X · NYC hackathon | NEAR testnet · a contract with no keys · NEAR Hackathon |
+| a second card (optional, `after` + `dur`) | — | 16 s more: the four records added after the first run — sealed payslip, shared deposit, fee per act, pool — each with the hash of its testnet measurement (film 2 min 16) |
 
-Those live in `scenarios/<name>.json` and are injected as `window.FILM`
+Those live in `scenarios/<name>.json` (a scenario may set `dur` and `after` to add that second card past 120 s) and are injected as `window.FILM`
 before the page runs. Everything else — the drawing, the timing, the voices,
 the padlock on the line — is the same film.
 

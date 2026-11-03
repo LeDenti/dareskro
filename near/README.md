@@ -258,7 +258,7 @@ names are taken, create your own with `DARESKRO_CONTRACT=<you>.testnet` and the 
 | `frais_near.mjs` | the fee per act measured on testnet; `frais.log`, `frais.json` |
 | `pot_near.mjs` | the pool measured on testnet; `pot.log`, `pot.json` |
 | `demo_near.mjs` | the testnet run; `run.log`, `compte_rendu.json` |
-| `../presentation/video/scenarios/near.json` | the film's NEAR scenario, filled from `compte_rendu.json` (see `../presentation/video/README.md`) |
+| `../presentation/video/scenarios/near.json` | the film's NEAR scenario, filled from `compte_rendu.json`, plus the second card with the four records measured on 01–02/11 (see `../presentation/video/README.md`) |
 
 Libraries: `near-sdk` 5.30, `hex` 0.4, `near-workspaces` 0.24, `near-api-js` 7.4. Written with Claude Code (Fable 5.1), as the rest
 of dareskro; the code was run and measured as reported above.

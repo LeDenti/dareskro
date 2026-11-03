@@ -4,7 +4,8 @@
 <script>
 // ======================= dareskro — La Linea style film =======================
 const W=1920,H=1080, cv=document.getElementById('c'), g=cv.getContext('2d');
-// What depends on the chain: the device's screen, what he reads aloud on it, the verification caption, the end card.
+// What depends on the chain: the device's screen, what he reads aloud on it, the verification caption, the end card,
+// and an optional second card (`after`: title, lines, foot, end) that extends the film past 120 s.
 // make.mjs injects window.FILM from scenarios/<name>.json before this script runs; without it, the XRPL version renders.
 const FILM=Object.assign({
   device:['XRP 466.57','after 2026-10-31','to r3kiDtPb…'],
@@ -333,6 +334,14 @@ function render(t){
     g.save(); g.globalAlpha=a2*out; g.font='64px Helvetica'; g.fillText(FILM.card[0],W/2,590); g.restore();
     g.save(); g.globalAlpha=a3*out; g.font='40px Helvetica'; g.fillText(FILM.card[1],W/2,760); g.fillText(FILM.card[2],W/2,820); g.restore();
     if(t>=109&&t<118.5){ const lx=lerp(-100,W+100,seg(t,109,111.5)); strokePts([[-100,900],[lx,900]]); } }
+  // second card, from the scenario (`after`): what the same contract has held since — the film then runs to FILM.after.end
+  if(FILM.after&&t>=120){ const A=FILM.after; const out=1-seg(t,A.end-1.5,A.end); g.fillStyle=INK;
+    g.save(); g.globalAlpha=seg(t,120.3,121.3)*out; g.textAlign='center'; g.font='bold 54px Helvetica'; g.fillText(A.title,W/2,190); g.restore();
+    A.lines.forEach((l,i)=>{ const a=seg(t,122+i*2,123+i*2)*out; if(a<=0) return; const y=300+i*140;
+      g.save(); g.globalAlpha=a; g.textAlign='left'; g.font='bold 40px Helvetica'; g.fillText(l[0],160,y);
+      g.font='33px Helvetica'; g.fillText(l[1],160,y+48); g.font='27px Menlo'; g.globalAlpha=a*0.75; g.fillText(l[2],160,y+90); g.restore(); });
+    g.save(); g.globalAlpha=seg(t,A.end-5.5,A.end-4.5)*out; g.textAlign='center'; g.font='32px Helvetica'; g.fillText(A.foot,W/2,H-80); g.restore();
+    if(t<A.end-1.5){ const lx=lerp(-100,W+100,seg(t,120,122.5)); strokePts([[-100,900],[lx,900]]); } }
 }
 function mark(ch,F,cam,t,shake){ const hx=F.x-cam+F.dir*30*S, hy=132; g.save(); g.fillStyle=INK; g.font='bold 120px Helvetica'; g.textAlign='center'; g.translate(hx,hy); g.rotate(Math.sin(t*(shake?40:14))*0.08); g.fillText(ch,0,0); g.restore(); }
 window.render=render; render(0);

@@ -24,7 +24,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const W = 1920, H = 1080, FPS = 30, DUR = 120;
+const W = 1920, H = 1080, FPS = 30;
 const argv = process.argv.slice(2);
 const cmd = argv[0] || 'all';
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
@@ -32,6 +32,7 @@ const positional = argv.slice(1).filter((a, i, arr) => !a.startsWith('--') && !(
 const name = opt('scenario', 'xrpl');
 const scenarioPath = resolve(HERE, 'scenarios', name + '.json');
 const scenario = JSON.parse(readFileSync(scenarioPath, 'utf8'));
+const DUR = scenario.dur || 120; // a scenario with a second card (`after`) runs longer
 const OUT = resolve(HERE, 'build', name);
 const FILM = resolve(HERE, 'film.html');
 const MP4 = resolve(HERE, `dareskro_la_linea_${name}.mp4`);

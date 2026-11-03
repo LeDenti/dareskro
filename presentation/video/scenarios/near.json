@@ -15,5 +15,33 @@
     "evidence  ·  code  ·  signature",
     "NEAR testnet  ·  a contract with no keys  ·  agentic payroll escrow",
     "NEAR Hackathon  ·  Build Beyond Boundaries  ·  November 2026"
-  ]
+  ],
+  "dur": 136,
+  "after": {
+    "title": "Since then, the same contract holds four more things",
+    "lines": [
+      [
+        "the sealed payslip",
+        "a token the employee owns, readable by four bodies only, transferable by nobody",
+        "01/11  ·  2vKYhUVtbK1fX5GJnGCx5yX6F3EkxPUrqxhJrbsDMP7v"
+      ],
+      [
+        "the shared deposit",
+        "tenant, landlord, mediator: the vote that reaches two of three pays both sides in one call",
+        "01/11  ·  2F3Lo2BQs2KBXc1MrYP5J4PiAGCUZ8UELP7zTZjte9KX"
+      ],
+      [
+        "a fee per act",
+        "zero unless one account sets it, never above 1 % — the code says so, whoever administers",
+        "02/11  ·  A1aitXsvGAhJQmytSBeLbyKi2XX5Gw2GT2yRrtzBxYUC"
+      ],
+      [
+        "the pool",
+        "several payers fill it, the surplus comes back, then it is a payroll escrow nobody can cancel",
+        "02/11  ·  HS6YWZsHzAyLp95cHhnzFc1tu7V24bRPtHKUsAx3aJUJ"
+      ]
+    ],
+    "foot": "21 unit tests  ·  7 sandbox scenarios  ·  4 deployments, every record kept  ·  testnet.nearblocks.io/address/dareskro.testnet",
+    "end": 136
+  }
 }
