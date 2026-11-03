@@ -361,6 +361,98 @@ is due, and Close. Honest note: the on-chain IDL account could not be re-created
 after this deployment (devnet RPC refusals); the page encodes the instructions
 itself and does not need it, explorers decode the new calls less prettily until it is back.
 
+## The fee per act — three rails, one line on the invoice
+
+The service may charge each act, even a small amount. Where it is charged depends on
+the rail, not on the contract — and no single act ever goes through more than two levers.
+The schedule is **zero by default** everywhere, **bounded by the code** wherever code can
+bind it, and **paid by the payer on top** of what is locked: what the recipient receives
+is never touched, so the claim at the top of this file stays true.
+
+| The payer pays… | …and the funds lock on | Lever | Bound by |
+|---|---|---|---|
+| SOL | Solana | **1** — `fee_bps` of the SOL locked with a floor, in `create` / `create_token` / `vault_create` | the program: `MAX_FEE_BPS` = 100, `MAX_FEE_MIN` = 0.01 SOL |
+| XRP or NEAR, bridged by Aurora | Solana | **2 + 1** — an `appFees` cut asked of Aurora, then lever 1 | Aurora's API (see the measurement: it keeps its own 10 bps) |
+| XRP, conditioned escrow | XRPL | **3** — drops the oracle asks before it signs the release (`oracle/tarif.json`) | the oracle's own rule; the refund at `CancelAfter` never depends on it |
+| XRP, date-only escrow | XRPL | none that holds: anyone may finish it | — |
+| NEAR | NEAR | the same rule in `near/`, since 02/11 (≤ 1 %, floor ≤ 0.1 NEAR) | the contract |
+
+**On Solana** (`programs/dareskro_escrow`, instructions `config_init`, `set_fee`, `set_admin`,
+`withdraw_fees`; account `FeeConfig`, seeds `["config"]`): the schedule account is created once by
+the program's upgrade authority, starts at zero, and only the administrator key may set it or
+withdraw the till — but never above the two constants compiled in, whoever administers. A token
+escrow, which locks no SOL, pays the floor. The fee sits in the schedule account above its rent and
+leaves in one `withdraw_fees`; release, cancel, vote and the deadline cost nothing. The `Created`
+and `VaultCreated` events carry the fee charged. The page shows it before the wallet signs
+(`Fee per act: …`), the desk records it on each lock (`fee` on the record, `/identity.fee`).
+
+Test `fee per act` (14 passing): a stranger cannot set it, the administrator cannot exceed the
+ceilings, 1 SOL at 50 bps costs the owner exactly 0.005 SOL on top while the escrow holds exactly
+1 SOL, 0.01 SOL pays the floor, a vault and a token escrow are charged, the schedule account cannot be
+swapped (wrong owner, unknown key and another program account are each refused), a stranger cannot
+withdraw, the administrator withdraws the till and the account keeps its rent, and back at zero an
+act costs rent and gas only.
+
+### Measured on devnet, 03/11/2026 05:56 UTC — `client/frais.mjs measure`, `client/sortie/frais.log`
+
+Schedule account [`9jdayx9U…`](https://explorer.solana.com/address/9jdayx9UcxXC5EMtRXVyAZMSx1icFPDZhjX7EzZ2sg8m?cluster=devnet),
+created by the upgrade authority ([2zsw9Xht…](https://explorer.solana.com/tx/2zsw9XhtU5WTy7ovBqiTSFZ92xcNfxWBq3FUPdu2j82YhgqXKHQGgk5t9VBVko2u9CpYRYCeAnC77DM5iY5hQw3d?cluster=devnet)); program redeployed at slot 518117218 (496 528 bytes).
+
+| UTC | Step | Result | Transaction |
+|---|---|---|---|
+| 05:56:35 | 1 | schedule: administrator `4ypF64RB…`, 0 bps / floor 0 SOL, 0 act charged; ceiling 100 bps / 0.01 SOL | |
+| 05:56:36 | 2a | a stranger `set_fee` → refused **NotAdmin** | |
+| 05:56:36 | 2b | the administrator at 101 bps → refused **FeeAboveCeiling** | |
+| 05:56:36 | 2b' | the administrator with a floor of 0.0101 SOL → refused **FeeAboveCeiling** | |
+| 05:56:37 | 2c | the administrator sets 50 bps with a floor of 0.001 SOL | [AmBoQffE…](https://explorer.solana.com/tx/AmBoQffETm6U3u9xsoUcKYQYMpEDotdHH2RpU3G3RttYBgFxGm1u4h1LjUhCfBUxZBDevCUf8bPTg6xUaroGoqY?cluster=devnet) |
+| 05:56:38 | 3 | escrow [`EDS6KS2y…`](https://explorer.solana.com/address/EDS6KS2yK9Mnx6DpeYFkK6eEhtTzpuPAKVEMJwJnVQPb?cluster=devnet): 0.05 SOL locked, on chain 0.05 for the destination; the owner paid **0.001 SOL on top** (0.5 % is under the floor) + rent + signature | [2dLaUKYp…](https://explorer.solana.com/tx/2dLaUKYppbeuBARWzigESoPNpm74ZePzEGwNrcHRZHirYGPxEQBR2MEhKKn9zUsHpfg9CsZaju4tBq8qf8bVYx44?cluster=devnet) |
+| 05:56:38 | 4 | till: held 0.0010, total 0.0010, 1 act charged | |
+| 05:56:38 | 5a | a stranger `withdraw_fees` → refused **NotAdmin** | |
+| 05:56:39 | 5b | the administrator withdraws: 10.4737 → 10.4746 SOL (+0.0010 after the signature); held 0 | [5raCMBsH…](https://explorer.solana.com/tx/5raCMBsHkC1Bs1HH4Wf9SRh7ZZoSyKeRKJew6yRFYNDvC1xyHggjRZaJffYbFMDuAYvewh4ygGxAfTPDp3tJeG1t?cluster=devnet) |
+| 05:56:47 | 6 | schedule back to 0 bps / 0 SOL; total charged since creation 0.0010 SOL over 1 act | [3pzGqG5P…](https://explorer.solana.com/tx/3pzGqG5PYarK1Ag6dqqnxwjANoWaLL4YBt72Mesn7BnXW45oczyvZVdBaEcbrGSrHFLsDDtNJZFLZsV5abVdJ93H?cluster=devnet) |
+
+Live on that schedule, 03/11 06:05–07:05 UTC: the desk locked 1 USD ([`9TiyEU4V…`](https://explorer.solana.com/address/9TiyEU4VcBjGSutitF5GSVfqvXHN5Gc1pa4wWM3p27mQ?cluster=devnet), record `fee: 0.0005 SOL, paid by the employer on top`) and the page, from a burner key, locked 1 USD too ([`4AsEWbt1…`](https://explorer.solana.com/address/4AsEWbt1TnjUkhqDZ5C94dzyWCofLLqJdiNBix139NdD?cluster=devnet)) with the line *dareskro fee 0.0005 SOL on top* shown before the signature.
+
+The devnet schedule now reads **0 bps with a floor of 0.0005 SOL** ([6MEaDNBb…](https://explorer.solana.com/tx/6MEaDNBbnadSGHBqzRNuZWEecoRB6x89RPywE5zdKFgTR4c2ar1NiT5SbZSc63enbVQERoFKYDSMnNhCBk1GHtA?cluster=devnet)): every
+escrow or vault the page or the desk creates from now on shows and pays that small fee. `node client/frais.mjs show | set <bps> <floorSol> | withdraw | admin <key>`.
+
+### Lever 2, measured on Aurora — 03/11/2026, three dry quotes
+
+`aurora_intents.mjs` sends `appFees: [{ recipient: "dareskro.near", fee: <bps> }]` with every quote.
+Aurora's API **echoes back its own fee whatever is asked** — 0, 10 or 100 bps, or no `appFees`
+at all — `[{ recipient: 2da316c1…, fee: 10 }]`, and the amounts do not move (2.436793 XRP for
+3 USDC, 81.031827 XRP for 100 USDC, in every case). So on this key the bridge already carries a
+10 basis-point app fee, Aurora's, and **no dareskro cut can be added on that leg**. A cut on the
+bridge would mean calling the NEAR Intents 1Click API directly, with its own key. The desk and the
+page show what was asked and what Aurora applied, side by side.
+
+### Lever 3, measured on XRPL testnet — `oracle/demo_frais.mjs`
+
+Oracle [`rUuvu1XP…`](https://testnet.xrpl.org/accounts/rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW), `oracle/tarif.json` set to 1000 drops for the run, then back to 0
+(the drops in force at `/watch` stay on the entry). The gate is the oracle's constat: the ledger has no commission field, and
+the Batch that would bind escrow + payment is not signable on the Ledger's XRP app, so the service is billed where the service
+is — the signature that reveals the secret. The refund at `CancelAfter` does not depend on it; a date-only payroll escrow has no gate.
+
+| UTC | Step | Result | Transaction |
+|---|---|---|---|
+| 06:04:18 | 0 | schedule in force: 1000 drops per conditioned escrow, memo `dareskro/fee "<owner>:<sequence>"` (`GET /fee`) | |
+| 06:04:41 | 2 | client `rQD6K9dV…` locks 20 XRP behind the condition, refund after 420 s | [4A313F47…](https://testnet.xrpl.org/transactions/4A313F47197CED7A182EBE2AA74EFB1142BF83AF85E32F4892AE076011C91395) |
+| 06:04:41 | 3 | `/watch` answers with the fee due: 1000 drops to the oracle, memo `rQD6K9dV…:22030056` | |
+| 06:04:47 | 4 | the RIGHT file is published at once; the oracle: *match (76 bytes); the service fee is not paid* — **waiting**, nothing signed | |
+| 06:04:56 | 4b | 9 s later, still waiting: the proof alone does not open the escrow (freelancer still at 100 XRP) | |
+| 06:05:01 | 5 | the client pays the fee: 1000 drops to the oracle with the memo asked, `tesSUCCESS` | [D462E57B…](https://testnet.xrpl.org/transactions/D462E57B89E83AD18770F06EE12D16FD37C0A2809DC734A731A70F54D5BF835E) |
+| 06:05:13 | 6 | next tick: fee seen (1000 drops, `D462E57B…`), the secret is revealed, **finished** | [5D232FA9…](https://testnet.xrpl.org/transactions/5D232FA95F9E7222E1DAF07BA1883FA0D49324CFDAAACE0D7FF4DE224259D369) |
+| 06:05:13 | 7 | freelancer 100 → **120 XRP**, the full amount: the fee came on top, from the client; oracle 99.990744 → 99.991284 XRP (+0.000540 = the fee minus its own EscrowFinish fee) | |
+
+Raw rows in `oracle/sortie/frais_2026-11-03T06-05-13-918Z.json` (not committed). `GET /fee` publishes the schedule; `/watch` returns the fee due with each registration.
+
+**Where this leaves the invoice.** One line, « frais dareskro », whatever the rail: a fixed amount per act on Solana, NEAR and XRPL,
+each paid on top and visible before the signature (Phantom, the Ledger, the desk). The percentage exists in the code (Solana and
+NEAR, capped at 1 %) but stays at zero until counsel says whether charging it makes dareskro a crypto-asset service provider
+under MiCA — a fixed fee for the oracle's constat and the lock is a software service; dareskro never holds the parties' funds,
+only its own fee, and that is worth keeping. When two levers stack (a bridged payment then locked on Solana), the bridge's
+10 bps are Aurora's, not ours: the payer sees both figures and the sum, nothing is charged twice by dareskro.
+
 ## Honest limits
 
 - The record costs ~0.005 SOL of rent until the owner closes it.
@@ -372,7 +464,11 @@ itself and does not need it, explorers decode the new calls less prettily until 
 - A payroll escrow is **one possible outcome**: if the statement was wrong, the
   correction is a new escrow, as on XRPL. That is the point.
 - Devnet only for the hackathon. On mainnet the upgrade authority would be
-  revoked before the first real escrow.
+  revoked before the first real escrow; the fee administrator (`set_fee`,
+  `withdraw_fees`) is a separate key that survives that, bounded by the two
+  constants above — the same split as on NEAR.
+- The fee schedule account (`config_init`) must exist before any `create`: on a
+  fresh deployment the upgrade authority creates it first (`client/frais.mjs init`).
 
 ## AI disclosure
 

@@ -59,6 +59,18 @@ export const escrowAddress = (owner, id) =>
 export const vaultAddress = (escrow) =>
   PublicKey.findProgramAddressSync([Buffer.from("vault"), new PublicKey(escrow).toBuffer()], PROGRAM_ID)[0];
 
+/** The fee schedule: one account per program (seeds ["config"]). */
+export const feeConfigAddress = () => PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID)[0];
+/** The schedule as plain numbers, or null before config_init. */
+export async function getFeeConfig(program) {
+  const c = await program.account.feeConfig.fetchNullable(feeConfigAddress());
+  if (!c) return null;
+  return { address: feeConfigAddress().toBase58(), admin: c.admin.toBase58(), feeBps: c.feeBps, feeMinLamports: c.feeMin.toNumber(), feeMinSol: c.feeMin.toNumber() / LAMPORTS,
+    feesHeldSol: c.feesHeld.toNumber() / LAMPORTS, feesTotalSol: c.feesTotal.toNumber() / LAMPORTS, actsCharged: c.actsCharged.toNumber(), ceiling: { bps: 100, minSol: 0.01 } };
+}
+/** What an act locking `lamports` costs the owner on top, under that schedule (a token escrow: lamports = 0). */
+export const feeFor = (cfg, lamports) => (cfg ? Math.max(Math.floor((lamports * cfg.feeBps) / 10_000), cfg.feeMinLamports) : 0);
+
 const bnOrNull = (v) => (v == null ? null : new anchor.BN(v));
 const hexOrNull = (v) => (v == null ? null : Array.from(Buffer.isBuffer(v) ? v : Buffer.from(v, "hex")));
 

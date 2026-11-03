@@ -3,7 +3,7 @@ import { Buffer } from "buffer";
 window.Buffer = Buffer;
 import { Connection, Keypair, PublicKey, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { CLUSTER, RPC, PROGRAM_ID, PAY_WITH, explorerTx, explorerAddr } from "./config.js";
-import { createIx, finishIx, cancelIx, closeIx, listEscrows, errorCode, vaultCreateIx, vaultVoteIx, vaultTimeoutIx, vaultCloseIx, listVaults } from "./program.js";
+import { createIx, finishIx, cancelIx, closeIx, listEscrows, errorCode, vaultCreateIx, vaultVoteIx, vaultTimeoutIx, vaultCloseIx, listVaults, fetchFeeConfig, feeFor, CONFIG } from "./program.js";
 import { solPrice, quote as auroraQuote } from "./aurora.js";
 
 const $ = (id) => document.getElementById(id);
@@ -81,6 +81,10 @@ function log(text, signature, ko = false) {
 
 // ---------------------------------------------------------------- create
 let rate;
+// the fee per act, read from the program's schedule account (zero unless the administrator set it; capped by the code at 1 % / 0.01 SOL)
+let feeCfg = null;
+const feeLine = (lamports) => { const f = feeFor(feeCfg, lamports); return f ? `dareskro fee ${(f / LAMPORTS_PER_SOL).toFixed(4)} SOL on top (${feeCfg.feeBps} bps, floor ${(feeCfg.feeMinLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL)` : "no dareskro fee on this act"; };
+(async () => { try { feeCfg = await fetchFeeConfig(connection); const t = feeCfg ? (feeCfg.feeBps || feeCfg.feeMinLamports ? `Fee per act: ${feeCfg.feeBps} bps of the SOL locked, floor ${(feeCfg.feeMinLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL, paid by the payer on top — never out of what the recipient gets. Capped by the program at 1 % / 0.01 SOL; ${feeCfg.actsCharged} act(s) charged so far.` : "Fee per act: zero (the schedule exists, the administrator has not set one). The program caps it at 1 % / 0.01 SOL.") : "Fee per act: no schedule account yet — acts cost nothing beyond rent and gas."; for (const id of ["fee-line", "fee-line-vault"]) { const el = $(id); if (el) { el.innerHTML = `${t} <a href="${explorerAddr(CONFIG.toBase58())}" target="_blank" rel="noreferrer">schedule</a>`; } } } catch {} })();
 (async () => { try { rate = await solPrice(); $("rate-line").textContent = `Rate: 1 SOL = ${rate.usdPerSol} USD (${rate.source}). On devnet the escrow holds SOL for the USD amount; on mainnet it would hold the USDC Aurora delivers.`; } catch { $("rate-line").textContent = "Rate unavailable: the amount will be locked as SOL at 1 SOL = 100 USD."; rate = { usdPerSol: 100, source: "fallback" }; } })();
 const inTwoMinutes = new Date(Date.now() + 2 * 60000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 $("f-date").value = inTwoMinutes;
@@ -98,7 +102,7 @@ $("btn-quote").onclick = async () => {
     const q = await auroraQuote({ originAsset: p.asset, usdc: usd, recipient: wallet.publicKey.toBase58(), refundTo, dry: true });
     lastQuote = { asset: p.id, amountIn: q.quote.amountInFormatted, usd: q.quote.amountInUsd, seconds: q.quote.timeEstimate };
     $("quote-box").innerHTML = `<b>${q.quote.amountInFormatted} ${p.id.toUpperCase()}</b> (≈ ${Number(q.quote.amountInUsd).toFixed(2)} $) for exactly <b>${q.quote.amountOutFormatted} USDC on Solana</b>, delivered in ≈ ${q.quote.timeEstimate} s to ${short(wallet.publicKey.toBase58())}.
-      Withdraw fee ${(Number(q.quote.withdrawFee) / 1e6).toFixed(3)} USDC. <span class="muted">Dry quote, mainnet: no deposit address, no funds moved. The real run of 1 Nov 2026 (2.63 XRP → 3 USDC in 37 s) is in the README.</span>`;
+      Withdraw fee ${(Number(q.quote.withdrawFee) / 1e6).toFixed(3)} USDC. App fee on the bridge: Aurora applied ${(q.quoteRequest?.appFees ?? []).map((f) => `${f.fee} bps to ${short(f.recipient)}`).join(", ") || "none"} (its own, whatever is asked: no dareskro cut on this leg). <span class="muted">Dry quote, mainnet: no deposit address, no funds moved. The real run of 1 Nov 2026 (2.63 XRP → 3 USDC in 37 s) is in the README.</span>`;
   } catch (e) { $("quote-box").innerHTML = `<span class="ko">Aurora refused: ${e.message}</span>`; }
 };
 $("btn-lock").onclick = async () => {
@@ -114,7 +118,7 @@ $("btn-lock").onclick = async () => {
     if ($("f-memo").value.trim()) memos.push($("f-memo").value.trim().slice(0, 128));
     const id = Date.now();
     const { escrow, ix } = createIx({ owner: wallet.publicKey, destination, lamports, finishAfter, cancelAfter, condition: null, memos, id });
-    const r = await send(ix, `create ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL → ${short(destination.toBase58())}`, { note: (m) => { $("lock-status").textContent = `${m} ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL for ${usd} USD, payable ${fmt(finishAfter)}`; } });
+    const r = await send(ix, `create ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL → ${short(destination.toBase58())} (${feeLine(lamports)})`, { note: (m) => { $("lock-status").textContent = `${m} ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL for ${usd} USD, payable ${fmt(finishAfter)}; ${feeLine(lamports)}`; } });
     if (r.refused) throw new Error(`${r.code ?? "refused"}: ${r.message ?? ""}`);
     $("lock-status").innerHTML = `<span class="ok">Locked.</span> Escrow <a href="${explorerAddr(escrow.toBase58())}" target="_blank" rel="noreferrer">${escrow.toBase58()}</a> · transaction <a href="${explorerTx(r.signature)}" target="_blank" rel="noreferrer">${short(r.signature, 8)}</a>`;
     lastKey = undefined; refreshBalance(); refreshList();
@@ -180,7 +184,7 @@ $("btn-vault").onclick = async () => {
     if ($("v-memo").value.trim()) memos.push($("v-memo").value.trim().slice(0, 128));
     const id = Date.now();
     const { vault, ix } = vaultCreateIx({ owner: wallet.publicKey, beneficiary, lamports, parties: [wallet.publicKey, beneficiary, third], threshold, deadline, memos, id });
-    const r = await send(ix, `vault ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL, ${threshold} of 3`, { note: (m) => { $("vault-status").textContent = m; } });
+    const r = await send(ix, `vault ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL, ${threshold} of 3 (${feeLine(lamports)})`, { note: (m) => { $("vault-status").textContent = `${m}; ${feeLine(lamports)}`; } });
     if (r.refused) throw new Error(`${r.code ?? "refused"}: ${r.message ?? ""}`);
     $("vault-status").innerHTML = `<span class="ok">Funded.</span> Vault <a href="${explorerAddr(vault.toBase58())}" target="_blank" rel="noreferrer">${vault.toBase58()}</a> · <a href="${explorerTx(r.signature)}" target="_blank" rel="noreferrer">${short(r.signature, 8)}</a>`;
     vaultKey = undefined; refreshBalance(); refreshVaults();

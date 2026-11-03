@@ -28,7 +28,7 @@ import { existsSync, readFileSync, writeFileSync, chmodSync, readdirSync } from 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SystemProgram } from "@solana/web3.js";
-import { connect, loadKeypair, Keypair, PublicKey, Transaction, createEscrow, listEscrows, getEscrow, chainNow, sendRecorded, explorerTx, explorerAccount, PROGRAM_ID, LAMPORTS } from "../client/dareskro_solana.mjs";
+import { connect, loadKeypair, Keypair, PublicKey, Transaction, createEscrow, listEscrows, getEscrow, chainNow, sendRecorded, explorerTx, explorerAccount, PROGRAM_ID, LAMPORTS, getFeeConfig, feeFor } from "../client/dareskro_solana.mjs";
 import { tokens as auroraTokens, quoteExactUsdcOut, status as auroraStatus, USDC_SOL } from "../client/aurora_intents.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -62,6 +62,24 @@ async function rate() {
 }
 
 const memoLen = (s) => (s.length > 128 ? s.slice(0, 125) + "…" : s);
+
+/**
+ * The service's schedule, one table for the three rails (tarif.json, public):
+ *   solana  — read from the program's FeeConfig account, never from this file (the program is the truth);
+ *   aurora  — basis points asked of Aurora Intents on a bridged payment (appFees). MEASURED 03/11/2026: Aurora's
+ *             API ignores what the client sends and applies its own 10 bps to its own recipient, whatever we ask
+ *             (0, 10 or 100 bps, or nothing): a dareskro cut on the bridge would need the 1Click API directly;
+ *   xrpl    — drops the XRPL oracle asks per conditioned escrow before it signs the release (oracle/tarif.json).
+ * The schedule an employer sees is one line whatever the rail; `capBps` bounds the sum when two rails stack.
+ */
+const TARIF = join(HERE, "tarif.json");
+const tarif = () => readJson(TARIF, { auroraBps: 10, auroraRecipient: "dareskro.near", capBps: 100 });
+/** What the program will charge on top of `lamports` right now (0 before config_init or at a zero schedule). */
+async function feeNow(lamports) {
+  const cfg = await getFeeConfig(program).catch(() => null);
+  const f = feeFor(cfg, lamports);
+  return { lamports: f, sol: f / LAMPORTS, schedule: cfg };
+}
 const errCode = (err) => err?.error?.errorCode?.code ?? (String(err?.message ?? err).match(/Error Code: (\w+)/) || [])[1] ?? null;
 
 // ------------------------------------------------------------------ HTTP
@@ -81,10 +99,12 @@ createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname === "/identity") {
     const [b, eb, o, r] = await Promise.all([balance(employer.publicKey), balance(employee.publicKey), oracle(), rate().catch(() => null)]);
+    const fee = await getFeeConfig(program).catch(() => null);
     return json(res, 200, { cluster: CLUSTER, programId: PROGRAM_ID.toBase58(), programExplorer: explorerAccount(PROGRAM_ID.toBase58(), CLUSTER),
       employer: { address: employer.publicKey.toBase58(), balanceSol: b == null ? null : b / LAMPORTS, explorer: explorerAccount(employer.publicKey.toBase58(), CLUSTER) },
       employee: { address: employee.publicKey.toBase58(), balanceSol: eb == null ? null : eb / LAMPORTS, explorer: explorerAccount(employee.publicKey.toBase58(), CLUSTER) },
-      oracle: o, rate: r });
+      oracle: o, rate: r,
+      fee: fee ? { ...fee, explorer: explorerAccount(fee.address, CLUSTER) } : null, tarif: tarif() });
   }
 
   if (req.method === "GET" && url.pathname === "/escrows") {
@@ -107,7 +127,8 @@ createServer(async (req, res) => {
       if (!(amountUsd > 0)) throw new Error("fiat.amount must be > 0");
       const lamports = Math.round((amountUsd / r.usdPerSol / scale) * LAMPORTS);
       const have = await balance(employer.publicKey);
-      if (have != null && have < lamports + 0.01 * LAMPORTS) throw new Error(`employer has ${(have / LAMPORTS).toFixed(3)} SOL, the escrow needs ${(lamports / LAMPORTS).toFixed(3)} SOL: lower the scale`);
+      const fee = await feeNow(lamports);
+      if (have != null && have < lamports + fee.lamports + 0.01 * LAMPORTS) throw new Error(`employer has ${(have / LAMPORTS).toFixed(3)} SOL, the escrow needs ${(lamports / LAMPORTS).toFixed(3)} SOL + ${fee.sol.toFixed(4)} SOL of fee: lower the scale`);
       const o = await oracle();
       const memos = [
         memoLen(`sha256:${p.statementSha256.toLowerCase()}`),
@@ -128,6 +149,7 @@ createServer(async (req, res) => {
       } else throw new Error(`unknown kind ${kind}`);
       const created = await createEscrow(program, { owner: employer, destination, lamports, finishAfter, cancelAfter, condition, memos });
       const record = { ...created, kind, cluster: CLUSTER, lamports, sol: lamports / LAMPORTS, fiat: { amount: amountUsd, currency: p.fiat?.currency ?? "USD" }, rate: r, scale,
+        fee: { lamports: fee.lamports, sol: fee.sol, usd: fee.sol * r.usdPerSol * scale, bps: fee.schedule?.feeBps ?? 0, floorSol: fee.schedule?.feeMinSol ?? 0, paidBy: "employer, on top of the amount locked" },
         statementSha256: p.statementSha256.toLowerCase(), statementId: p.statementId ?? null, validatedBy: p.validatedBy ?? null, destination: destination.toBase58(),
         finishAfter: finishAfter ?? null, cancelAfter: cancelAfter ?? null, condition: condition ?? null, deliveryId: deliveryId ?? null, proof: proof ?? null, memos,
         explorer: explorerTx(created.signature, CLUSTER), escrowExplorer: explorerAccount(created.escrow, CLUSTER), lockedAt: new Date().toISOString(), oracle: o?.address ?? null, watched: false };
@@ -138,7 +160,7 @@ createServer(async (req, res) => {
         } catch (e) { record.watchError = e.message; }
       }
       const locks = readJson(LOCKS, []); locks.push(record); writeFileSync(LOCKS, JSON.stringify(locks, null, 2));
-      log(`locked ${record.sol} SOL (${amountUsd} ${record.fiat.currency}${scale !== 1 ? ` /${scale}` : ""}) for ${record.destination} — ${record.explorer}`);
+      log(`locked ${record.sol} SOL (${amountUsd} ${record.fiat.currency}${scale !== 1 ? ` /${scale}` : ""}) for ${record.destination}, fee ${fee.sol} SOL on top — ${record.explorer}`);
       json(res, 201, record);
     });
   }
@@ -179,9 +201,12 @@ createServer(async (req, res) => {
     return withBody(req, res, async (p) => {
       // p: { originAsset, usdc, refundTo, dry? } — recipient is always the employer's own Solana address
       const usdcOut = Math.round(Number(p.usdc) * 1e6);
-      const q = await quoteExactUsdcOut({ originAsset: p.originAsset, usdcOut, recipient: employer.publicKey.toBase58(), refundTo: p.refundTo, dry: p.dry !== false });
+      const t = tarif();
+      const q = await quoteExactUsdcOut({ originAsset: p.originAsset, usdcOut, recipient: employer.publicKey.toBase58(), refundTo: p.refundTo, dry: p.dry !== false, appFeeBps: t.auroraBps, appFeeRecipient: t.auroraRecipient });
       json(res, 200, { dry: p.dry !== false, amountIn: q.quote.amountInFormatted, amountInUsd: q.quote.amountInUsd, amountOut: q.quote.amountOutFormatted, timeEstimate: q.quote.timeEstimate,
-        deadline: q.quoteRequest.deadline, depositAddress: q.quote.depositAddress ?? null, depositMemo: q.quote.depositMemo ?? null, withdrawFee: q.quote.withdrawFee, minAmountIn: q.quote.minAmountIn });
+        deadline: q.quoteRequest.deadline, depositAddress: q.quote.depositAddress ?? null, depositMemo: q.quote.depositMemo ?? null, withdrawFee: q.quote.withdrawFee, minAmountIn: q.quote.minAmountIn,
+        // what we asked Aurora for, and what Aurora actually applied (its own 10 bps, measured 03/11/2026)
+        appFeeAsked: { recipient: t.auroraRecipient, bps: t.auroraBps }, appFeeApplied: q.quoteRequest.appFees ?? null });
     });
   }
   if (req.method === "GET" && url.pathname === "/fund/status") {

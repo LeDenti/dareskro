@@ -14,6 +14,9 @@ export type Identity = {
   employee: { address: string; balanceSol: number | null; explorer: string };
   oracle: { name: string; address: string; cluster: string; explorer: string; balanceSol: number | null; watching: number } | null;
   rate: { usdPerSol: number; source: string; at: string } | null;
+  /** the program's fee schedule (FeeConfig account), null before config_init */
+  fee: { address: string; admin: string; feeBps: number; feeMinSol: number; feesHeldSol: number; feesTotalSol: number; actsCharged: number; ceiling: { bps: number; minSol: number }; explorer: string } | null;
+  tarif: { auroraBps: number; auroraRecipient: string; capBps: number; xrplDrops?: number };
 };
 
 export type LockRequest = {
@@ -92,6 +95,7 @@ export type FundToken = { assetId: string; symbol: string; blockchain: string; d
 export type FundQuote = {
   dry: boolean; amountIn: string; amountInUsd: string; amountOut: string; timeEstimate: number; deadline: string;
   depositAddress: string | null; depositMemo: string | null; withdrawFee: string; minAmountIn: string;
+  appFeeAsked: { recipient: string; bps: number }; appFeeApplied: { recipient: string; fee: number }[] | null;
 };
 export type FundProof = {
   at: string; payer: string; recipient: string; amountIn: string; amountOut: string; seconds: number;

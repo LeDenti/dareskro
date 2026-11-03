@@ -218,6 +218,22 @@ export function SolanaDesk() {
             </dd>
             <dt>Rate</dt>
             <dd>{id.rate ? `1 SOL = ${id.rate.usdPerSol} USD (${id.rate.source})` : "—"}</dd>
+            <dt>Fee per act</dt>
+            <dd>
+              {id.fee ? (
+                <>
+                  {id.fee.feeBps || id.fee.feeMinSol
+                    ? `${id.fee.feeBps} bps of the SOL locked, floor ${id.fee.feeMinSol} SOL — paid by the employer on top, never out of the employee's amount`
+                    : "zero (the administrator has not set one)"}
+                  ; capped by the program at {id.fee.ceiling.bps} bps / {id.fee.ceiling.minSol} SOL whoever administers · {id.fee.actsCharged} act(s) charged, {id.fee.feesHeldSol.toFixed(4)} SOL in the till ·{" "}
+                  <a href={id.fee.explorer} target="_blank" rel="noreferrer">
+                    schedule
+                  </a>
+                </>
+              ) : (
+                "no schedule account yet: acts cost rent and gas only"
+              )}
+            </dd>
           </dl>
         )}
       </Card>
@@ -303,6 +319,12 @@ export function SolanaDesk() {
             </dd>
             <dt>Withdraw fee in this quote</dt>
             <dd>{(Number(quote.withdrawFee) / 1e6).toFixed(3)} USDC (Aurora's figure; it was 0.254 USDC on the 3 USDC run)</dd>
+            <dt>App fee on the bridge</dt>
+            <dd>
+              asked {quote.appFeeAsked.bps} bps for {quote.appFeeAsked.recipient} · Aurora applied{" "}
+              {quote.appFeeApplied ? quote.appFeeApplied.map((f) => `${f.fee} bps to ${short(f.recipient)}`).join(", ") : "none"}
+              <span className="muted"> (measured 03/11/2026: Aurora's API keeps its own 10 bps whatever is asked — no dareskro cut on this leg)</span>
+            </dd>
             <dt>Deadline</dt>
             <dd>{quote.deadline.slice(0, 19).replace("T", " ")}Z{quote.dry ? " (dry: no deposit address issued)" : ` · deposit to ${quote.depositAddress}`}</dd>
           </dl>

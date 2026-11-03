@@ -1,0 +1,9 @@
+{
+  "_": "the service's schedule for the rails the program does not govern; solana's is the FeeConfig account on chain",
+  "auroraBps": 10,
+  "auroraRecipient": "dareskro.near",
+  "auroraNote": "asked of Aurora Intents in every quote (appFees); measured 03/11/2026: the API applies its own 10 bps to its own recipient whatever is asked",
+  "capBps": 100,
+  "xrplDrops": 1000,
+  "xrplNote": "what the XRPL oracle asks per conditioned escrow before signing the release (oracle/tarif.json is the one it reads)"
+}

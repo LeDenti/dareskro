@@ -20,8 +20,20 @@
 //!
 //! Who holds the funds: a PDA of this program, one per escrow. Native SOL sits
 //! in the escrow account itself; an SPL token (USDC…) sits in a vault token
-//! account whose authority is that PDA. The program has no admin instruction:
-//! once the upgrade authority is revoked, the only moves left are the ones below.
+//! account whose authority is that PDA. The program has no admin instruction
+//! over the parties' funds: once the upgrade authority is revoked, the only
+//! moves left are the ones below.
+//!
+//! A fee per act (same rule as the NEAR contract): the service may charge each
+//! `create`, `create_token` and `vault_create` a percentage of the SOL locked
+//! with a floor (a token escrow, which locks no SOL, pays the floor). It is paid
+//! by the owner **on top of** the amount locked — what the destination will
+//! receive is never touched — and it is zero unless the administrator account
+//! sets it (`set_fee`). Two constants compiled here cap the schedule whoever
+//! administers: `MAX_FEE_BPS` = 100 (1 %) and `MAX_FEE_MIN` = 0.01 SOL. The fee
+//! sits in the `FeeConfig` account and is withdrawn by the administrator in one
+//! call (`withdraw_fees`); release, cancel, vote and the deadline cost nothing.
+//! The schedule account is created once, by the program's upgrade authority.
 //!
 //! Times are Unix seconds, as `Clock::get()?.unix_timestamp`.
 use anchor_lang::prelude::*;
@@ -52,6 +64,14 @@ pub const MAX_READERS: u8 = 6;
 pub const SHARED_SEED: &[u8] = b"shared";
 #[constant]
 pub const MAX_PARTIES: u8 = 5;
+#[constant]
+pub const CONFIG_SEED: &[u8] = b"config";
+/// the fee can never exceed 1 % of what is locked…
+#[constant]
+pub const MAX_FEE_BPS: u16 = 100;
+/// …nor a floor of 0.01 SOL, whoever administers
+#[constant]
+pub const MAX_FEE_MIN: u64 = 10_000_000;
 
 #[program]
 pub mod dareskro_escrow {
@@ -97,7 +117,13 @@ pub mod dareskro_escrow {
             ),
             amount,
         )?;
-        emit!(Created::from(&**escrow, escrow.key()));
+        let fee = charge_fee(
+            &mut ctx.accounts.config,
+            &ctx.accounts.owner.to_account_info(),
+            &ctx.accounts.system_program.to_account_info(),
+            amount,
+        )?;
+        emit!(Created::from(&**escrow, escrow.key(), fee));
         Ok(())
     }
 
@@ -143,7 +169,14 @@ pub mod dareskro_escrow {
             amount,
             ctx.accounts.mint.decimals,
         )?;
-        emit!(Created::from(&**escrow, escrow.key()));
+        // a token escrow locks no SOL: it pays the floor of the schedule
+        let fee = charge_fee(
+            &mut ctx.accounts.config,
+            &ctx.accounts.owner.to_account_info(),
+            &ctx.accounts.system_program.to_account_info(),
+            0,
+        )?;
+        emit!(Created::from(&**escrow, escrow.key(), fee));
         Ok(())
     }
 
@@ -317,6 +350,13 @@ pub mod dareskro_escrow {
             ),
             amount,
         )?;
+        let fee = charge_fee(
+            &mut ctx.accounts.config,
+            &ctx.accounts.owner.to_account_info(),
+            &ctx.accounts.system_program.to_account_info(),
+            amount,
+        )?;
+        let v = &ctx.accounts.vault;
         emit!(VaultCreated {
             vault: v.key(),
             owner: v.owner,
@@ -326,7 +366,54 @@ pub mod dareskro_escrow {
             parties: v.parties.clone(),
             deadline,
             id,
+            fee,
         });
+        Ok(())
+    }
+
+    // ---------------------------------------------------------- the fee per act
+
+    /// The schedule account, once per program, by the upgrade authority. Starts
+    /// at zero: until `set_fee`, an act costs nothing beyond its rent and gas.
+    pub fn config_init(ctx: Context<ConfigInit>, admin: Pubkey) -> Result<()> {
+        require!(admin != Pubkey::default(), EscrowError::NoDestination);
+        let c = &mut ctx.accounts.config;
+        c.admin = admin;
+        c.fee_bps = 0;
+        c.fee_min = 0;
+        c.fees_held = 0;
+        c.fees_total = 0;
+        c.acts_charged = 0;
+        c.bump = ctx.bumps.config;
+        Ok(())
+    }
+
+    /// The administrator sets the schedule, under the two ceilings compiled above.
+    pub fn set_fee(ctx: Context<AdminOnly>, fee_bps: u16, fee_min: u64) -> Result<()> {
+        require!(fee_bps <= MAX_FEE_BPS, EscrowError::FeeAboveCeiling);
+        require!(fee_min <= MAX_FEE_MIN, EscrowError::FeeAboveCeiling);
+        let c = &mut ctx.accounts.config;
+        c.fee_bps = fee_bps;
+        c.fee_min = fee_min;
+        emit!(FeeSet { admin: c.admin, fee_bps, fee_min });
+        Ok(())
+    }
+
+    /// Hand the role over (dareskro.near's counterpart on Solana).
+    pub fn set_admin(ctx: Context<AdminOnly>, new_admin: Pubkey) -> Result<()> {
+        require!(new_admin != Pubkey::default(), EscrowError::NoDestination);
+        ctx.accounts.config.admin = new_admin;
+        Ok(())
+    }
+
+    /// Everything charged so far goes to the administrator; the account keeps its rent.
+    pub fn withdraw_fees(ctx: Context<AdminOnly>) -> Result<()> {
+        let amount = ctx.accounts.config.fees_held;
+        require!(amount > 0, EscrowError::NothingToWithdraw);
+        ctx.accounts.config.fees_held = 0;
+        ctx.accounts.config.sub_lamports(amount)?;
+        ctx.accounts.admin.add_lamports(amount)?;
+        emit!(FeesWithdrawn { admin: ctx.accounts.admin.key(), amount });
         Ok(())
     }
 
@@ -490,6 +577,8 @@ pub struct Create<'info> {
         bump
     )]
     pub escrow: Account<'info, Escrow>,
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)]
+    pub config: Account<'info, FeeConfig>,
     pub system_program: Program<'info, System>,
 }
 
@@ -524,6 +613,8 @@ pub struct CreateToken<'info> {
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)]
+    pub config: Account<'info, FeeConfig>,
     pub system_program: Program<'info, System>,
 }
 
@@ -792,6 +883,8 @@ pub struct VaultCreate<'info> {
         bump
     )]
     pub vault: Account<'info, SharedVault>,
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)]
+    pub config: Account<'info, FeeConfig>,
     pub system_program: Program<'info, System>,
 }
 
@@ -971,6 +1064,85 @@ fn pay_from_vault<'info>(
     ))
 }
 
+// ------------------------------------------------------------- the fee per act
+
+#[derive(Accounts)]
+pub struct ConfigInit<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + FeeConfig::INIT_SPACE,
+        seeds = [CONFIG_SEED],
+        bump
+    )]
+    pub config: Account<'info, FeeConfig>,
+    /// this program, to find its ProgramData…
+    #[account(constraint = program.programdata_address()? == Some(program_data.key()) @ EscrowError::NotUpgradeAuthority)]
+    pub program: Program<'info, crate::program::DareskroEscrow>,
+    /// …whose upgrade authority must be the signer
+    #[account(constraint = program_data.upgrade_authority_address == Some(authority.key()) @ EscrowError::NotUpgradeAuthority)]
+    pub program_data: Account<'info, ProgramData>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdminOnly<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump, has_one = admin @ EscrowError::NotAdmin)]
+    pub config: Account<'info, FeeConfig>,
+}
+
+/// The schedule and the till. One per program; the fees charged sit in this
+/// account's lamports, above its rent.
+#[account]
+#[derive(InitSpace)]
+pub struct FeeConfig {
+    pub admin: Pubkey,
+    /// basis points of the SOL locked, at most MAX_FEE_BPS
+    pub fee_bps: u16,
+    /// floor in lamports, at most MAX_FEE_MIN; a token escrow pays exactly this
+    pub fee_min: u64,
+    /// charged and not yet withdrawn
+    pub fees_held: u64,
+    /// charged since the account was created
+    pub fees_total: u64,
+    pub acts_charged: u64,
+    pub bump: u8,
+}
+
+/// What this act costs the owner, on top of what is locked: `fee_bps` of the
+/// SOL locked with the floor `fee_min` (`locked = 0` for a token escrow, which
+/// then pays the floor). Zero fee: no transfer, no trace.
+fn charge_fee<'info>(
+    config: &mut Account<'info, FeeConfig>,
+    owner: &AccountInfo<'info>,
+    system_program: &AccountInfo<'info>,
+    locked: u64,
+) -> Result<u64> {
+    let pct = (locked as u128 * config.fee_bps as u128 / 10_000) as u64;
+    let fee = pct.max(config.fee_min);
+    if fee == 0 {
+        return Ok(0);
+    }
+    anchor_lang::system_program::transfer(
+        CpiContext::new(
+            system_program.key(),
+            anchor_lang::system_program::Transfer {
+                from: owner.clone(),
+                to: config.to_account_info(),
+            },
+        ),
+        fee,
+    )?;
+    config.fees_held += fee;
+    config.fees_total += fee;
+    config.acts_charged += 1;
+    Ok(fee)
+}
+
 // -------------------------------------------------------------------- events
 
 #[event]
@@ -984,11 +1156,14 @@ pub struct Created {
     pub cancel_after: Option<i64>,
     pub condition: Option<[u8; 32]>,
     pub id: u64,
+    /// what the owner paid the service for this act, in lamports (0 = no schedule)
+    pub fee: u64,
 }
 
 impl Created {
-    fn from(e: &Escrow, key: Pubkey) -> Self {
+    fn from(e: &Escrow, key: Pubkey, fee: u64) -> Self {
         Self {
+            fee,
             escrow: key,
             owner: e.owner,
             destination: e.destination,
@@ -1030,6 +1205,20 @@ pub struct VaultCreated {
     pub parties: Vec<Pubkey>,
     pub deadline: Option<i64>,
     pub id: u64,
+    pub fee: u64,
+}
+
+#[event]
+pub struct FeeSet {
+    pub admin: Pubkey,
+    pub fee_bps: u16,
+    pub fee_min: u64,
+}
+
+#[event]
+pub struct FeesWithdrawn {
+    pub admin: Pubkey,
+    pub amount: u64,
 }
 
 #[event]
@@ -1130,4 +1319,12 @@ pub enum EscrowError {
     NoDeadline,
     #[msg("the deadline is not reached")]
     DeadlineNotReached,
+    #[msg("only the administrator may set or withdraw the fee")]
+    NotAdmin,
+    #[msg("only the program's upgrade authority creates the schedule")]
+    NotUpgradeAuthority,
+    #[msg("the fee is capped by the code: at most 100 basis points and a floor of 0.01 SOL")]
+    FeeAboveCeiling,
+    #[msg("nothing to withdraw")]
+    NothingToWithdraw,
 }

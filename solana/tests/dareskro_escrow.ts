@@ -109,10 +109,24 @@ describe("dareskro escrow on Solana", () => {
   const passerby = Keypair.generate();
   const oracle = Keypair.generate();
 
+  const configPda = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId)[0];
+  const programData = PublicKey.findProgramAddressSync(
+    [program.programId.toBuffer()],
+    new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111")
+  )[0];
+
   before(async () => {
     await fund(employer, 20);
     await fund(passerby, 2);
     await fund(oracle, 2);
+    // the schedule account: only the program's upgrade authority (the test wallet) creates it, at zero
+    if (!(await connection.getAccountInfo(configPda))) {
+      await refused(
+        program.methods.configInit(passerby.publicKey).accountsPartial({ authority: passerby.publicKey, program: program.programId, programData }).signers([passerby]).rpc(),
+        "NotUpgradeAuthority"
+      );
+      await program.methods.configInit(payer.publicKey).accountsPartial({ authority: payer.publicKey, program: program.programId, programData }).rpc();
+    }
   });
 
   it("payroll shape: no finish before the date, no cancel ever, anyone finishes after", async () => {
@@ -512,5 +526,102 @@ describe("dareskro escrow on Solana", () => {
     await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey], 3, deposit, null), "BadThreshold");
     await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, tenant.publicKey], 1, deposit, null), "DuplicateParty");
     await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey], 2, deposit, now - 100), "DeadlinePassed");
+  });
+
+  it("fee per act: zero by default, set by the administrator under the ceilings, paid on top of the lock, withdrawn, never skippable", async () => {
+    const setFee = (who: Keypair, bps: number, min: number) =>
+      program.methods.setFee(bps, new BN(min)).accountsPartial({ admin: who.publicKey }).signers([who]).rpc();
+    const withdraw = (who: Keypair) => program.methods.withdrawFees().accountsPartial({ admin: who.publicKey }).signers([who]).rpc();
+    const held = async () => (await program.account.feeConfig.fetch(configPda)).feesHeld.toNumber();
+    const SIG = 5000; // one signature
+
+    let cfg = await program.account.feeConfig.fetch(configPda);
+    assert.equal(cfg.feeBps, 0);
+    assert.equal(cfg.feeMin.toNumber(), 0);
+    assert.equal(cfg.admin.toBase58(), payer.publicKey.toBase58());
+
+    // a stranger cannot set it; the administrator cannot go above the ceilings compiled in the program
+    await refused(setFee(passerby, 10, 0), "NotAdmin");
+    await refused(setFee(payer, 101, 0), "FeeAboveCeiling");
+    await refused(setFee(payer, 0, 10_000_001), "FeeAboveCeiling");
+
+    // 50 bps (0.5 %) with a floor of 0.001 SOL
+    await setFee(payer, 50, 1_000_000);
+    const now = await chainNow();
+
+    // 1 SOL locked: the owner pays 1 SOL + rent + 0.005 SOL; the escrow holds exactly 1 SOL for the destination
+    const pay = 1 * LAMPORTS_PER_SOL;
+    const b0 = await connection.getBalance(employer.publicKey);
+    const { escrow } = await create(employer, employee.publicKey, pay, { finishAfter: now + 600, memos: ["fee test"] });
+    const b1 = await connection.getBalance(employer.publicKey);
+    const rent = (await connection.getBalance(escrow)) - pay;
+    assert.isAbove(rent, 0);
+    assert.equal(b0 - b1 - rent - pay, 5_000_000, "0.5 % of 1 SOL, on top (the test wallet pays the signatures)");
+    assert.equal((await program.account.escrow.fetch(escrow)).amount.toNumber(), pay, "what the destination gets is untouched");
+    assert.equal(await held(), 5_000_000);
+
+    // 0.01 SOL locked: 0.5 % is 50 000 lamports, under the floor — the floor applies
+    await create(employer, employee.publicKey, 0.01 * LAMPORTS_PER_SOL, { finishAfter: now + 600 });
+    assert.equal(await held(), 6_000_000);
+
+    // a shared vault of 0.4 SOL: 0.5 % = 0.002 SOL
+    const vid = newId();
+    await program.methods
+      .vaultCreate(vid, employee.publicKey, new BN(0.4 * LAMPORTS_PER_SOL), [employer.publicKey, employee.publicKey, oracle.publicKey], 2, null, [])
+      .accountsPartial({ owner: employer.publicKey, vault: sharedPda(employer.publicKey, vid) })
+      .signers([employer])
+      .rpc();
+    assert.equal(await held(), 8_000_000);
+
+    // a token escrow locks no SOL: it pays the floor
+    const mint = await createMint(connection, payer, payer.publicKey, null, 6);
+    const ata = await getOrCreateAssociatedTokenAccount(connection, payer, mint, employer.publicKey);
+    await mintTo(connection, payer, mint, ata.address, payer, 10_000_000);
+    const tid = newId();
+    const tesc = escrowPda(employer.publicKey, tid);
+    await program.methods
+      .createToken(tid, employee.publicKey, new BN(1_000_000), new BN(now + 600), null, null, [])
+      .accountsPartial({ owner: employer.publicKey, mint, ownerToken: ata.address, escrow: tesc, vault: vaultPda(tesc), tokenProgram: TOKEN_PROGRAM_ID })
+      .signers([employer])
+      .rpc();
+    assert.equal(await held(), 9_000_000);
+
+    // the fee cannot be skipped: the schedule account is a fixed PDA of the program; a wallet in its
+    // place is refused (wrong owner), an unknown key too (not initialized), another kind of program account (discriminator)
+    const fakeId = newId();
+    const withConfig = (config: PublicKey) =>
+      program.methods
+        .create(fakeId, employee.publicKey, new BN(pay), new BN(now + 600), null, null, [])
+        .accountsPartial({ owner: employer.publicKey, escrow: escrowPda(employer.publicKey, fakeId), config })
+        .signers([employer])
+        .rpc();
+    await refused(withConfig(passerby.publicKey), "AccountOwnedByWrongProgram");
+    await refused(withConfig(Keypair.generate().publicKey), "AccountNotInitialized");
+    await refused(withConfig(escrow), "AccountDiscriminatorMismatch");
+    assert.equal(await held(), 9_000_000);
+    cfg = await program.account.feeConfig.fetch(configPda);
+    assert.equal(cfg.actsCharged.toNumber(), 4);
+
+    // only the administrator withdraws, in one call; the account keeps its rent
+    await refused(withdraw(passerby), "NotAdmin");
+    const rentCfg = (await connection.getBalance(configPda)) - 9_000_000;
+    const a0 = await connection.getBalance(payer.publicKey);
+    await withdraw(payer);
+    const a1 = await connection.getBalance(payer.publicKey);
+    // the test wallet is also the local validator's identity, which earns a few lamports of fee rewards meanwhile
+    assert.isAtLeast(a1 - a0 + SIG, 9_000_000);
+    assert.isBelow(a1 - a0 + SIG, 9_001_000);
+    assert.equal(await connection.getBalance(configPda), rentCfg);
+    assert.equal(await held(), 0);
+    assert.equal((await program.account.feeConfig.fetch(configPda)).feesTotal.toNumber(), 9_000_000);
+    await refused(withdraw(payer), "NothingToWithdraw");
+
+    // back to zero: the next act costs nothing beyond rent and gas
+    await setFee(payer, 0, 0);
+    const c0 = await connection.getBalance(employer.publicKey);
+    const { escrow: free } = await create(employer, employee.publicKey, pay, { finishAfter: now + 600 });
+    const c1 = await connection.getBalance(employer.publicKey);
+    assert.equal(c0 - c1, await connection.getBalance(free), "amount + rent, nothing else");
+    assert.equal(await held(), 0);
   });
 });

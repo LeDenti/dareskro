@@ -14,16 +14,28 @@ class W { constructor() { this.parts = []; } u8(v) { this.parts.push(Buffer.from
   pk(p) { this.parts.push(new PublicKey(p).toBuffer()); return this; } bytes(b) { this.parts.push(Buffer.from(b)); return this; }
   opt(v, f) { if (v == null) return this.u8(0); this.u8(1); f(v); return this; } str(s) { const b = Buffer.from(s, "utf8"); return this.u32(b.length).bytes(b); } out() { return Buffer.concat(this.parts); } }
 
+/** The fee schedule: one account per program, seeds ["config"]; the create instructions take it. */
+export const CONFIG = PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM)[0];
+const CDISC = [143, 52, 146, 187, 219, 123, 76, 155];
+/** { feeBps, feeMinLamports, admin, feesHeld, feesTotal, actsCharged } or null before config_init. */
+export async function fetchFeeConfig(connection) {
+  const a = await connection.getAccountInfo(CONFIG); if (!a) return null;
+  const b = Buffer.from(a.data); if (!b.subarray(0, 8).equals(Buffer.from(CDISC))) return null;
+  return { admin: new PublicKey(b.subarray(8, 40)).toBase58(), feeBps: b.readUInt16LE(40), feeMinLamports: Number(b.readBigUInt64LE(42)), feesHeld: Number(b.readBigUInt64LE(50)), feesTotal: Number(b.readBigUInt64LE(58)), actsCharged: Number(b.readBigUInt64LE(66)) };
+}
+/** What an act locking `lamports` costs on top, under the schedule (0 without one). */
+export const feeFor = (cfg, lamports) => (cfg ? Math.max(Math.floor((lamports * cfg.feeBps) / 10000), cfg.feeMinLamports) : 0);
+
 export const escrowAddress = (owner, id) => { const le = Buffer.alloc(8); le.writeBigUInt64LE(BigInt(id)); return PublicKey.findProgramAddressSync([Buffer.from("escrow"), new PublicKey(owner).toBuffer(), le], PROGRAM)[0]; };
 
-/** create(id, destination, lamports, finish_after?, cancel_after?, condition?, memos[]) */
+/** create(id, destination, lamports, finish_after?, cancel_after?, condition?, memos[]) — accounts: owner, escrow, the fee schedule, system */
 export function createIx({ owner, destination, lamports, finishAfter, cancelAfter, condition, memos = [], id }) {
   const w = new W().bytes(DISC.create).u64(id).pk(destination).u64(lamports);
   w.opt(finishAfter, (v) => w.i64(v)); w.opt(cancelAfter, (v) => w.i64(v)); w.opt(condition, (v) => w.bytes(v)); w.u32(memos.length);
   for (const m of memos) w.str(m);
   const escrow = escrowAddress(owner, id);
   return { escrow, ix: new TransactionInstruction({ programId: PROGRAM, data: w.out(), keys: [
-    { pubkey: new PublicKey(owner), isSigner: true, isWritable: true }, { pubkey: escrow, isSigner: false, isWritable: true }, { pubkey: SystemProgram.programId, isSigner: false, isWritable: false } ] }) };
+    { pubkey: new PublicKey(owner), isSigner: true, isWritable: true }, { pubkey: escrow, isSigner: false, isWritable: true }, { pubkey: CONFIG, isSigner: false, isWritable: true }, { pubkey: SystemProgram.programId, isSigner: false, isWritable: false } ] }) };
 }
 export const finishIx = ({ caller, escrow, destination, fulfillment }) => new TransactionInstruction({ programId: PROGRAM, data: buildFinish(fulfillment), keys: [
   { pubkey: new PublicKey(caller), isSigner: true, isWritable: false }, { pubkey: new PublicKey(escrow), isSigner: false, isWritable: true }, { pubkey: new PublicKey(destination), isSigner: false, isWritable: true } ] });
@@ -70,7 +82,7 @@ export function vaultCreateIx({ owner, beneficiary, lamports, parties, threshold
   for (const m of memos) w.str(m);
   const vault = sharedAddress(owner, id);
   return { vault, ix: new TransactionInstruction({ programId: PROGRAM, data: w.out(), keys: [
-    { pubkey: new PublicKey(owner), isSigner: true, isWritable: true }, { pubkey: vault, isSigner: false, isWritable: true }, { pubkey: SystemProgram.programId, isSigner: false, isWritable: false } ] }) };
+    { pubkey: new PublicKey(owner), isSigner: true, isWritable: true }, { pubkey: vault, isSigner: false, isWritable: true }, { pubkey: CONFIG, isSigner: false, isWritable: true }, { pubkey: SystemProgram.programId, isSigner: false, isWritable: false } ] }) };
 }
 export const vaultVoteIx = ({ party, vault, beneficiary, owner, toBeneficiary }) => new TransactionInstruction({ programId: PROGRAM, data: new W().bytes(VDISC.vote).u64(toBeneficiary).out(), keys: [
   { pubkey: new PublicKey(party), isSigner: true, isWritable: false }, { pubkey: new PublicKey(vault), isSigner: false, isWritable: true }, { pubkey: new PublicKey(beneficiary), isSigner: false, isWritable: true }, { pubkey: new PublicKey(owner), isSigner: false, isWritable: true } ] });
