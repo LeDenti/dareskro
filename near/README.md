@@ -11,7 +11,7 @@ repository is the XRPL product built for the New York hackathon of 24–25 Octob
 **Submitted on 3 November 2026.** `dareskro.testnet` has no access keys any more: one transaction deleted the last one
 ([3ogoRN5V…](https://testnet.nearblocks.io/txns/3ogoRN5VeJeo4RkKGGvT6zesY2C39xZFuL1Di67bmYYD)); the code cannot change and the balance
 cannot move except through the contract's own methods. Tags: `pre-hackathon` (d300710), `hackathon-submission` (5a7022d). Films:
-[release v0.4-near](https://github.com/LeDenti/dareskro/releases/tag/v0.4-near).
+[release v0.4-near](https://github.com/LeDenti/dareskro/releases/tag/v0.4-near). Posted on X: [2117586092559917281](https://x.com/Ju_l_C/status/2117586092559917281).
 
 Developer feedback for the NEAR team, every item pinned to a line of code or a transaction: [`FEEDBACK.md`](FEEDBACK.md).
 
