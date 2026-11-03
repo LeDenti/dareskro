@@ -1,0 +1,27 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+
+1. vault
+  ✓ draft: 1200 held by the tenant, decided 2 of 3 — VAU-D11247
+
+  ▶ As the sandbox BUYER, approve 40D459132K186693U here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=40D459132K186693U
+
+  ✓ the tenant approves (the hold) — 40D459132K186693U
+  ✓ the landlord alone: 180 (no decision) — 1 vote
+  ✓ release on one vote (must be refused) — 2 of 3 agree on the amount
+  ✓ the tenant: 0 (still no decision: 180 ≠ 0) — 2 votes, no agreement
+  ✓ a stranger's vote (must be refused) — unknown party stranger; parties are tenant, landlord, mediator
+  ✓ the mediator: 180 → decided by landlord + mediator — landlord + mediator
+  ✓ partial capture 180 to the landlord, 1020 released back to the tenant — capture 6SU60818MW199240X, payout Y9UKC8452R3WW
+
+  ▶ As the sandbox BUYER, approve 75Y78444BP6772725 here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=75Y78444BP6772725
+
+  ✓ custody: the tenant pays (intent CAPTURE) — 75Y78444BP6772725
+  ✓ custody: captured at lock, said so in the record — 3VY99844US7611410
+  ✓ custody, no decision at the deadline: the whole deposit paid back to the tenant — 500.00→payer-mock@example.com
+
+All steps as expected.
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 0

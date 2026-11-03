@@ -1,0 +1,17 @@
+{
+  "name": "dareskro-paypal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "dareskro's PayPal rail: the hold is the escrow, the AI reads, the code gates, a human validates, PayPal pays.",
+  "scripts": {
+    "serve": "node service.mjs",
+    "demo": "node demo_paypal.mjs",
+    "demo:mock": "PAYPAL_MODE=mock SEAT_MODE=mock node demo_paypal.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
+    "@paypal/agent-toolkit": "^1.11.0",
+    "zod": "^3.24.2"
+  }
+}

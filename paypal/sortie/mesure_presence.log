@@ -1,0 +1,26 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+
+1. presence
+  ✓ draft: the post's address and the text it must keep — PRE-FB6789
+
+  ▶ As the sandbox BUYER, approve 6JJ556395T348562P here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=6JJ556395T348562P
+
+  ✓ the brand approves — 6JJ556395T348562P
+  ✓ before the date: the desk only watches — HTTP 200, 208 bytes, contains "#BottomRadar"
+  ✓ release before the check date (must be refused) — check date reached, post live at the decision
+  … the date is in 239 s, waiting
+  ✓ at the date: the decision read — HTTP 200, 208 bytes, contains "#BottomRadar"
+  ✓ post live → capture + payout — capture 8RH401899N604435S, payout F2U59T8VD3BS4
+
+  ▶ As the sandbox BUYER, approve 3YX06645RL313715F here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=3YX06645RL313715F
+
+  ✓ the brand approves the second post — 3YX06645RL313715F
+  ✓ deleted post → release refused — HTTP 404
+  ✓ deleted post → void, the brand never charged — 0TN9015825219300R
+
+All steps as expected.
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 0

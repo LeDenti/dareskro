@@ -1,0 +1,26 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+
+1. pool
+  ✓ draft: target 1000, released at the date — POO-5A20A9
+  ✓ payer 1 brings 600 — 12E34462EC8670422
+
+  ▶ As the sandbox BUYER, approve 12E34462EC8670422 here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=12E34462EC8670422
+
+  ✓ the tenant approves — 12E34462EC8670422
+  ✓ release with the target not reached (must be refused) — target reached, date reached
+  ✓ payer 2 brings 700: trimmed to the 400 that were missing — order for 400 (asked 700)
+
+  ▶ As the sandbox BUYER, approve 1RE6567408174863P here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=1RE6567408174863P
+
+  ✓ the guarantor approves — 1RE6567408174863P
+  ✓ pool locked at the target — the tenant 600.00 + the guarantor 400.00
+  ✓ a third payer once full (must be refused) — mission is locked
+  … the date is in 51 s, waiting
+  ✗ at the date: two captures, one payout of 1000 — the tenant 600.00, the guarantor 400.00 → payout 8YTFWDFVWNTGQ
+
+SOME STEPS DID NOT GO AS EXPECTED: at the date: two captures, one payout of 1000
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 1

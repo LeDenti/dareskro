@@ -1,0 +1,1 @@
+{ "bps": 1, "note": "the fee per act, in basis points of what is released (1 bp = 0.01 %), taken on the platform's PayPal account at payout; the code refuses anything above 100 (1 %)" }

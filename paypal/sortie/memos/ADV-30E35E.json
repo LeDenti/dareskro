@@ -1,0 +1,81 @@
+{
+  "summary": "The deliverable is a 360-byte markdown invoice (INVOICE 2026-0117) from Atelier Verne to BottomRadar SAS for 900.00 USD, due 2026-12-02. It meets all three acceptance criteria in the brief. Nothing could be confirmed as held, though: the mission has no PayPal order id or authorization id, so get_order could not be called, and there are no funds to release until an order exists.",
+  "evidence": [
+    {
+      "fact": "Deliverable fetched from http://127.0.0.1:8796/fixtures/invoice_2026-11-02.md with HTTP status 200, 360 bytes, text/markdown, sha256 d004577f2c459724d94ab66abc1a3ea9e587c1a5251d0f83cdfbf128ad835b78",
+      "source": "deliverable"
+    },
+    {
+      "fact": "Heading reads '# INVOICE 2026-0117'",
+      "source": "deliverable"
+    },
+    {
+      "fact": "'Supplier: Atelier Verne, 12 rue des Lices, Marseille — SIREN 912 345 678'",
+      "source": "deliverable"
+    },
+    {
+      "fact": "'Debtor (bill to): BottomRadar SAS, Marseille'",
+      "source": "deliverable"
+    },
+    {
+      "fact": "Line item 'Illustration set for the overbought alert (12 pieces) | 900.00 USD' and '**Total due** | **900.00 USD**'",
+      "source": "deliverable"
+    },
+    {
+      "fact": "'Due date: 30 days from issue (due 2026-12-02). Payment by bank transfer or PayPal.'",
+      "source": "deliverable"
+    },
+    {
+      "fact": "Brief: invoice of 900.00 USD from Atelier Verne to BottomRadar SAS, due 2026-12-02T21:22:11.746Z; advance asked 800.00; agreed price 800.00 USD",
+      "source": "brief"
+    },
+    {
+      "fact": "Brief gives PayPal order id '(none yet)' and authorization id '(none)', so get_order was not called and no held amount, currency or status was read",
+      "source": "brief"
+    }
+  ],
+  "criteria": [
+    {
+      "criterion": "1. The document is an invoice [contains invoice]",
+      "met": true,
+      "why": "Heading: '# INVOICE 2026-0117'. The word appears only in uppercase, so a strictly case-sensitive check for lowercase 'invoice' would not match. The content (supplier, bill-to, line items, total due, due date) is an invoice."
+    },
+    {
+      "criterion": "2. It names the debtor [contains BottomRadar]",
+      "met": true,
+      "why": "'Debtor (bill to): BottomRadar SAS, Marseille'"
+    },
+    {
+      "criterion": "3. It states a due date [contains due]",
+      "met": true,
+      "why": "'Due date: 30 days from issue (due 2026-12-02).' This matches the brief's due date of 2026-12-02."
+    }
+  ],
+  "recommendation": "release",
+  "unverified": [
+    "No PayPal order exists: the order id is '(none yet)' and the authorization id is '(none)'. I could not confirm any held amount, currency or status, and nothing can be captured until an 800.00 USD order is created and authorized.",
+    "Whether the invoice is genuine: I did not check the SIREN 912 345 678, the supplier's identity or the existence of the underlying receivable.",
+    "The issue date: the invoice has no explicit issue date, only '30 days from issue (due 2026-12-02)'.",
+    "Whether the deliverable was submitted before the 2026-11-03T22:22:11.746Z deadline: I only read the content, not a submission timestamp.",
+    "Criterion 1 holds only if 'contains invoice' is checked case-insensitively, since the document says 'INVOICE' in uppercase."
+  ],
+  "model": "claude-opus-5-5",
+  "usage": {
+    "input": 3248,
+    "output": 1776
+  },
+  "facts": [
+    {
+      "check": "deliverable reachable",
+      "ok": true,
+      "why": "http://127.0.0.1:8796/fixtures/invoice_2026-11-02.md answered 200, 360 bytes, sha256 d004577f2c45…"
+    }
+  ],
+  "mission": "ADV-30E35E",
+  "deliverable": {
+    "url": "http://127.0.0.1:8796/fixtures/invoice_2026-11-02.md",
+    "sha256": "d004577f2c459724d94ab66abc1a3ea9e587c1a5251d0f83cdfbf128ad835b78",
+    "bytes": 360
+  },
+  "at": "2026-11-03T21:22:33.512Z"
+}

@@ -38,6 +38,7 @@ import { ContractDesk, type ContractKind } from "./ContractDesk";
 import { PlacementDesk } from "./PlacementDesk";
 import { SolanaDesk } from "./SolanaDesk";
 import { NearDesk } from "./NearDesk";
+import { PaypalDesk } from "./PaypalDesk";
 import { FactureDesk } from "./FactureDesk";
 import * as ledger from "./ledger";
 import * as oracle from "./oracle";
@@ -106,7 +107,7 @@ const transports: { id: Mode; label: string }[] = [
 ];
 
 /** Who pays whom. The employee case is the payroll escrow; the other three are conditional escrows on the same oracle. */
-type CaseMode = "employee" | ContractKind | "placement" | "solana" | "near" | "facture";
+type CaseMode = "employee" | ContractKind | "placement" | "solana" | "near" | "paypal" | "facture";
 
 const cases: { id: CaseMode; label: string }[] = [
   { id: "employee", label: "Employee" },
@@ -119,6 +120,8 @@ const cases: { id: CaseMode; label: string }[] = [
   { id: "solana", label: "Solana · same desk" },
   // the same desk on NEAR (NEAR Hackathon, Nov 2026): escrow, sealed payslip, deposit decided 2 of 3: near/
   { id: "near", label: "NEAR · same desk" },
+  // the same desk on PayPal (PayPal AI Hackathon, Nov 2026): no ledger, a hold/capture/void/payout rail and an AI seat that reads: paypal/
+  { id: "paypal", label: "PayPal · same desk" },
   // the seventh case: a supplier paid before the due date by a 2-of-3 pool (AI, risk policy, operator): facture/
   { id: "facture", label: "Invoice advance · pool 2/3" },
 ];
@@ -175,8 +178,9 @@ function Desk(props: {
   // ---- the case: the device cards are shared, the rest depends on who pays whom
   const [caseMode, setCaseMode] = useState<CaseMode>("employee");
   const contract = caseMode !== "employee";
-  const onSolana = caseMode === "solana" || caseMode === "near";
+  const onSolana = caseMode === "solana" || caseMode === "near" || caseMode === "paypal"; // another rail: the XRPL cards step aside
   const onNear = caseMode === "near";
+  const onPaypal = caseMode === "paypal";
   const onFacture = caseMode === "facture";
   const payerWord = contract ? "payer" : "employer";
 
@@ -1098,8 +1102,9 @@ function Desk(props: {
         </Card>
       )}
 
-      {onSolana && !onNear && <SolanaDesk />}
+      {onSolana && !onNear && !onPaypal && <SolanaDesk />}
       {onNear && <NearDesk />}
+      {onPaypal && <PaypalDesk />}
       {onFacture && <FactureDesk />}
 
       {contract && caseMode === "placement" && (

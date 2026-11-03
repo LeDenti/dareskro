@@ -1,0 +1,2 @@
+{"at":"2026-11-03T20:42:33.718Z","ok":true,"why":"HTTP 200, 208 bytes, contains \"#BottomRadar\"","sha256":"72e9b65341b69d0b600403de72890348aa1b24d8a62f9b61235cda4cef70e138","decision":false}
+{"at":"2026-11-03T20:46:32.839Z","ok":true,"why":"HTTP 200, 208 bytes, contains \"#BottomRadar\"","sha256":"72e9b65341b69d0b600403de72890348aa1b24d8a62f9b61235cda4cef70e138","decision":true}

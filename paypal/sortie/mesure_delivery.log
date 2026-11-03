@@ -1,0 +1,27 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+
+1. delivery
+  ✓ draft the mission — DEL-850982 — 120 USD
+  ✓ release before anything (must be refused) — state, human decision, memo on file, hold of BottomRadar
+
+  ▶ As the sandbox BUYER, approve 70993866L2470005C here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=70993866L2470005C
+
+  ✓ the client approves (intent AUTHORIZE) — 70993866L2470005C
+  ✓ the hold is on file — 2W56764598992502B until 2026-12-02T20:40:30Z
+  ✓ void before the deadline (must be refused) — deadline passed or refused
+  ✓ the freelancer delivers (fetched and hashed) — 1468 bytes, sha256 8c707f0d301e5c03…
+  ✓ the AI seat reads and writes the memo — 4/4 criteria, recommends release, memo sha256 79db196810ae3c0c… (claude-opus-5-5)
+      ✓ 1. At least 250 words [min-words 250] — A hand count gives about 263 words, from "BottomRadar — the overbought alert" to "Open your radar at bottomradar.com." That is above 250, but only by a small margin.
+      ✓ 2. Names the BR Score [contains BR Score] — The text says: "computes one number per token: the **BR Score**."
+      ✓ 3. Ends with a call to action to bottomradar.com [contains bottomradar.com] — The final line is "Open your radar at bottomradar.com."
+      ✓ 4. Does not promise profits or returns [absent guaranteed] — 'guaranteed' is absent. The copy rules out prediction: "It is not a prediction" and "The BR Score does not tell you a token will fall."
+  ✓ release on the memo alone, no human (must be refused) — state, human decision
+  ✓ a named human validates — Julien (operator) → release
+  ✓ capture, then payout to the freelancer — capture 9DC98243J55097407, payout V9Y4RVYJ2HQV2
+  ✓ void after capture (must be refused) — not closed, deadline passed or refused, a hold is open
+
+All steps as expected.
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 0

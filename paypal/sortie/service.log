@@ -1,0 +1,105 @@
+2026-11-03 20:02:26 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 0 bps
+2026-11-03 20:02:26 UTC  PAY-58267F: drafted payroll "Sunday shift, 25/10 — net, URSSAF, DGFiP" — USD, deadline 2026-11-03T21:02:26.413Z
+2026-11-03 20:02:27 UTC  PAY-58267F: order 4UN32235A0595535X for the pharmacy — 801.66 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=4UN32235A0595535X
+2026-11-03 20:03:50 UTC  PAY-58267F: hold 0H923884BD348641U — 801.66 USD of the pharmacy until 2026-12-02T20:03:50Z
+2026-11-03 20:03:50 UTC  PAY-58267F: locked — Payroll — paid at the date, one approval, three payouts
+2026-11-03 20:03:52 UTC  PAY-58267F: release REFUSED — pay date reached: finishAfter 2026-11-03T20:07:26.413Z
+2026-11-03 20:07:29 UTC  PAY-58267F: captured 801.66 USD of the pharmacy (62V017810L6457311)
+2026-11-03 20:07:30 UTC  PAY-58267F: payout 3ZYDR5QNUBRYE (PENDING) — 407.32 to sb-zte7r53618648@personal.example.com, 361.31 to urssaf-mock@example.com, 33.03 to dgfip-mock@example.com
+2026-11-03 20:07:30 UTC  PAY-58267F: release REFUSED — not closed: mission is released; hold of the pharmacy: authorization 0H923884BD348641U is CAPTURED
+2026-11-03 20:07:38 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 0 bps
+2026-11-03 20:07:38 UTC  DEL-94C4CC: drafted delivery "Landing copy for BottomRadar's overbought alert" — USD, deadline 2026-11-03T21:07:38.810Z
+2026-11-03 20:07:38 UTC  DEL-94C4CC: release REFUSED — state: mission is drafted; human decision: no human validation; memo on file: no memo; hold of BottomRadar: no authorization on file
+2026-11-03 20:07:40 UTC  DEL-94C4CC: order 2Y280566JD402143F for BottomRadar — 120.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=2Y280566JD402143F
+2026-11-03 20:37:43 UTC  DEL-94C4CC: void REFUSED — deadline passed or refused: deadline 2026-11-03T21:07:38.810Z not reached and nobody refused; a hold is open: none
+2026-11-03 20:37:43 UTC  DEL-94C4CC: release REFUSED — state: mission is offered; human decision: no human validation; memo on file: no memo; hold of BottomRadar: no authorization on file
+2026-11-03 20:37:43 UTC  DEL-94C4CC: release REFUSED — state: mission is offered; human decision: no human validation; memo on file: no memo; hold of BottomRadar: no authorization on file
+2026-11-03 20:37:43 UTC  DEL-94C4CC: void REFUSED — deadline passed or refused: deadline 2026-11-03T21:07:38.810Z not reached and nobody refused; a hold is open: none
+2026-11-03 20:39:24 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+2026-11-03 20:39:24 UTC  DEL-850982: drafted delivery "Landing copy for BottomRadar's overbought alert" — USD, deadline 2026-11-03T21:39:24.473Z
+2026-11-03 20:39:24 UTC  DEL-850982: release REFUSED — state: mission is drafted; human decision: no human validation; memo on file: no memo; hold of BottomRadar: no authorization on file
+2026-11-03 20:39:26 UTC  DEL-850982: order 70993866L2470005C for BottomRadar — 120.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=70993866L2470005C
+2026-11-03 20:40:31 UTC  DEL-850982: hold 2W56764598992502B — 120.00 USD of BottomRadar until 2026-12-02T20:40:30Z
+2026-11-03 20:40:31 UTC  DEL-850982: locked — Delivery — the AI reads, a human validates, PayPal pays
+2026-11-03 20:40:32 UTC  DEL-850982: void REFUSED — deadline passed or refused: deadline 2026-11-03T21:39:24.473Z not reached and nobody refused
+2026-11-03 20:40:32 UTC  DEL-850982: delivered http://127.0.0.1:8796/fixtures/deliverable_landing.md — 1468 bytes, sha256 8c707f0d301e…
+2026-11-03 20:40:38 UTC  seat: read_deliverable({})
+2026-11-03 20:40:38 UTC  seat: get_order({"id":"70993866L2470005C"})
+2026-11-03 20:41:18 UTC  DEL-850982: memo 79db196810ae… by claude-opus-5-5 — 4/4 criteria, recommends release
+2026-11-03 20:41:19 UTC  DEL-850982: release REFUSED — state: mission is reviewed; human decision: no human validation
+2026-11-03 20:41:19 UTC  DEL-850982: Julien (operator) decided release on memo 79db196810ae…
+2026-11-03 20:41:21 UTC  DEL-850982: captured 120.00 USD of BottomRadar (9DC98243J55097407)
+2026-11-03 20:41:22 UTC  DEL-850982: payout V9Y4RVYJ2HQV2 (PENDING) — 119.99 to sb-zte7r53618648@personal.example.com (fee 0.01)
+2026-11-03 20:41:22 UTC  DEL-850982: void REFUSED — not closed: mission is released; deadline passed or refused: deadline 2026-11-03T21:39:24.473Z not reached and nobody refused; a hold is open: CAPTURED
+2026-11-03 20:41:32 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+2026-11-03 20:41:32 UTC  PRE-FB6789: drafted presence "Influencer post, live at the date" — USD, deadline 2026-11-03T21:41:32.126Z
+2026-11-03 20:41:33 UTC  PRE-FB6789: order 6JJ556395T348562P for BottomRadar — 80.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=6JJ556395T348562P
+2026-11-03 20:42:31 UTC  PRE-FB6789: hold 3UM972979T899842C — 80.00 USD of BottomRadar until 2026-12-02T20:42:31Z
+2026-11-03 20:42:31 UTC  PRE-FB6789: locked — Presence — the post must still be there at the date
+2026-11-03 20:42:33 UTC  PRE-FB6789: post live — HTTP 200, 208 bytes, contains "#BottomRadar" (watch)
+2026-11-03 20:42:34 UTC  PRE-FB6789: release REFUSED — check date reached: checkAfter 2026-11-03T20:46:32.126Z; post live at the decision: 2026-11-03T20:42:33.718Z: HTTP 200, 208 bytes, contains "#BottomRadar"
+2026-11-03 20:46:32 UTC  PRE-FB6789: post live — HTTP 200, 208 bytes, contains "#BottomRadar" (decision)
+2026-11-03 20:46:36 UTC  PRE-FB6789: captured 80.00 USD of BottomRadar (8RH401899N604435S)
+2026-11-03 20:46:37 UTC  PRE-FB6789: payout F2U59T8VD3BS4 (PENDING) — 79.99 to sb-zte7r53618648@personal.example.com (fee 0.01)
+2026-11-03 20:46:37 UTC  PRE-4BC6D0: drafted presence "A post that was deleted" — USD, deadline 2026-11-03T21:46:37.258Z
+2026-11-03 20:46:38 UTC  PRE-4BC6D0: order 3YX06645RL313715F for BottomRadar — 80.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=3YX06645RL313715F
+2026-11-03 21:03:22 UTC  PRE-4BC6D0: hold 0TN9015825219300R — 80.00 USD of BottomRadar until 2026-12-02T21:03:22Z
+2026-11-03 21:03:22 UTC  PRE-4BC6D0: locked — Presence — the post must still be there at the date
+2026-11-03 21:03:25 UTC  PRE-4BC6D0: post NOT live — HTTP 404 (decision)
+2026-11-03 21:03:26 UTC  PRE-4BC6D0: release REFUSED — post live at the decision: 2026-11-03T21:03:25.648Z: HTTP 404
+2026-11-03 21:03:27 UTC  PRE-4BC6D0: expired — 1 hold(s) voided, the payer(s) never charged
+2026-11-03 21:03:45 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+2026-11-03 21:03:45 UTC  AFF-B8DFC6: drafted affiliate "Affiliate commission on order BR-2026-0417" — USD, deadline 2026-11-03T22:03:45.661Z
+2026-11-03 21:03:47 UTC  AFF-B8DFC6: order 0KH98728KX119090J for BottomRadar — 25.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=0KH98728KX119090J
+2026-11-03 21:07:30 UTC  AFF-B8DFC6: hold 2LU04622J2717534J — 25.00 USD of BottomRadar until 2026-12-02T21:07:30Z
+2026-11-03 21:07:30 UTC  AFF-B8DFC6: locked — Affiliate — the merchant confirms the sale with a token given once
+2026-11-03 21:07:31 UTC  AFF-B8DFC6: confirmation with a bad token refused
+2026-11-03 21:07:32 UTC  AFF-B8DFC6: release REFUSED — sale confirmed: waiting for the merchant's confirmation
+2026-11-03 21:07:32 UTC  AFF-B8DFC6: the merchant confirms order BR-2026-0417 — sha256 e608a3a38c3c…
+2026-11-03 21:07:35 UTC  AFF-B8DFC6: captured 25.00 USD of BottomRadar (8VJ727459B990791W)
+2026-11-03 21:07:36 UTC  AFF-B8DFC6: payout T6SFUUTA2S5KE (PENDING) — 25.00 to sb-zte7r53618648@personal.example.com (fee 0.00)
+2026-11-03 21:08:21 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+2026-11-03 21:08:21 UTC  POO-5A20A9: drafted pool "Deposit funded by the tenant and a guarantor" — USD, deadline 2026-11-03T22:08:21.674Z
+2026-11-03 21:08:24 UTC  POO-5A20A9: order 12E34462EC8670422 for the tenant — 600.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=12E34462EC8670422
+2026-11-03 21:11:34 UTC  POO-5A20A9: hold 17316083HF1550623 — 600.00 USD of the tenant until 2026-12-02T21:11:33Z
+2026-11-03 21:11:36 UTC  POO-5A20A9: release REFUSED — target reached: 600.00 of 1000.00 USD held; date reached: finishAfter 2026-11-03T21:13:21.673Z
+2026-11-03 21:11:37 UTC  POO-5A20A9: order 1RE6567408174863P for the guarantor — 400.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=1RE6567408174863P
+2026-11-03 21:12:30 UTC  POO-5A20A9: hold 1JJ30432RA0433250 — 400.00 USD of the guarantor until 2026-12-02T21:12:29Z
+2026-11-03 21:12:30 UTC  POO-5A20A9: locked — Pool — several payers, one target, surplus returned
+2026-11-03 21:13:26 UTC  POO-5A20A9: captured 600.00 USD of the tenant (6NU530152H978454G)
+2026-11-03 21:13:28 UTC  POO-5A20A9: captured 400.00 USD of the guarantor (0F294513VN4813710)
+2026-11-03 21:13:29 UTC  POO-5A20A9: payout 8YTFWDFVWNTGQ (PENDING) — 999.90 to sb-zte7r53618648@personal.example.com (fee 0.10)
+2026-11-03 21:13:56 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+2026-11-03 21:13:56 UTC  VAU-D11247: drafted vault "Rental deposit, lease 12-rue-des-Lices" — USD, deadline 2026-11-03T22:13:56.679Z
+2026-11-03 21:13:58 UTC  VAU-D11247: order 40D459132K186693U for tenant — 1200.00 USD, intent AUTHORIZE; approve at https://www.sandbox.paypal.com/checkoutnow?token=40D459132K186693U
+2026-11-03 21:17:00 UTC  VAU-D11247: hold 12U88777GV854771U — 1200.00 USD of tenant until 2026-12-02T21:17:00Z
+2026-11-03 21:17:00 UTC  VAU-D11247: locked — Vault — the deposit decided 2 of 3, returned in part
+2026-11-03 21:17:02 UTC  VAU-D11247: landlord votes 180.00 to the beneficiary — 1 vote(s), no decision
+2026-11-03 21:17:02 UTC  VAU-D11247: release REFUSED — 2 of 3 agree on the amount: 1 vote(s): landlord→180.00
+2026-11-03 21:17:02 UTC  VAU-D11247: tenant votes 0.00 to the beneficiary — 2 vote(s), no decision
+2026-11-03 21:17:02 UTC  VAU-D11247: mediator votes 180.00 to the beneficiary — DECIDED by landlord + mediator
+2026-11-03 21:17:06 UTC  VAU-D11247: captured 180.00 USD of tenant (6SU60818MW199240X), 1020.00 released back
+2026-11-03 21:17:07 UTC  VAU-D11247: payout Y9UKC8452R3WW (PENDING) — 179.98 to sb-zte7r53618648@personal.example.com (fee 0.02)
+2026-11-03 21:17:07 UTC  VAU-E0EB4E: drafted vault "Rental deposit in custody (a lease outlives the 29-day hold)" — USD, deadline 2026-11-03T21:17:09.245Z
+2026-11-03 21:17:08 UTC  VAU-E0EB4E: order 75Y78444BP6772725 for tenant — 500.00 USD, intent CAPTURE; approve at https://www.sandbox.paypal.com/checkoutnow?token=75Y78444BP6772725
+2026-11-03 21:21:04 UTC  VAU-E0EB4E: tenant's 500.00 USD captured into custody (3VY99844US7611410)
+2026-11-03 21:21:04 UTC  VAU-E0EB4E: locked — Vault — the deposit decided 2 of 3, returned in part
+2026-11-03 21:21:07 UTC  VAU-E0EB4E: custody refund payout ETYZWTG78KR3L (PENDING)
+2026-11-03 21:21:07 UTC  VAU-E0EB4E: expired — no hold to void
+2026-11-03 21:22:11 UTC  PayPal desk on http://127.0.0.1:8796 — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+2026-11-03 21:22:11 UTC  ADV-30E35E: drafted advance "Invoice 2026-0117, Atelier Verne → BottomRadar" — USD, deadline 2026-11-03T22:22:11.746Z
+2026-11-03 21:22:11 UTC  ADV-30E35E: locked — Invoice advance — AI, risk policy and operator; 2 of 3 pay the supplier
+2026-11-03 21:22:11 UTC  ADV-30E35E: release REFUSED — 2 of 3 seats sign: ai ✗, policy ✗, operator ✗; memo on file: no memo
+2026-11-03 21:22:16 UTC  seat: read_deliverable({})
+2026-11-03 21:22:33 UTC  ADV-30E35E: memo f373851b83c2… by claude-opus-5-5 — 3/3 criteria, recommends release
+2026-11-03 21:22:33 UTC  ADV-30E35E: policy signs — advance ≤ rate × invoice: ok; due within the horizon: ok; under the debtor's cap: ok; the AI's memo exists and names this invoice: ok
+2026-11-03 21:22:34 UTC  ADV-30E35E: payout 8ZGBT2YKTNGXJ (PENDING) — 799.92 to sb-zte7r53618648@personal.example.com (fee 0.08)
+2026-11-03 21:22:35 UTC  ADV-30E35E: repayment order 3K994277SM473315S — 900.00 USD by BottomRadar SAS, due 2026-12-02T21:22:11.746Z; approve at https://www.sandbox.paypal.com/checkoutnow?token=3K994277SM473315S
+2026-11-03 21:24:05 UTC  ADV-30E35E: repaid — 900.00 USD captured (0B863230H8384340T); the pool's capital is back
+2026-11-03 21:24:05 UTC  ADV-BA9C55: drafted advance "An advance the policy refuses (95 % of the invoice)" — USD, deadline 2026-11-03T22:24:05.882Z
+2026-11-03 21:24:05 UTC  ADV-BA9C55: locked — Invoice advance — AI, risk policy and operator; 2 of 3 pay the supplier
+2026-11-03 21:24:09 UTC  seat: read_deliverable({})
+2026-11-03 21:24:25 UTC  ADV-BA9C55: memo f35306a6bc3d… by claude-opus-5-5 — 2/2 criteria, recommends hold
+2026-11-03 21:24:25 UTC  ADV-BA9C55: policy REFUSES — advance ≤ rate × invoice: 855.00 vs 810.00 (90 % of 900.00); due within the horizon: ok; under the debtor's cap: ok; the AI's memo exists and names this invoice: ok
+2026-11-03 21:24:25 UTC  ADV-BA9C55: Julien (operator) decided release on memo f35306a6bc3d…
+2026-11-03 21:24:25 UTC  ADV-BA9C55: release REFUSED — 2 of 3 seats sign: ai ✗, policy ✗, operator ✓

@@ -1,0 +1,90 @@
+{
+  "summary": "The freelancer delivered the English landing copy for BottomRadar's overbought alert (sha256 8c707f0d…0b626, about 263 words), and it is checked against the brief's 4 acceptance criteria. PayPal shows 120.00 USD held: the order is COMPLETED with intent AUTHORIZE, and authorization 2W56764598992502B is CREATED, matching the agreed price. All 4 criteria are met, so the recommendation is release, with one note on tone outside the criteria.",
+  "evidence": [
+    {
+      "fact": "The deliverable fetched with HTTP 200, 1468 bytes, text/markdown, sha256 8c707f0d301e5c039133f68f6382dcdee30cf6d9b7d52207ac25ae547c50b626.",
+      "source": "deliverable"
+    },
+    {
+      "fact": "A hand count of the words, leaving out markdown symbols and dashes, gives about 263 words.",
+      "source": "deliverable"
+    },
+    {
+      "fact": "The text says: \"computes one number per token: the **BR Score**\". The term BR Score also appears in the 'What the alert does' and 'What it is not' sections.",
+      "source": "deliverable"
+    },
+    {
+      "fact": "The last line is: \"Open your radar at bottomradar.com.\"",
+      "source": "deliverable"
+    },
+    {
+      "fact": "The word 'guaranteed' does not appear anywhere. The copy says: \"The BR Score does not tell you a token will fall\" and \"the decision ... is yours\".",
+      "source": "deliverable"
+    },
+    {
+      "fact": "The opening tagline reads: \"Markets do not ring a bell at the top. BottomRadar does.\"",
+      "source": "deliverable"
+    },
+    {
+      "fact": "Order 70993866L2470005C has intent AUTHORIZE and status COMPLETED, for 120.00 USD. Its description reads 'dareskro delivery DEL-850982: Landing copy for BottomRadar's overbought alert' and its custom_id is DEL-850982:0.",
+      "source": "paypal:get_order"
+    },
+    {
+      "fact": "Authorization 2W56764598992502B has status CREATED, amount 120.00 USD, and expires at 2026-12-02T20:40:30Z.",
+      "source": "paypal:get_order"
+    },
+    {
+      "fact": "The agreed price is 120.00 USD and the deadline is 2026-11-03T21:39:24.473Z.",
+      "source": "brief"
+    }
+  ],
+  "criteria": [
+    {
+      "criterion": "1. At least 250 words [min-words 250]",
+      "met": true,
+      "why": "A hand count gives about 263 words, from \"BottomRadar — the overbought alert\" to \"Open your radar at bottomradar.com.\" That is above 250, but only by a small margin."
+    },
+    {
+      "criterion": "2. Names the BR Score [contains BR Score]",
+      "met": true,
+      "why": "The text says: \"computes one number per token: the **BR Score**.\""
+    },
+    {
+      "criterion": "3. Ends with a call to action to bottomradar.com [contains bottomradar.com]",
+      "met": true,
+      "why": "The final line is \"Open your radar at bottomradar.com.\""
+    },
+    {
+      "criterion": "4. Does not promise profits or returns [absent guaranteed]",
+      "met": true,
+      "why": "'guaranteed' is absent. The copy rules out prediction: \"It is not a prediction\" and \"The BR Score does not tell you a token will fall.\""
+    }
+  ],
+  "recommendation": "release",
+  "unverified": [
+    "The exact word count: it was counted by hand, and a tool that counts markdown symbols as words would give a slightly higher number.",
+    "When the deliverable was submitted compared with the deadline of 2026-11-03T21:39:24.473Z: the fetch result has no submission timestamp.",
+    "Whether the copy meets the brief's wider 'plain words, no hype' wish. That wish is not an acceptance criterion. The tagline \"Markets do not ring a bell at the top. BottomRadar does.\" could read as hype or as a hint at timing the market, which sits awkwardly with the 'What it is not' section. The human decider may want to note this.",
+    "The copy's factual claims (77 tokens, updates every ten minutes, \"we measured it\"): these were not checked against bottomradar.com.",
+    "Whether the authorization can still be captured: I only read its status as CREATED and did not attempt a capture."
+  ],
+  "model": "claude-opus-5-5",
+  "usage": {
+    "input": 4677,
+    "output": 3371
+  },
+  "facts": [
+    {
+      "check": "deliverable reachable",
+      "ok": true,
+      "why": "http://127.0.0.1:8796/fixtures/deliverable_landing.md answered 200, 1468 bytes, sha256 8c707f0d301e…"
+    }
+  ],
+  "mission": "DEL-850982",
+  "deliverable": {
+    "url": "http://127.0.0.1:8796/fixtures/deliverable_landing.md",
+    "sha256": "8c707f0d301e5c039133f68f6382dcdee30cf6d9b7d52207ac25ae547c50b626",
+    "bytes": 1468
+  },
+  "at": "2026-11-03T20:41:18.655Z"
+}

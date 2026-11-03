@@ -1,0 +1,227 @@
+{
+  "at": "2026-11-03T20:07:30.501Z",
+  "mode": "sandbox",
+  "seat": "claude-opus-5-5",
+  "holdDays": 29,
+  "feeBps": 0,
+  "ok": true,
+  "scenarios": {
+    "payroll": "PAY-58267F"
+  },
+  "steps": [
+    {
+      "at": "2026-11-03T20:02:26.418Z",
+      "what": "draft: statement validated by a named human BEFORE the lock",
+      "ok": true,
+      "note": "PAY-58267F — 801.66 = 407.32 + 361.31 + 33.03"
+    },
+    {
+      "at": "2026-11-03T20:03:51.926Z",
+      "what": "the employer approves ONE order",
+      "ok": true,
+      "note": "4UN32235A0595535X"
+    },
+    {
+      "at": "2026-11-03T20:03:51.930Z",
+      "what": "one hold for the three payees",
+      "ok": true,
+      "note": "0H923884BD348641U — 801.66 USD"
+    },
+    {
+      "at": "2026-11-03T20:03:52.292Z",
+      "what": "release before the pay date (must be refused)",
+      "ok": true,
+      "note": "pay date reached"
+    },
+    {
+      "at": "2026-11-03T20:07:30.057Z",
+      "what": "at the date, anyone releases: one capture, ONE payout batch of three",
+      "ok": true,
+      "note": "capture 62V017810L6457311; payout 3ZYDR5QNUBRYE: 407.32→sb-zte7r53618648@personal.example.com, 361.31→urssaf-mock@example.com, 33.03→dgfip-mock@example.com"
+    },
+    {
+      "at": "2026-11-03T20:07:30.500Z",
+      "what": "release twice (must be refused)",
+      "ok": true,
+      "note": "not closed, hold of the pharmacy"
+    }
+  ],
+  "missions": [
+    {
+      "id": "PAY-58267F",
+      "kind": "payroll",
+      "state": "released",
+      "title": "Sunday shift, 25/10 — net, URSSAF, DGFiP",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:02:26.413Z",
+      "payers": [
+        {
+          "name": "the pharmacy",
+          "email": "payer-mock@example.com",
+          "amount": 801.66,
+          "orderId": "4UN32235A0595535X",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=4UN32235A0595535X",
+          "intent": "AUTHORIZE",
+          "authorizationId": "0H923884BD348641U",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "801.66"
+          },
+          "expiresAt": "2026-12-02T20:03:50Z",
+          "captureId": "62V017810L6457311",
+          "captured": "801.66",
+          "releasedToPayer": "0.00"
+        }
+      ],
+      "payees": [
+        {
+          "label": "net paid to the employee",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 407.32
+        },
+        {
+          "label": "contributions to URSSAF",
+          "email": "urssaf-mock@example.com",
+          "amount": 361.31
+        },
+        {
+          "label": "income tax withheld, to DGFiP",
+          "email": "dgfip-mock@example.com",
+          "amount": 33.03
+        }
+      ],
+      "finishAfter": "2026-11-03T20:07:26.413Z",
+      "statement": {
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "id": "stmt-ffff3dd0e216"
+      },
+      "validation": {
+        "by": "Julien (employer)",
+        "decision": "release",
+        "at": "2026-11-03T20:02:26.415Z",
+        "what": "the statement, before the lock"
+      },
+      "createdAt": "2026-11-03T20:02:26.417Z",
+      "history": [
+        {
+          "at": "2026-11-03T20:02:26.417Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T20:02:27.774Z",
+          "what": "order",
+          "payer": "the pharmacy",
+          "orderId": "4UN32235A0595535X",
+          "intent": "AUTHORIZE",
+          "amount": "801.66"
+        },
+        {
+          "at": "2026-11-03T20:03:50.896Z",
+          "what": "hold",
+          "payer": "the pharmacy",
+          "authorizationId": "0H923884BD348641U",
+          "held": {
+            "currency_code": "USD",
+            "value": "801.66"
+          },
+          "expiresAt": "2026-12-02T20:03:50Z"
+        },
+        {
+          "at": "2026-11-03T20:03:50.900Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T20:03:52.291Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "pay date reached: finishAfter 2026-11-03T20:07:26.413Z"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:07:27.605Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T20:07:30.052Z",
+          "what": "release",
+          "captures": [
+            "62V017810L6457311"
+          ],
+          "payout": "3ZYDR5QNUBRYE"
+        },
+        {
+          "at": "2026-11-03T20:07:30.498Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "not closed: mission is released",
+            "hold of the pharmacy: authorization 0H923884BD348641U is CAPTURED"
+          ]
+        }
+      ],
+      "release": {
+        "at": "2026-11-03T20:07:30.052Z",
+        "captures": [
+          {
+            "payer": "the pharmacy",
+            "captureId": "62V017810L6457311",
+            "captured": "801.66",
+            "releasedToPayer": "0.00"
+          }
+        ],
+        "payout": {
+          "batchId": "3ZYDR5QNUBRYE",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "407.32",
+              "label": "net paid to the employee"
+            },
+            {
+              "receiver": "urssaf-mock@example.com",
+              "amount": "361.31",
+              "label": "contributions to URSSAF"
+            },
+            {
+              "receiver": "dgfip-mock@example.com",
+              "amount": "33.03",
+              "label": "income tax withheld, to DGFiP"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 0,
+          "total": "0.00"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "pay date reached",
+            "ok": true,
+            "why": "finishAfter 2026-11-03T20:07:26.413Z"
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T21:02:26.413Z"
+          },
+          {
+            "check": "hold of the pharmacy",
+            "ok": true,
+            "why": "801.66 USD held (0H923884BD348641U) until 2026-12-02T20:03:50Z"
+          }
+        ]
+      }
+    }
+  ]
+}

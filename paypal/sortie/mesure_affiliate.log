@@ -1,0 +1,19 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+
+1. affiliate
+  ✓ draft: the token is given ONCE, only its hash is kept — AFF-B8DFC6
+  ✓ confirm before the lock (must be refused: the money must be locked BEFORE the sale) — mission is drafted: the money must be locked BEFORE the sale
+
+  ▶ As the sandbox BUYER, approve 0KH98728KX119090J here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=0KH98728KX119090J
+
+  ✓ the merchant approves — 0KH98728KX119090J
+  ✓ a bad token (must be 403) — bad token
+  ✓ release before the confirmation (must be refused) — sale confirmed
+  ✓ the merchant's system confirms the sale — order sha256 e608a3a38c3caffd…
+  ✓ release carries the order hash — capture 8VJ727459B990791W, payout T6SFUUTA2S5KE
+
+All steps as expected.
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 0

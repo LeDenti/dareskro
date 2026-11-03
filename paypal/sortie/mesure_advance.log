@@ -1,0 +1,23 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 1 bps
+
+1. advance
+  ✓ draft: invoice 900, advance 800 asked — ADV-30E35E
+  ✓ release with no seat signed (must be refused) — 2 of 3 seats sign, memo on file
+  ✓ the AI seat reads the invoice; the policy runs after it — memo recommends release; policy signs
+      ✓ advance ≤ rate × invoice — 800.00 vs 810.00 (90 % of 900.00)
+      ✓ due within the horizon — 29.0 days, limit 90
+      ✓ under the debtor's cap — 800.00 vs cap 5000.00
+      ✓ the AI's memo exists and names this invoice — memo f373851b83c2… on http://127.0.0.1:8796/fixtures/invoice_2026-11-02.md
+  ✓ AI + policy = 2 of 3: the advance is paid without the operator — payout 8ZGBT2YKTNGXJ
+  ✓ the debtor's repayment order (intent CAPTURE, 900) — 3K994277SM473315S
+
+  ▶ As the sandbox BUYER (the debtor), pay the invoice here:
+    https://www.sandbox.paypal.com/checkoutnow?token=3K994277SM473315S
+
+  ✓ repaid: the pool's capital is back — 0B863230H8384340T
+  ✓ policy refuses (95 %) — AI + operator still make 2 of 3, as on XRPL (a refusal by a signer, not by the rail) — 855.00 vs 810.00 (90 % of 900.00)
+
+All steps as expected.
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 0

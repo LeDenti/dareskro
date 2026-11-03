@@ -68,3 +68,9 @@ near/desk/sortie/.video_*
 
 # the pension fund's fetched copy of a deposit (a duplicate of agent/depots/<sha>.json)
 agent/sortie/recu_caisse.json
+
+# PayPal rail: dependencies; .env (client id/secret, Anthropic key) is covered by *.env above
+paypal/node_modules/
+paypal/sortie_mock/
+paypal/sortie/*.mp4
+paypal/sortie/.video_*

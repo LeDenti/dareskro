@@ -2,6 +2,8 @@
 
 > **Encode Solana Hackathon 2026 (12 Oct – 8 Nov) — the Solana rail lives in [`solana/`](solana/README.md):** an escrow program with no owner, the sealed payslip, measured on devnet; [final demo video, 3 min 56](https://github.com/LeDenti/dareskro/releases/download/v0.3-solana-final/dareskro_la_linea_solana_final.mp4). Only that folder is this hackathon's work.
 >
+> **PayPal AI Hackathon, 1 October – 12 November 2026 — the PayPal rail lives in [`paypal/`](paypal/README.md):** the same desk with PayPal's verbs (authorize = lock, capture = release, void = refund, payout = pay), the seven shapes measured on the three ledgers, and the first language model in dareskro — the AI seat that reads through PayPal's Agent Toolkit and has no tool that moves money. Only that folder (and the desk's PayPal tab) is this hackathon's work; diff: tag `pre-paypal` → tag `paypal-submission`.
+>
 > **NEAR Hackathon, 1–14 November 2026 — the NEAR integration lives in [`near/`](near/README.md), plus the NEAR tab of the pay desk (`app/src/NearDesk.tsx`, `app/src/near.ts`).** Only that work is built in
 > the NEAR window; the rest of this repository is the XRPL product of the New York hackathon below, baseline for NEAR judging
 > (disclosed as rule Q-002 asks). Diff: tag `pre-hackathon` → tag `hackathon-submission`.

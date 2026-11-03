@@ -1,0 +1,1522 @@
+{
+  "at": "2026-11-03T21:21:07.700Z",
+  "mode": "sandbox",
+  "seat": "claude-opus-5-5",
+  "holdDays": 29,
+  "feeBps": 1,
+  "ok": true,
+  "scenarios": {
+    "vault": "VAU-D11247"
+  },
+  "steps": [
+    {
+      "at": "2026-11-03T21:13:56.684Z",
+      "what": "draft: 1200 held by the tenant, decided 2 of 3",
+      "ok": true,
+      "note": "VAU-D11247"
+    },
+    {
+      "at": "2026-11-03T21:17:02.446Z",
+      "what": "the tenant approves (the hold)",
+      "ok": true,
+      "note": "40D459132K186693U"
+    },
+    {
+      "at": "2026-11-03T21:17:02.453Z",
+      "what": "the landlord alone: 180 (no decision)",
+      "ok": true,
+      "note": "1 vote"
+    },
+    {
+      "at": "2026-11-03T21:17:02.838Z",
+      "what": "release on one vote (must be refused)",
+      "ok": true,
+      "note": "2 of 3 agree on the amount"
+    },
+    {
+      "at": "2026-11-03T21:17:02.840Z",
+      "what": "the tenant: 0 (still no decision: 180 ≠ 0)",
+      "ok": true,
+      "note": "2 votes, no agreement"
+    },
+    {
+      "at": "2026-11-03T21:17:02.841Z",
+      "what": "a stranger's vote (must be refused)",
+      "ok": true,
+      "note": "unknown party stranger; parties are tenant, landlord, mediator"
+    },
+    {
+      "at": "2026-11-03T21:17:02.843Z",
+      "what": "the mediator: 180 → decided by landlord + mediator",
+      "ok": true,
+      "note": "landlord + mediator"
+    },
+    {
+      "at": "2026-11-03T21:17:07.245Z",
+      "what": "partial capture 180 to the landlord, 1020 released back to the tenant",
+      "ok": true,
+      "note": "capture 6SU60818MW199240X, payout Y9UKC8452R3WW"
+    },
+    {
+      "at": "2026-11-03T21:21:04.809Z",
+      "what": "custody: the tenant pays (intent CAPTURE)",
+      "ok": true,
+      "note": "75Y78444BP6772725"
+    },
+    {
+      "at": "2026-11-03T21:21:04.810Z",
+      "what": "custody: captured at lock, said so in the record",
+      "ok": true,
+      "note": "3VY99844US7611410"
+    },
+    {
+      "at": "2026-11-03T21:21:07.699Z",
+      "what": "custody, no decision at the deadline: the whole deposit paid back to the tenant",
+      "ok": "ETYZWTG78KR3L",
+      "note": "500.00→payer-mock@example.com"
+    }
+  ],
+  "missions": [
+    {
+      "id": "PAY-58267F",
+      "kind": "payroll",
+      "state": "released",
+      "title": "Sunday shift, 25/10 — net, URSSAF, DGFiP",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:02:26.413Z",
+      "payers": [
+        {
+          "name": "the pharmacy",
+          "email": "payer-mock@example.com",
+          "amount": 801.66,
+          "orderId": "4UN32235A0595535X",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=4UN32235A0595535X",
+          "intent": "AUTHORIZE",
+          "authorizationId": "0H923884BD348641U",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "801.66"
+          },
+          "expiresAt": "2026-12-02T20:03:50Z",
+          "captureId": "62V017810L6457311",
+          "captured": "801.66",
+          "releasedToPayer": "0.00"
+        }
+      ],
+      "payees": [
+        {
+          "label": "net paid to the employee",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 407.32
+        },
+        {
+          "label": "contributions to URSSAF",
+          "email": "urssaf-mock@example.com",
+          "amount": 361.31
+        },
+        {
+          "label": "income tax withheld, to DGFiP",
+          "email": "dgfip-mock@example.com",
+          "amount": 33.03
+        }
+      ],
+      "finishAfter": "2026-11-03T20:07:26.413Z",
+      "statement": {
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "id": "stmt-ffff3dd0e216"
+      },
+      "validation": {
+        "by": "Julien (employer)",
+        "decision": "release",
+        "at": "2026-11-03T20:02:26.415Z",
+        "what": "the statement, before the lock"
+      },
+      "createdAt": "2026-11-03T20:02:26.417Z",
+      "history": [
+        {
+          "at": "2026-11-03T20:02:26.417Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T20:02:27.774Z",
+          "what": "order",
+          "payer": "the pharmacy",
+          "orderId": "4UN32235A0595535X",
+          "intent": "AUTHORIZE",
+          "amount": "801.66"
+        },
+        {
+          "at": "2026-11-03T20:03:50.896Z",
+          "what": "hold",
+          "payer": "the pharmacy",
+          "authorizationId": "0H923884BD348641U",
+          "held": {
+            "currency_code": "USD",
+            "value": "801.66"
+          },
+          "expiresAt": "2026-12-02T20:03:50Z"
+        },
+        {
+          "at": "2026-11-03T20:03:50.900Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T20:03:52.291Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "pay date reached: finishAfter 2026-11-03T20:07:26.413Z"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:07:27.605Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T20:07:30.052Z",
+          "what": "release",
+          "captures": [
+            "62V017810L6457311"
+          ],
+          "payout": "3ZYDR5QNUBRYE"
+        },
+        {
+          "at": "2026-11-03T20:07:30.498Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "not closed: mission is released",
+            "hold of the pharmacy: authorization 0H923884BD348641U is CAPTURED"
+          ]
+        }
+      ],
+      "release": {
+        "at": "2026-11-03T20:07:30.052Z",
+        "captures": [
+          {
+            "payer": "the pharmacy",
+            "captureId": "62V017810L6457311",
+            "captured": "801.66",
+            "releasedToPayer": "0.00"
+          }
+        ],
+        "payout": {
+          "batchId": "3ZYDR5QNUBRYE",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "407.32",
+              "label": "net paid to the employee"
+            },
+            {
+              "receiver": "urssaf-mock@example.com",
+              "amount": "361.31",
+              "label": "contributions to URSSAF"
+            },
+            {
+              "receiver": "dgfip-mock@example.com",
+              "amount": "33.03",
+              "label": "income tax withheld, to DGFiP"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 0,
+          "total": "0.00"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "pay date reached",
+            "ok": true,
+            "why": "finishAfter 2026-11-03T20:07:26.413Z"
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T21:02:26.413Z"
+          },
+          {
+            "check": "hold of the pharmacy",
+            "ok": true,
+            "why": "801.66 USD held (0H923884BD348641U) until 2026-12-02T20:03:50Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "DEL-94C4CC",
+      "kind": "delivery",
+      "state": "offered",
+      "title": "Landing copy for BottomRadar's overbought alert",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:07:38.810Z",
+      "payers": [
+        {
+          "name": "BottomRadar",
+          "email": "payer-mock@example.com",
+          "amount": 120,
+          "orderId": "2Y280566JD402143F",
+          "orderStatus": "PAYER_ACTION_REQUIRED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=2Y280566JD402143F",
+          "intent": "AUTHORIZE"
+        }
+      ],
+      "brief": "Write the English landing copy for the overbought alert of bottomradar.com: what the alert does, what it is not, and how to start. Plain words, no hype, no promise of returns.",
+      "criteria": [
+        "At least 250 words [min-words 250]",
+        "Names the BR Score [contains BR Score]",
+        "Ends with a call to action to bottomradar.com [contains bottomradar.com]",
+        "Does not promise profits or returns [absent guaranteed]"
+      ],
+      "expectedSha256": null,
+      "payees": [
+        {
+          "label": "the copywriter",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 120
+        }
+      ],
+      "createdAt": "2026-11-03T20:07:38.813Z",
+      "history": [
+        {
+          "at": "2026-11-03T20:07:38.813Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T20:07:38.814Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "state: mission is drafted",
+            "human decision: no human validation",
+            "memo on file: no memo",
+            "hold of BottomRadar: no authorization on file"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:07:40.331Z",
+          "what": "order",
+          "payer": "BottomRadar",
+          "orderId": "2Y280566JD402143F",
+          "intent": "AUTHORIZE",
+          "amount": "120.00"
+        },
+        {
+          "at": "2026-11-03T20:37:43.593Z",
+          "what": "void-attempt",
+          "ok": false,
+          "refused": [
+            "deadline passed or refused: deadline 2026-11-03T21:07:38.810Z not reached and nobody refused",
+            "a hold is open: none"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:37:43.598Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "state: mission is offered",
+            "human decision: no human validation",
+            "memo on file: no memo",
+            "hold of BottomRadar: no authorization on file"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:37:43.600Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "state: mission is offered",
+            "human decision: no human validation",
+            "memo on file: no memo",
+            "hold of BottomRadar: no authorization on file"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:37:43.601Z",
+          "what": "void-attempt",
+          "ok": false,
+          "refused": [
+            "deadline passed or refused: deadline 2026-11-03T21:07:38.810Z not reached and nobody refused",
+            "a hold is open: none"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DEL-850982",
+      "kind": "delivery",
+      "state": "released",
+      "title": "Landing copy for BottomRadar's overbought alert",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:39:24.473Z",
+      "payers": [
+        {
+          "name": "BottomRadar",
+          "email": "payer-mock@example.com",
+          "amount": 120,
+          "orderId": "70993866L2470005C",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=70993866L2470005C",
+          "intent": "AUTHORIZE",
+          "authorizationId": "2W56764598992502B",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "120.00"
+          },
+          "expiresAt": "2026-12-02T20:40:30Z",
+          "captureId": "9DC98243J55097407",
+          "captured": "120.00",
+          "releasedToPayer": "0.00"
+        }
+      ],
+      "brief": "Write the English landing copy for the overbought alert of bottomradar.com: what the alert does, what it is not, and how to start. Plain words, no hype, no promise of returns.",
+      "criteria": [
+        "At least 250 words [min-words 250]",
+        "Names the BR Score [contains BR Score]",
+        "Ends with a call to action to bottomradar.com [contains bottomradar.com]",
+        "Does not promise profits or returns [absent guaranteed]"
+      ],
+      "expectedSha256": null,
+      "payees": [
+        {
+          "label": "the copywriter",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 120
+        }
+      ],
+      "createdAt": "2026-11-03T20:39:24.476Z",
+      "history": [
+        {
+          "at": "2026-11-03T20:39:24.476Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T20:39:24.478Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "state: mission is drafted",
+            "human decision: no human validation",
+            "memo on file: no memo",
+            "hold of BottomRadar: no authorization on file"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:39:26.135Z",
+          "what": "order",
+          "payer": "BottomRadar",
+          "orderId": "70993866L2470005C",
+          "intent": "AUTHORIZE",
+          "amount": "120.00"
+        },
+        {
+          "at": "2026-11-03T20:40:31.015Z",
+          "what": "hold",
+          "payer": "BottomRadar",
+          "authorizationId": "2W56764598992502B",
+          "held": {
+            "currency_code": "USD",
+            "value": "120.00"
+          },
+          "expiresAt": "2026-12-02T20:40:30Z"
+        },
+        {
+          "at": "2026-11-03T20:40:31.019Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T20:40:32.722Z",
+          "what": "void-attempt",
+          "ok": false,
+          "refused": [
+            "deadline passed or refused: deadline 2026-11-03T21:39:24.473Z not reached and nobody refused"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:40:32.734Z",
+          "what": "deliver",
+          "url": "http://127.0.0.1:8796/fixtures/deliverable_landing.md",
+          "sha256": "8c707f0d301e5c039133f68f6382dcdee30cf6d9b7d52207ac25ae547c50b626",
+          "ok": true
+        },
+        {
+          "at": "2026-11-03T20:41:18.656Z",
+          "what": "review",
+          "memoSha256": "79db196810ae3c0cdca4e17cfad02d68913de375ca3924bae7fd056ce42de64f",
+          "recommendation": "release",
+          "model": "claude-opus-5-5"
+        },
+        {
+          "at": "2026-11-03T20:41:19.155Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "state: mission is reviewed",
+            "human decision: no human validation"
+          ]
+        },
+        {
+          "at": "2026-11-03T20:41:19.158Z",
+          "what": "validate",
+          "by": "Julien (operator)",
+          "decision": "release"
+        },
+        {
+          "at": "2026-11-03T20:41:19.608Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T20:41:22.294Z",
+          "what": "release",
+          "captures": [
+            "9DC98243J55097407"
+          ],
+          "payout": "V9Y4RVYJ2HQV2"
+        },
+        {
+          "at": "2026-11-03T20:41:22.807Z",
+          "what": "void-attempt",
+          "ok": false,
+          "refused": [
+            "not closed: mission is released",
+            "deadline passed or refused: deadline 2026-11-03T21:39:24.473Z not reached and nobody refused",
+            "a hold is open: CAPTURED"
+          ]
+        }
+      ],
+      "deliverable": {
+        "url": "http://127.0.0.1:8796/fixtures/deliverable_landing.md",
+        "sha256": "8c707f0d301e5c039133f68f6382dcdee30cf6d9b7d52207ac25ae547c50b626",
+        "bytes": 1468,
+        "status": 200,
+        "ok": true,
+        "why": null,
+        "at": "2026-11-03T20:40:32.734Z"
+      },
+      "memo": {
+        "sha256": "79db196810ae3c0cdca4e17cfad02d68913de375ca3924bae7fd056ce42de64f",
+        "file": "sortie/memos/DEL-850982.json",
+        "recommendation": "release",
+        "model": "claude-opus-5-5",
+        "at": "2026-11-03T20:41:18.655Z",
+        "deliverableUrl": "http://127.0.0.1:8796/fixtures/deliverable_landing.md",
+        "deliverableSha256": "8c707f0d301e5c039133f68f6382dcdee30cf6d9b7d52207ac25ae547c50b626",
+        "criteriaMet": 4,
+        "criteriaTotal": 4
+      },
+      "validation": {
+        "by": "Julien (operator)",
+        "decision": "release",
+        "at": "2026-11-03T20:41:19.158Z",
+        "memoSha256": "79db196810ae3c0cdca4e17cfad02d68913de375ca3924bae7fd056ce42de64f"
+      },
+      "release": {
+        "at": "2026-11-03T20:41:22.294Z",
+        "captures": [
+          {
+            "payer": "BottomRadar",
+            "captureId": "9DC98243J55097407",
+            "captured": "120.00",
+            "releasedToPayer": "0.00"
+          }
+        ],
+        "payout": {
+          "batchId": "V9Y4RVYJ2HQV2",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "119.99",
+              "label": "the copywriter"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 1,
+          "total": "0.01"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is validated"
+          },
+          {
+            "check": "state",
+            "ok": true,
+            "why": "mission is validated"
+          },
+          {
+            "check": "human decision",
+            "ok": true,
+            "why": "Julien (operator) decided release at 2026-11-03T20:41:19.158Z"
+          },
+          {
+            "check": "memo on file",
+            "ok": true,
+            "why": "memo 79db196810ae… recommends release"
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T21:39:24.473Z"
+          },
+          {
+            "check": "hold of BottomRadar",
+            "ok": true,
+            "why": "120.00 USD held (2W56764598992502B) until 2026-12-02T20:40:30Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PRE-FB6789",
+      "kind": "presence",
+      "state": "released",
+      "title": "Influencer post, live at the date",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:41:32.126Z",
+      "payers": [
+        {
+          "name": "BottomRadar",
+          "email": "payer-mock@example.com",
+          "amount": 80,
+          "orderId": "6JJ556395T348562P",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=6JJ556395T348562P",
+          "intent": "AUTHORIZE",
+          "authorizationId": "3UM972979T899842C",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "80.00"
+          },
+          "expiresAt": "2026-12-02T20:42:31Z",
+          "captureId": "8RH401899N604435S",
+          "captured": "80.00",
+          "releasedToPayer": "0.00"
+        }
+      ],
+      "proof": {
+        "url": "http://127.0.0.1:8796/fixtures/post_influencer.html",
+        "mustContain": "#BottomRadar"
+      },
+      "checkAfter": "2026-11-03T20:46:32.126Z",
+      "payees": [
+        {
+          "label": "the creator",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 80
+        }
+      ],
+      "createdAt": "2026-11-03T20:41:32.128Z",
+      "history": [
+        {
+          "at": "2026-11-03T20:41:32.128Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T20:41:33.603Z",
+          "what": "order",
+          "payer": "BottomRadar",
+          "orderId": "6JJ556395T348562P",
+          "intent": "AUTHORIZE",
+          "amount": "80.00"
+        },
+        {
+          "at": "2026-11-03T20:42:31.988Z",
+          "what": "hold",
+          "payer": "BottomRadar",
+          "authorizationId": "3UM972979T899842C",
+          "held": {
+            "currency_code": "USD",
+            "value": "80.00"
+          },
+          "expiresAt": "2026-12-02T20:42:31Z"
+        },
+        {
+          "at": "2026-11-03T20:42:31.991Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T20:42:33.718Z",
+          "what": "probe",
+          "ok": true,
+          "why": "HTTP 200, 208 bytes, contains \"#BottomRadar\"",
+          "sha256": "72e9b65341b69d0b600403de72890348aa1b24d8a62f9b61235cda4cef70e138",
+          "decision": false
+        },
+        {
+          "at": "2026-11-03T20:42:34.132Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "check date reached: checkAfter 2026-11-03T20:46:32.126Z",
+            "post live at the decision: 2026-11-03T20:42:33.718Z: HTTP 200, 208 bytes, contains \"#BottomRadar\""
+          ]
+        },
+        {
+          "at": "2026-11-03T20:46:32.839Z",
+          "what": "probe",
+          "ok": true,
+          "why": "HTTP 200, 208 bytes, contains \"#BottomRadar\"",
+          "sha256": "72e9b65341b69d0b600403de72890348aa1b24d8a62f9b61235cda4cef70e138",
+          "decision": true
+        },
+        {
+          "at": "2026-11-03T20:46:33.462Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T20:46:37.256Z",
+          "what": "release",
+          "captures": [
+            "8RH401899N604435S"
+          ],
+          "payout": "F2U59T8VD3BS4"
+        }
+      ],
+      "lastSeen": {
+        "at": "2026-11-03T20:46:32.839Z",
+        "ok": true,
+        "why": "HTTP 200, 208 bytes, contains \"#BottomRadar\"",
+        "sha256": "72e9b65341b69d0b600403de72890348aa1b24d8a62f9b61235cda4cef70e138",
+        "decision": true
+      },
+      "looks": 2,
+      "release": {
+        "at": "2026-11-03T20:46:37.256Z",
+        "captures": [
+          {
+            "payer": "BottomRadar",
+            "captureId": "8RH401899N604435S",
+            "captured": "80.00",
+            "releasedToPayer": "0.00"
+          }
+        ],
+        "payout": {
+          "batchId": "F2U59T8VD3BS4",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "79.99",
+              "label": "the creator"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 1,
+          "total": "0.01"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "check date reached",
+            "ok": true,
+            "why": "checkAfter 2026-11-03T20:46:32.126Z"
+          },
+          {
+            "check": "post live at the decision",
+            "ok": true,
+            "why": "2026-11-03T20:46:32.839Z: HTTP 200, 208 bytes, contains \"#BottomRadar\""
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T21:41:32.126Z"
+          },
+          {
+            "check": "hold of BottomRadar",
+            "ok": true,
+            "why": "80.00 USD held (3UM972979T899842C) until 2026-12-02T20:42:31Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PRE-4BC6D0",
+      "kind": "presence",
+      "state": "expired",
+      "title": "A post that was deleted",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:46:37.258Z",
+      "payers": [
+        {
+          "name": "BottomRadar",
+          "email": "payer-mock@example.com",
+          "amount": 80,
+          "orderId": "3YX06645RL313715F",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=3YX06645RL313715F",
+          "intent": "AUTHORIZE",
+          "authorizationId": "0TN9015825219300R",
+          "authorizationStatus": "VOIDED",
+          "held": {
+            "currency_code": "USD",
+            "value": "80.00"
+          },
+          "expiresAt": "2026-12-02T21:03:22Z"
+        }
+      ],
+      "proof": {
+        "url": "http://127.0.0.1:8796/fixtures/no_such_post.html",
+        "mustContain": null
+      },
+      "checkAfter": "2026-11-03T20:46:38.258Z",
+      "payees": [
+        {
+          "label": "the creator",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 80
+        }
+      ],
+      "createdAt": "2026-11-03T20:46:37.260Z",
+      "history": [
+        {
+          "at": "2026-11-03T20:46:37.260Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T20:46:38.561Z",
+          "what": "order",
+          "payer": "BottomRadar",
+          "orderId": "3YX06645RL313715F",
+          "intent": "AUTHORIZE",
+          "amount": "80.00"
+        },
+        {
+          "at": "2026-11-03T21:03:22.874Z",
+          "what": "hold",
+          "payer": "BottomRadar",
+          "authorizationId": "0TN9015825219300R",
+          "held": {
+            "currency_code": "USD",
+            "value": "80.00"
+          },
+          "expiresAt": "2026-12-02T21:03:22Z"
+        },
+        {
+          "at": "2026-11-03T21:03:22.878Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T21:03:25.648Z",
+          "what": "probe",
+          "ok": false,
+          "why": "HTTP 404",
+          "sha256": null,
+          "decision": true
+        },
+        {
+          "at": "2026-11-03T21:03:26.035Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "post live at the decision: 2026-11-03T21:03:25.648Z: HTTP 404"
+          ]
+        },
+        {
+          "at": "2026-11-03T21:03:26.463Z",
+          "what": "void-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T21:03:27.758Z",
+          "what": "void",
+          "voided": [
+            "0TN9015825219300R"
+          ],
+          "refund": null
+        }
+      ],
+      "lastSeen": {
+        "at": "2026-11-03T21:03:25.648Z",
+        "ok": false,
+        "why": "HTTP 404",
+        "sha256": null,
+        "decision": true
+      },
+      "looks": 1,
+      "closed": {
+        "at": "2026-11-03T21:03:27.758Z",
+        "voided": [
+          "0TN9015825219300R"
+        ],
+        "refund": null,
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "deadline passed, or post not live at the decision",
+            "ok": true,
+            "why": "2026-11-03T21:03:25.648Z: HTTP 404"
+          },
+          {
+            "check": "a hold is open",
+            "ok": true,
+            "why": "CREATED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AFF-B8DFC6",
+      "kind": "affiliate",
+      "state": "released",
+      "title": "Affiliate commission on order BR-2026-0417",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T22:03:45.661Z",
+      "payers": [
+        {
+          "name": "BottomRadar",
+          "email": "payer-mock@example.com",
+          "amount": 25,
+          "orderId": "0KH98728KX119090J",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=0KH98728KX119090J",
+          "intent": "AUTHORIZE",
+          "authorizationId": "2LU04622J2717534J",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "25.00"
+          },
+          "expiresAt": "2026-12-02T21:07:30Z",
+          "captureId": "8VJ727459B990791W",
+          "captured": "25.00",
+          "releasedToPayer": "0.00"
+        }
+      ],
+      "orderRef": "BR-2026-0417",
+      "payees": [
+        {
+          "label": "the affiliate",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 25
+        }
+      ],
+      "createdAt": "2026-11-03T21:03:45.664Z",
+      "history": [
+        {
+          "at": "2026-11-03T21:03:45.665Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T21:03:47.111Z",
+          "what": "order",
+          "payer": "BottomRadar",
+          "orderId": "0KH98728KX119090J",
+          "intent": "AUTHORIZE",
+          "amount": "25.00"
+        },
+        {
+          "at": "2026-11-03T21:07:30.953Z",
+          "what": "hold",
+          "payer": "BottomRadar",
+          "authorizationId": "2LU04622J2717534J",
+          "held": {
+            "currency_code": "USD",
+            "value": "25.00"
+          },
+          "expiresAt": "2026-12-02T21:07:30Z"
+        },
+        {
+          "at": "2026-11-03T21:07:30.954Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T21:07:31.520Z",
+          "what": "confirm-refused"
+        },
+        {
+          "at": "2026-11-03T21:07:32.298Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "sale confirmed: waiting for the merchant's confirmation"
+          ]
+        },
+        {
+          "at": "2026-11-03T21:07:32.301Z",
+          "what": "confirm",
+          "orderHash": "e608a3a38c3caffd778e260ba1e0811fe5622855aa0435e7e19f29b68b669f99"
+        },
+        {
+          "at": "2026-11-03T21:07:33.231Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T21:07:36.266Z",
+          "what": "release",
+          "captures": [
+            "8VJ727459B990791W"
+          ],
+          "payout": "T6SFUUTA2S5KE"
+        }
+      ],
+      "confirmTokenSha256": "2f1f1b5a72ddbb03dded0f3bf3044b2581cfa91c0a303a437b45be78d5b3dc33",
+      "confirmed": {
+        "orderRef": "BR-2026-0417",
+        "orderHash": "e608a3a38c3caffd778e260ba1e0811fe5622855aa0435e7e19f29b68b669f99",
+        "at": "2026-11-03T21:07:32.301Z"
+      },
+      "release": {
+        "at": "2026-11-03T21:07:36.265Z",
+        "captures": [
+          {
+            "payer": "BottomRadar",
+            "captureId": "8VJ727459B990791W",
+            "captured": "25.00",
+            "releasedToPayer": "0.00"
+          }
+        ],
+        "payout": {
+          "batchId": "T6SFUUTA2S5KE",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "25.00",
+              "label": "the affiliate"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 1,
+          "total": "0.00"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "sale confirmed",
+            "ok": true,
+            "why": "order sha256 e608a3a38c3c… confirmed at 2026-11-03T21:07:32.301Z"
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T22:03:45.661Z"
+          },
+          {
+            "check": "hold of BottomRadar",
+            "ok": true,
+            "why": "25.00 USD held (2LU04622J2717534J) until 2026-12-02T21:07:30Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "POO-5A20A9",
+      "kind": "pool",
+      "state": "released",
+      "title": "Deposit funded by the tenant and a guarantor",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T22:08:21.674Z",
+      "target": 1000,
+      "payers": [
+        {
+          "name": "the tenant",
+          "email": "payer-mock@example.com",
+          "amount": 600,
+          "trimmedTo": 600,
+          "orderId": "12E34462EC8670422",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=12E34462EC8670422",
+          "intent": "AUTHORIZE",
+          "authorizationId": "17316083HF1550623",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "600.00"
+          },
+          "expiresAt": "2026-12-02T21:11:33Z",
+          "captureId": "6NU530152H978454G",
+          "captured": "600.00",
+          "releasedToPayer": "0.00"
+        },
+        {
+          "name": "the guarantor",
+          "email": "payer-mock@example.com",
+          "amount": 700,
+          "trimmedTo": 400,
+          "orderId": "1RE6567408174863P",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=1RE6567408174863P",
+          "intent": "AUTHORIZE",
+          "authorizationId": "1JJ30432RA0433250",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "400.00"
+          },
+          "expiresAt": "2026-12-02T21:12:29Z",
+          "captureId": "0F294513VN4813710",
+          "captured": "400.00",
+          "releasedToPayer": "0.00"
+        }
+      ],
+      "finishAfter": "2026-11-03T21:13:21.673Z",
+      "payees": [
+        {
+          "label": "the landlord",
+          "email": "sb-zte7r53618648@personal.example.com",
+          "amount": 1000
+        }
+      ],
+      "createdAt": "2026-11-03T21:08:21.678Z",
+      "history": [
+        {
+          "at": "2026-11-03T21:08:21.678Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T21:08:24.053Z",
+          "what": "order",
+          "payer": "the tenant",
+          "orderId": "12E34462EC8670422",
+          "intent": "AUTHORIZE",
+          "amount": "600.00"
+        },
+        {
+          "at": "2026-11-03T21:11:34.921Z",
+          "what": "hold",
+          "payer": "the tenant",
+          "authorizationId": "17316083HF1550623",
+          "held": {
+            "currency_code": "USD",
+            "value": "600.00"
+          },
+          "expiresAt": "2026-12-02T21:11:33Z"
+        },
+        {
+          "at": "2026-11-03T21:11:36.831Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "target reached: 600.00 of 1000.00 USD held",
+            "date reached: finishAfter 2026-11-03T21:13:21.673Z"
+          ]
+        },
+        {
+          "at": "2026-11-03T21:11:37.935Z",
+          "what": "order",
+          "payer": "the guarantor",
+          "orderId": "1RE6567408174863P",
+          "intent": "AUTHORIZE",
+          "amount": "400.00"
+        },
+        {
+          "at": "2026-11-03T21:12:30.197Z",
+          "what": "hold",
+          "payer": "the guarantor",
+          "authorizationId": "1JJ30432RA0433250",
+          "held": {
+            "currency_code": "USD",
+            "value": "400.00"
+          },
+          "expiresAt": "2026-12-02T21:12:29Z"
+        },
+        {
+          "at": "2026-11-03T21:12:30.202Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T21:13:23.401Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T21:13:29.338Z",
+          "what": "release",
+          "captures": [
+            "6NU530152H978454G",
+            "0F294513VN4813710"
+          ],
+          "payout": "8YTFWDFVWNTGQ"
+        }
+      ],
+      "release": {
+        "at": "2026-11-03T21:13:29.338Z",
+        "captures": [
+          {
+            "payer": "the tenant",
+            "captureId": "6NU530152H978454G",
+            "captured": "600.00",
+            "releasedToPayer": "0.00"
+          },
+          {
+            "payer": "the guarantor",
+            "captureId": "0F294513VN4813710",
+            "captured": "400.00",
+            "releasedToPayer": "0.00"
+          }
+        ],
+        "payout": {
+          "batchId": "8YTFWDFVWNTGQ",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "999.90",
+              "label": "the landlord"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 1,
+          "total": "0.10"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "target reached",
+            "ok": true,
+            "why": "1000.00 of 1000.00 USD held"
+          },
+          {
+            "check": "date reached",
+            "ok": true,
+            "why": "finishAfter 2026-11-03T21:13:21.673Z"
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T22:08:21.674Z"
+          },
+          {
+            "check": "hold of the tenant",
+            "ok": true,
+            "why": "600.00 USD held (17316083HF1550623) until 2026-12-02T21:11:33Z"
+          },
+          {
+            "check": "hold of the guarantor",
+            "ok": true,
+            "why": "400.00 USD held (1JJ30432RA0433250) until 2026-12-02T21:12:29Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAU-D11247",
+      "kind": "vault",
+      "state": "released",
+      "title": "Rental deposit, lease 12-rue-des-Lices",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T22:13:56.679Z",
+      "payers": [
+        {
+          "name": "tenant",
+          "email": "payer-mock@example.com",
+          "amount": 1200,
+          "orderId": "40D459132K186693U",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=40D459132K186693U",
+          "intent": "AUTHORIZE",
+          "authorizationId": "12U88777GV854771U",
+          "authorizationStatus": "CAPTURED",
+          "held": {
+            "currency_code": "USD",
+            "value": "1200.00"
+          },
+          "expiresAt": "2026-12-02T21:17:00Z",
+          "captureId": "6SU60818MW199240X",
+          "captured": "180.00",
+          "releasedToPayer": "1020.00"
+        }
+      ],
+      "beneficiary": {
+        "name": "landlord",
+        "email": "sb-zte7r53618648@personal.example.com"
+      },
+      "parties": [
+        "tenant",
+        "landlord",
+        "mediator"
+      ],
+      "threshold": 2,
+      "votes": [
+        {
+          "party": "landlord",
+          "toBeneficiary": 180,
+          "at": "2026-11-03T21:17:02.451Z"
+        },
+        {
+          "party": "tenant",
+          "toBeneficiary": 0,
+          "at": "2026-11-03T21:17:02.839Z"
+        },
+        {
+          "party": "mediator",
+          "toBeneficiary": 180,
+          "at": "2026-11-03T21:17:02.842Z"
+        }
+      ],
+      "custody": false,
+      "memos": [
+        "lease 12-rue-des-Lices",
+        "entry inventory sha256 …",
+        "exit inventory sha256 …"
+      ],
+      "createdAt": "2026-11-03T21:13:56.683Z",
+      "history": [
+        {
+          "at": "2026-11-03T21:13:56.683Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T21:13:58.158Z",
+          "what": "order",
+          "payer": "tenant",
+          "orderId": "40D459132K186693U",
+          "intent": "AUTHORIZE",
+          "amount": "1200.00"
+        },
+        {
+          "at": "2026-11-03T21:17:00.798Z",
+          "what": "hold",
+          "payer": "tenant",
+          "authorizationId": "12U88777GV854771U",
+          "held": {
+            "currency_code": "USD",
+            "value": "1200.00"
+          },
+          "expiresAt": "2026-12-02T21:17:00Z"
+        },
+        {
+          "at": "2026-11-03T21:17:00.803Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T21:17:02.451Z",
+          "what": "vote",
+          "party": "landlord",
+          "toBeneficiary": 180,
+          "decided": null
+        },
+        {
+          "at": "2026-11-03T21:17:02.837Z",
+          "what": "release-attempt",
+          "ok": false,
+          "refused": [
+            "2 of 3 agree on the amount: 1 vote(s): landlord→180.00"
+          ]
+        },
+        {
+          "at": "2026-11-03T21:17:02.839Z",
+          "what": "vote",
+          "party": "tenant",
+          "toBeneficiary": 0,
+          "decided": null
+        },
+        {
+          "at": "2026-11-03T21:17:02.842Z",
+          "what": "vote",
+          "party": "mediator",
+          "toBeneficiary": 180,
+          "decided": 180
+        },
+        {
+          "at": "2026-11-03T21:17:03.851Z",
+          "what": "release-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T21:17:07.243Z",
+          "what": "release",
+          "captures": [
+            "6SU60818MW199240X"
+          ],
+          "payout": "Y9UKC8452R3WW"
+        }
+      ],
+      "release": {
+        "at": "2026-11-03T21:17:07.243Z",
+        "captures": [
+          {
+            "payer": "tenant",
+            "captureId": "6SU60818MW199240X",
+            "captured": "180.00",
+            "releasedToPayer": "1020.00"
+          }
+        ],
+        "payout": {
+          "batchId": "Y9UKC8452R3WW",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "sb-zte7r53618648@personal.example.com",
+              "amount": "179.98",
+              "label": "to landlord (decided 2 of 3)"
+            }
+          ]
+        },
+        "fee": {
+          "bps": 1,
+          "total": "0.02"
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "2 of 3 agree on the amount",
+            "ok": true,
+            "why": "180.00 USD to landlord, 1020.00 back to tenant"
+          },
+          {
+            "check": "before deadline",
+            "ok": true,
+            "why": "deadline 2026-11-03T22:13:56.679Z"
+          },
+          {
+            "check": "hold of tenant",
+            "ok": true,
+            "why": "1200.00 USD held (12U88777GV854771U) until 2026-12-02T21:17:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "VAU-E0EB4E",
+      "kind": "vault",
+      "state": "expired",
+      "title": "Rental deposit in custody (a lease outlives the 29-day hold)",
+      "currency": "USD",
+      "deadlineAt": "2026-11-03T21:17:09.245Z",
+      "payers": [
+        {
+          "name": "tenant",
+          "email": "payer-mock@example.com",
+          "amount": 500,
+          "orderId": "75Y78444BP6772725",
+          "orderStatus": "COMPLETED",
+          "approveUrl": "https://www.sandbox.paypal.com/checkoutnow?token=75Y78444BP6772725",
+          "intent": "CAPTURE",
+          "captureId": "3VY99844US7611410",
+          "captureStatus": "COMPLETED"
+        }
+      ],
+      "beneficiary": {
+        "name": "landlord",
+        "email": "sb-zte7r53618648@personal.example.com"
+      },
+      "parties": [
+        "tenant",
+        "landlord",
+        "mediator"
+      ],
+      "threshold": 2,
+      "votes": [],
+      "custody": true,
+      "memos": [],
+      "createdAt": "2026-11-03T21:17:07.247Z",
+      "history": [
+        {
+          "at": "2026-11-03T21:17:07.247Z",
+          "what": "draft"
+        },
+        {
+          "at": "2026-11-03T21:17:08.419Z",
+          "what": "order",
+          "payer": "tenant",
+          "orderId": "75Y78444BP6772725",
+          "intent": "CAPTURE",
+          "amount": "500.00"
+        },
+        {
+          "at": "2026-11-03T21:21:04.678Z",
+          "what": "custody-capture",
+          "payer": "tenant",
+          "captureId": "3VY99844US7611410"
+        },
+        {
+          "at": "2026-11-03T21:21:04.681Z",
+          "what": "locked"
+        },
+        {
+          "at": "2026-11-03T21:21:07.016Z",
+          "what": "void-attempt",
+          "ok": true,
+          "refused": []
+        },
+        {
+          "at": "2026-11-03T21:21:07.697Z",
+          "what": "void",
+          "voided": [],
+          "refund": "ETYZWTG78KR3L"
+        }
+      ],
+      "closed": {
+        "at": "2026-11-03T21:21:07.697Z",
+        "voided": [],
+        "refund": {
+          "batchId": "ETYZWTG78KR3L",
+          "status": "PENDING",
+          "items": [
+            {
+              "receiver": "payer-mock@example.com",
+              "amount": "500.00",
+              "label": "deposit back to tenant"
+            }
+          ]
+        },
+        "gate": [
+          {
+            "check": "not closed",
+            "ok": true,
+            "why": "mission is locked"
+          },
+          {
+            "check": "deadline passed",
+            "ok": true,
+            "why": "deadline 2026-11-03T21:17:09.245Z"
+          },
+          {
+            "check": "in custody: the refund is a payout, not a void",
+            "ok": true,
+            "why": "the service pays the whole deposit back to the owner"
+          }
+        ]
+      }
+    }
+  ]
+}

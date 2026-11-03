@@ -1,0 +1,19 @@
+
+dareskro · PayPal rail — mode sandbox, seat claude-opus-5-5, hold 29 days, fee 0 bps
+
+1. payroll
+  ✓ draft: statement validated by a named human BEFORE the lock — PAY-58267F — 801.66 = 407.32 + 361.31 + 33.03
+
+  ▶ As the sandbox BUYER, approve 4UN32235A0595535X here within 5 min, then come back:
+    https://www.sandbox.paypal.com/checkoutnow?token=4UN32235A0595535X
+
+  ✓ the employer approves ONE order — 4UN32235A0595535X
+  ✓ one hold for the three payees — 0H923884BD348641U — 801.66 USD
+  ✓ release before the pay date (must be refused) — pay date reached
+  … the date is in 215 s, waiting
+  ✓ at the date, anyone releases: one capture, ONE payout batch of three — capture 62V017810L6457311; payout 3ZYDR5QNUBRYE: 407.32→sb-zte7r53618648@personal.example.com, 361.31→urssaf-mock@example.com, 33.03→dgfip-mock@example.com
+  ✓ release twice (must be refused) — not closed, hold of the pharmacy
+
+All steps as expected.
+Report: paypal/sortie/compte_rendu.json · registry: paypal/sortie/missions.json · memos: paypal/sortie/memos/
+EXIT 0
