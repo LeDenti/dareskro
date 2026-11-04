@@ -19,3 +19,6 @@ Context: Rust contract `contract/src/lib.rs` (near-sdk 5.30) with escrows, non-t
 - Item 1 → near-sdk-rs discussion [#1667](https://github.com/near/near-sdk-rs/discussions/1667) (Ideas).
 - Item 4 → near-api-js issue [#2026](https://github.com/near/near-api-js/issues/2026).
 - Item 5 → near-api-js issue [#2027](https://github.com/near/near-api-js/issues/2027).
+
+## Answered upstream
+- Item 2, 4 November 2026, on [#1665](https://github.com/near/near-sdk-rs/issues/1665): the four `flush()` calls are right for this contract. The one case they would not cover is a `store::` collection nested inside another (flushing the outer one does not flush the inner), documented in [#1669](https://github.com/near/near-sdk-rs/issues/1669) — this contract has none: every map value is a plain struct or a `Vec`. A `measure_storage(|| …)` helper is not doable yet (nothing tracks which collections hold unwritten changes) and is planned with the storage redesign; an estimator would not be reliable either. Their advice, attach a generous deposit and refund the surplus as `create_batch` does, is what every payable method here already does.
