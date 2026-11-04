@@ -74,3 +74,4 @@ paypal/node_modules/
 paypal/sortie_mock/
 paypal/sortie/*.mp4
 paypal/sortie/.video_*
+paypal/sortie_hosted/

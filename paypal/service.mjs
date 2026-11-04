@@ -3,6 +3,8 @@
  * dareskro's PayPal desk — every shape of the ledger desk, with PayPal's verbs.
  *
  *   node service.mjs                 http://127.0.0.1:8796   (PAYPAL_PORT; env in paypal/.env)
+ *   hosted (Render, see ../render.yaml): PORT and RENDER_EXTERNAL_URL are the host's; the service then listens on
+ *   0.0.0.0 and also serves the built desk (../app/dist, or DESK_DIST) at /, so one URL is the whole demo.
  *
  * The shapes are in kinds.mjs (payroll, delivery, presence, affiliate, pool, vault, advance);
  * the verbs in rail.mjs (authorize = lock, capture = release, void = refund, payout = pay);
@@ -47,8 +49,10 @@ import { review } from "./seat.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 loadEnv(path.join(HERE, ".env"));
-const PORT = Number(process.env.PAYPAL_PORT || 8796);
-const BASE = process.env.PAYPAL_PUBLIC_URL || `http://127.0.0.1:${PORT}`;
+const PORT = Number(process.env.PORT || process.env.PAYPAL_PORT || 8796); // PORT: the host's (Render)
+const HOST = process.env.PAYPAL_HOST || (process.env.PORT || process.env.RENDER ? "0.0.0.0" : "127.0.0.1");
+const BASE = process.env.PAYPAL_PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || `http://127.0.0.1:${PORT}`;
+const DESK_DIST = process.env.DESK_DIST ? path.resolve(process.env.DESK_DIST) : path.join(HERE, "..", "app", "dist"); // the built desk, served at / when it exists
 const OUT = process.env.PAYPAL_OUT ? path.resolve(process.env.PAYPAL_OUT) : path.join(HERE, "sortie"); // PAYPAL_OUT: keep a sandbox run apart from a mock run
 const MEMOS = path.join(OUT, "memos");
 const REGISTRY = path.join(OUT, "missions.json");
@@ -466,13 +470,23 @@ createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": /\.html?$/.test(f) ? "text/html; charset=utf-8" : "text/markdown; charset=utf-8", "Access-Control-Allow-Origin": "*" });
       return res.end(readFileSync(f));
     }
+    if ((req.method === "GET" || req.method === "HEAD") && existsSync(DESK_DIST)) {
+      // the built desk: a file under app/dist, or index.html for the app's own routes (no extension)
+      const rel = path.normalize(decodeURIComponent(p)).replace(/^(\.\.[/\\])+/, "");
+      let f = path.join(DESK_DIST, rel);
+      if (!f.startsWith(DESK_DIST)) throw fail(403, "no");
+      if (!existsSync(f) || !path.extname(f)) f = path.join(DESK_DIST, "index.html");
+      const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".json": "application/json", ".png": "image/png", ".woff2": "font/woff2", ".ico": "image/x-icon" };
+      res.writeHead(200, { "Content-Type": types[path.extname(f)] ?? "application/octet-stream", "Cache-Control": path.extname(f) === ".html" ? "no-cache" : "public, max-age=3600" });
+      return res.end(req.method === "HEAD" ? undefined : readFileSync(f));
+    }
     throw fail(404, `no route ${req.method} ${p}`);
   } catch (e) {
     const status = e.status ?? 500;
     if (status >= 500) log(`500 ${req.method} ${p}: ${e.stack ?? e.message}`);
     return json(res, status, { error: e.message, ...(e.extra ?? {}) });
   }
-}).listen(PORT, "127.0.0.1", () => log(`PayPal desk on ${BASE} — mode ${rail.mode}, seat ${SEAT}, hold ${rail.holdDays} days, fee ${tarif.bps} bps`));
+}).listen(PORT, HOST, () => log(`PayPal desk on ${BASE} (${HOST}:${PORT}${existsSync(DESK_DIST) ? ", serving the built desk" : ""}) — mode ${rail.mode}, seat ${SEAT}, hold ${rail.holdDays} days, fee ${tarif.bps} bps`));
 
 /** paypal/.env (0600, gitignored): KEY=value lines; the environment wins over the file. */
 function loadEnv(file) {

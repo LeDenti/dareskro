@@ -141,6 +141,21 @@ with the gate's reasons when refused; the registry. Measured in mock on 3 Novemb
 and on the memo alone, then validated and paid with the 1 bp fee) and a deposit (a stranger's vote **400**, landlord + mediator
 on 180 → capture 180, 1020 back). The tab only talks to `service.mjs` on 127.0.0.1:8796; `app/src/paypal.ts` is its client.
 
+## Hosted demo — Render
+
+`render.yaml` at the root of the repository is a Render Blueprint: one free web service that runs `service.mjs` with the
+**mock PayPal** (no credentials; every id starts with `MOCK-`) and serves the built desk at `/`, opened on the PayPal tab
+(`?case=paypal`). Anyone can draft a mission, "mock click" the payer's approval, let the seat read, validate, release or
+void, and watch the registry — every refusal included. The hosted registry (`PAYPAL_OUT=sortie_hosted`) starts empty and
+stays apart from the sandbox one. Set `ANTHROPIC_API_KEY` in the Render dashboard and the seat is the real Claude on the
+hosted desk (it still has no tool that moves money); leave it empty and the mock seat writes the same memo shape.
+
+The sandbox itself is not hosted on purpose: a real PayPal approval needs a sandbox **buyer** account, i.e. a human on
+PayPal's page, and the ids of the 3 November measurement are in this README and in `sortie/missions.json`. What the
+hosting needed from the code: the service listens on the host's `PORT`, takes its public URL from `RENDER_EXTERNAL_URL`
+(for PayPal's return URL), serves `app/dist` when it exists, and the desk's client reads `VITE_PAYPAL_DESK_URL` (empty =
+its own origin).
+
 ## Run it
 
 ```bash
@@ -155,7 +170,8 @@ node demo_paypal.mjs            # prints each approval URL: approve as the sandb
 DEMO_ONLY=pool,vault node demo_paypal.mjs      # one shape at a time; DEMO_APPROVE_WINDOW=300 (s) is how long "the date" waits for the human
 PAYPAL_OUT=sortie_mock PAYPAL_MODE=mock SEAT_MODE=mock node demo_paypal.mjs   # a mock run that leaves the sandbox registry alone
 node service.mjs                # the service alone, http://127.0.0.1:8796, behind the desk's PayPal tab (app/)
-(cd ../app && npm run dev)       # the desk: open it, pick "PayPal · same desk"
+(cd ../app && npm run dev)       # the desk: open it, pick "PayPal · same desk" (or add ?case=paypal)
+(cd ../app && VITE_PAYPAL_DESK_URL= VITE_DEFAULT_CASE=paypal npm run build) && PAYPAL_MODE=mock PAYPAL_OUT=sortie_hosted node service.mjs   # what Render runs: one URL
 ```
 
 Every mission, every refusal and every PayPal id goes to `sortie/missions.json` (public) and `sortie/service.log`; the memos to
@@ -174,6 +190,7 @@ Every mission, every refusal and every PayPal id goes to `sortie/missions.json` 
 | `../app/src/PaypalDesk.tsx`, `../app/src/paypal.ts` | the desk tab and its client of the service |
 | `enregistre.mjs` | films the sandbox logs (`sortie/mesure_<shape>.log`) typed out in a terminal, Playwright + ffmpeg → `sortie/film_sandbox.mp4` (2:31); `--clip delivery --seconds 12 --size 1280x720` makes a 12 s insert of one shape |
 | `tarif.json` | the fee per act (bps, ≤ 100, zero by default) |
+| `../render.yaml` | the hosted demo: mock PayPal + the built desk on one Render web service |
 | `fixtures/` | the demo's deliverable, post and invoice |
 
 ## Honest limits

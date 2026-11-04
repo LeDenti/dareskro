@@ -4,9 +4,11 @@
  * with intent AUTHORIZE, approved by the payer on PayPal's page), a capture — partial if the rule
  * says so — a void, a payout. Seven shapes, one rule table each (paypal/kinds.mjs); the AI seat
  * (paypal/seat.mjs) reads and writes a memo, it never moves money. If the service is not running,
- * the PayPal tab says so and nothing else changes.
+ * the PayPal tab says so and nothing else changes. Hosted (Render), the service serves this desk itself
+ * and the tab talks to its own origin.
  */
-const DESK_URL = "http://127.0.0.1:8796";
+// VITE_PAYPAL_DESK_URL: the service's origin; empty = the page's own origin (the hosted desk, served by service.mjs)
+const DESK_URL = (import.meta.env.VITE_PAYPAL_DESK_URL as string | undefined) ?? "http://127.0.0.1:8796";
 
 export type Kind = "payroll" | "delivery" | "presence" | "affiliate" | "pool" | "vault" | "advance";
 export const KINDS: Kind[] = ["payroll", "delivery", "presence", "affiliate", "pool", "vault", "advance"];

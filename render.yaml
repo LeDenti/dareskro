@@ -1,0 +1,27 @@
+# dareskro on PayPal — the hosted demo (Render Blueprint, https://render.com/docs/blueprint-spec)
+#
+# One web service: paypal/service.mjs with a mock PayPal (no credentials, every id starts with MOCK-),
+# serving the built pay desk at / — open it, pick "PayPal · same desk", the "mock click" button plays
+# the payer's approval. Add ANTHROPIC_API_KEY in the dashboard and the AI seat becomes the real
+# Claude (it reads, it never pays); leave it empty and the mock seat writes the same memo shape.
+# The sandbox (real PayPal) is not hosted: its approvals need a sandbox buyer, i.e. a human at
+# PayPal's page — see paypal/README.md "Run it".
+services:
+  - type: web
+    name: dareskro-paypal
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: cd paypal && npm ci && cd ../app && npm ci && VITE_PAYPAL_DESK_URL= VITE_DEFAULT_CASE=paypal npm run build
+    startCommand: cd paypal && node service.mjs
+    healthCheckPath: /identity
+    envVars:
+      - key: PAYPAL_MODE
+        value: mock
+      - key: PAYPAL_OUT
+        value: sortie_hosted      # the hosted registry starts empty and stays apart from the sandbox one
+      - key: ANTHROPIC_API_KEY
+        sync: false               # optional: set it in the dashboard for the real seat; empty = mock seat
+      - key: NODE_VERSION
+        value: "22"

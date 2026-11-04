@@ -176,7 +176,11 @@ function Desk(props: {
   const { transport } = props;
 
   // ---- the case: the device cards are shared, the rest depends on who pays whom
-  const [caseMode, setCaseMode] = useState<CaseMode>("employee");
+  // ?case=paypal (or VITE_DEFAULT_CASE) opens the desk on that case: the hosted demo lands on its rail
+  const [caseMode, setCaseMode] = useState<CaseMode>(() => {
+    const asked = new URLSearchParams(window.location.search).get("case") ?? (import.meta.env.VITE_DEFAULT_CASE as string | undefined);
+    return cases.some((c) => c.id === asked) ? (asked as CaseMode) : "employee";
+  });
   const contract = caseMode !== "employee";
   const onSolana = caseMode === "solana" || caseMode === "near" || caseMode === "paypal"; // another rail: the XRPL cards step aside
   const onNear = caseMode === "near";
