@@ -126,4 +126,5 @@ export type Action = "offer" | "fund" | "lock" | "deliver" | "review" | "policy"
 export const act = (id: string, action: Action, body: Record<string, unknown> = {}) => call<Mission & { mission?: Mission; payer?: Payer; release?: Release }>("POST", `/missions/${id}/${action}`, body);
 /** The mock rail's "click on PayPal's page": the approve link is the desk's own. */
 export const mockApprove = async (approveUrl: string) => (await fetch(approveUrl)).ok;
-export const fixture = (file: string) => `${DESK_URL}/fixtures/${file}`;
+/** The demo documents, as absolute URLs: the service fetches and hashes a deliverable by its http(s) URL. */
+export const fixture = (file: string) => `${DESK_URL || window.location.origin}/fixtures/${file}`;

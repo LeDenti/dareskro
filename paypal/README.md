@@ -143,7 +143,7 @@ on 180 → capture 180, 1020 back). The tab only talks to `service.mjs` on 127.0
 
 ## Hosted demo — Render
 
-`render.yaml` at the root of the repository is a Render Blueprint: one free web service that runs `service.mjs` with the
+**https://dareskro-paypal.onrender.com** (free tier: the first request may take a minute to wake it). `render.yaml` at the root of the repository is the Render Blueprint behind it: one free web service that runs `service.mjs` with the
 **mock PayPal** (no credentials; every id starts with `MOCK-`) and serves the built desk at `/`, opened on the PayPal tab
 (`?case=paypal`). Anyone can draft a mission, "mock click" the payer's approval, let the seat read, validate, release or
 void, and watch the registry — every refusal included. The hosted registry (`PAYPAL_OUT=sortie_hosted`) starts empty and
