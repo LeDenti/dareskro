@@ -1,0 +1,12 @@
+{
+  "name": "dareskro euro de test",
+  "symbol": "EURD",
+  "decimals": 6,
+  "description": "Jeton de test (Concordium testnet) pour la demo dareskro Accountable : l'agent de paie regle le net d'un bulletin de garde au salarie en EURD par un flux x402 a frais sponsorises. Aucune valeur. Concordium Trusted Agents Hackathon, novembre-decembre 2026.",
+  "thumbnail": {
+    "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/concordium/plt/EURD-128.svg"
+  },
+  "display": {
+    "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/concordium/plt/EURD-512.svg"
+  }
+}
