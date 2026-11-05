@@ -542,7 +542,8 @@ describe("dareskro escrow on Solana", () => {
     const advPda = (invoice: Buffer) => PublicKey.findProgramAddressSync([Buffer.from("advance"), pool.toBuffer(), invoice], program.programId)[0];
     const inv = (name: string) => sha256(Buffer.from(`dareskro/facture/1 ${name}`));
     const now0 = await chainNow();
-    const pol = { maxShareBps: 3000, maxAdvanceBps: 9000, maxTerm: new BN(90 * 86400), grace: new BN(4) };
+    const pol = { maxShareBps: 3000, maxDebtorAbs: new BN(46 * U), maxAdvanceBps: 9000, maxTerm: new BN(90 * 86400), grace: new BN(4) };
+    const memo = (name: string) => sha256(Buffer.from(`analyse ${name}: ACCEPTE`)); // the AI seat's memo, anchored by its hash
 
     const poolCreate = (signers: PublicKey[], threshold: number, policy: any) =>
       program.methods.poolCreate(id, signers, threshold, policy).accountsPartial({ operator: operator.publicKey }).signers([operator]).rpc();
@@ -556,8 +557,8 @@ describe("dareskro escrow on Solana", () => {
     assert.equal(P.capital.toNumber(), 160 * U);
     assert.equal(P.lenders.length, 2);
 
-    const propose = (who: Keypair, invoice: Buffer, debtor: PublicKey, face: number, advance: number, fee: number, due: number) =>
-      program.methods.advancePropose([...invoice], supplier.publicKey, debtor, new BN(face), new BN(advance), new BN(fee), new BN(due))
+    const propose = (who: Keypair, invoice: Buffer, debtor: PublicKey, face: number, advance: number, fee: number, due: number, analysis: Buffer = memo("x")) =>
+      program.methods.advancePropose([...invoice], [...analysis], supplier.publicKey, debtor, new BN(face), new BN(advance), new BN(fee), new BN(due))
         .accountsPartial({ signer: who.publicKey, pool, advance: advPda(invoice) }).signers([who]).rpc();
     const approve = (who: Keypair, invoice: Buffer, supplierAcc = supplier.publicKey) =>
       program.methods.advanceApprove().accountsPartial({ signer: who.publicKey, pool, advance: advPda(invoice), supplier: supplierAcc, config: configPda }).signers([who]).rpc();
@@ -577,6 +578,8 @@ describe("dareskro escrow on Solana", () => {
     await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 6 * U, now0 + 600), "FeeAboveFace");
     await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 + 91 * 86400), "TermTooLong");
     await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 - 10), "DeadlinePassed");
+    // no memo from the AI seat, no proposal: the analysis is mandatory, as in facture/politique.mjs
+    await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 + 600, Buffer.alloc(32)), "AnalysisRequired");
 
     // F-001: 50 due, 45 advanced, fee 1 — the AI seat proposes, the risk policy approves: paid, 2 of 3
     await propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 + 600);
@@ -590,6 +593,7 @@ describe("dareskro escrow on Solana", () => {
     let A = await program.account.advance.fetch(advPda(f1));
     assert.deepEqual(A.status, { funded: {} });
     assert.equal(A.approvals.length, 2);
+    assert.deepEqual(Buffer.from(A.analysis), memo("x"), "the AI seat's memo hash sits in the record");
     P = await program.account.pool.fetch(pool);
     assert.equal(P.outstanding.toNumber(), 45 * U);
     assert.equal(P.capital.toNumber(), 160 * U - 500_000, "the act fee left the book");
@@ -609,6 +613,10 @@ describe("dareskro escrow on Solana", () => {
     // and an advance above 90 % of the face, however many sign
     await propose(ia, f4, d2.publicKey, 50 * U, 46 * U, 0, now0 + 600);
     await refused(approve(operator, f4), "AdvanceAboveCap");
+    // the absolute cap per debtor (46 here): 47 to d2 is 29.4 % of the capital, under the share cap, above the absolute one
+    const f5 = inv("F-2026-005");
+    await propose(ia, f5, d2.publicKey, 60 * U, 47 * U, 0, now0 + 600);
+    await refused(approve(policy, f5), "DebtorCapBreached");
 
     // F-003: 40 due in a few seconds, 36 advanced, fee 1 — funded (37 / 160 = 23 %)
     const dueF3 = (await chainNow()) + 6;
@@ -680,7 +688,7 @@ describe("dareskro escrow on Solana", () => {
     assert.equal(P.deposits.toNumber(), 0);
 
     // the operator deletes the settled records and the never-funded proposals; rent comes back
-    for (const f of [f1, f2, f3, f4]) await closeAdv(f);
+    for (const f of [f1, f2, f3, f4, f5]) await closeAdv(f);
     assert.isNull(await program.account.advance.fetchNullable(advPda(f1)));
     await setFee(0, 0);
     await program.methods.withdrawFees().accountsPartial({ admin: payer.publicKey }).rpc(); // the two act fees, so the next test starts from an empty till

@@ -464,11 +464,17 @@ paid (`tesSUCCESS`) — **the ledger knew no cap, only a signer held it**. XLS-6
 on devnet with `DebtMaximum` (`tecLIMIT_EXCEEDED`), but it is not on mainnet.
 
 Here the program is the pool. `pool_create` writes the ceilings into the account —
-`max_share_bps` (one debtor's exposure over the capital), `max_advance_bps` (advance over
-face), `max_term`, `grace` — and `advance_approve` checks them **at the moment the threshold
-is reached**, after the signatures are verified. Two valid signatures out of three cannot
+`max_share_bps` (one debtor's exposure over the capital), `max_debtor_abs` (the same, in
+lamports whatever the capital), `max_advance_bps` (advance over face), `max_term`, `grace` —
+and `advance_approve` checks them **at the moment the threshold is reached**, after the
+signatures are verified. No proposal exists without the AI seat's memo: `advance_propose`
+carries the SHA-256 of the analysis next to the dossier's (`AnalysisRequired` otherwise) — the
+"analyse obligatoire et ancrée" of `facture/politique.mjs`, held by the program instead of by
+a signer. The rule is Faktura's (Casper, 2026): *the AI approves, only the contract moves the
+money*. Two valid signatures out of three cannot
 pay what the policy refuses; the refusal is the program's (`ConcentrationBreached`,
-`AdvanceAboveCap`, `PoolIlliquid`), and a refused approval is not even recorded. The rest
+`DebtorCapBreached`, `AdvanceAboveCap`, `PoolIlliquid`), and a refused approval is not even
+recorded. The rest
 is the XRPL scenario written as instructions:
 
 | instruction | who | what |
@@ -476,55 +482,56 @@ is the XRPL scenario written as instructions:
 | `pool_create(id, signers, threshold, policy)` | the operator | the pool account (PDA `["pool", operator, id]`) and its ceilings, fixed at creation |
 | `pool_deposit(amount)` | a lender (≤ 5) | lamports into the pool, a claim on the book |
 | `pool_withdraw()` | a lender | its share: deposit × capital ÷ deposits, out of cash not on advances; a loss lowers it, fees earned raise it |
-| `advance_propose(invoice, supplier, debtor, face, advance, fee, due)` | one signer | `invoice` is the SHA-256 of the canonical dossier (`facture.mjs`, `empreinte`), the fingerprint the XRPL version anchors; shape checks only |
+| `advance_propose(invoice, analysis, supplier, debtor, face, advance, fee, due)` | one signer | `invoice` is the SHA-256 of the canonical dossier (`facture.mjs`, `empreinte`), the fingerprint the XRPL version anchors; `analysis` the SHA-256 of the AI seat's memo, never empty; shape checks only |
 | `advance_approve()` | another signer | the approval that reaches the threshold pays the supplier, after the ceilings; dareskro's fee per act leaves the pool here |
 | `advance_repay(amount)` | the debtor, or anyone | into the advance account; once advance + fee are covered: pool repaid, fee booked, surplus to the supplier, same call |
 | `advance_default()` | a signer, after due + grace | the loss leaves the book (the lenders carry it), what was partly paid goes to the pool; **nothing is seized**, the program holds nothing of the supplier's |
 | `advance_buyback()` | the supplier, or anyone for it | the recourse: what is unpaid goes to the pool, the loss leaves the book |
 | `advance_close()` | the operator | deletes a settled or never-funded record; a Funded one stays |
 
-Test: `anchor test` replays it on a local validator (15 passing). Devnet: `node client/affacturage.mjs measure`
+Test: `anchor test` replays it on a local validator (15 passing, the absolute cap and the missing memo included). Devnet: `node client/affacturage.mjs measure`
 (the three seats and the parties are throwaway keys in `client/cles/affacturage/`, the dossiers are
 `facture/pieces/F-2026-00{1,2,3}.txt` canonicalised exactly as on XRPL). Unit: 0.01 SOL, so that the
 numbers are the XRPL run's (pool 160, advances 45 / 54 / 36).
 
-### Measured on devnet, 05/11/2026 09:30 UTC — pool [`DddwWVqJ…`](https://explorer.solana.com/address/DddwWVqJUQsWrFZj6ib4uRV7Xp38qNUHcbiAQMsUXEff?cluster=devnet), `client/sortie/affacturage.log`
+### Measured on devnet, 05/11/2026 09:38 UTC — pool [`hsfRkEtS…`](https://explorer.solana.com/address/hsfRkEtSf39K4KgQAY3JndacW8rmfcWpXdYLuuRiaJH?cluster=devnet), `client/sortie/affacturage.log`
 
-Schedule in force: 0 bps, floor 0.0005 SOL per act, paid by the pool.
+Schedule in force: 0 bps, floor 0.0005 SOL per act, paid by the pool. Program redeployed at slot 518895329 (608 424 bytes, after `solana program extend 120000`). A first run at 09:30 (pool `DddwWVqJ…`) measured the same scenario without the memo and the absolute cap.
 
 | step | what the program did | |
 |---|---|---|
-| 1 | pool DddwWVqJUQsWrFZj6ib4uRV7Xp38qNUHcbiAQMsUXEff created: 2 of 3, one debtor ≤ 30 % of the capital, advance ≤ 90 % of the face, term ≤ 90 d, grace 20 s | [tx](https://explorer.solana.com/tx/5x9mDQ1GmF5U24EmgL7JToFUvLdT3YjQotG8n5gtQEv6hP9h32vjExHqauS2ZHdN4JzzBv236yZXvUvxVuhfmLr8?cluster=devnet) |
-| 2a | lender A deposits 80 (0.8 SOL) | [tx](https://explorer.solana.com/tx/2Y1Yg9kGPC9JpcbGTXo8CQqmg4L5e1QYHTPBRjJceKuCXMAH5n4ts5occctUEtjaHa49xdureTXFkV3qVLwe8yAy?cluster=devnet) |
-| 2b | lender B deposits 80 — capital 160 | [tx](https://explorer.solana.com/tx/2TjAQyoCfoxcXF7Mb1Bmtjiu2d7H5EjfDyHFpHpph1mNhyF531r1fQhsdtkABX5tK4h9mScfGaeyacRpKRpP9MUR?cluster=devnet) |
+| 1 | pool hsfRkEtSf39K4KgQAY3JndacW8rmfcWpXdYLuuRiaJH created: 2 of 3, one debtor ≤ 30 % of the capital and ≤ 100 absolute, advance ≤ 90 % of the face, term ≤ 90 d, grace 20 s, the AI seat's memo mandatory | [tx](https://explorer.solana.com/tx/4evJxRow9KVyKkx1dkiUh3h2sw5nkEw3NNnk4bKGrLq27JkRCVpLfvwxJ8iXjZwDUk6uZA2wbPa6moYzLgBsC5KH?cluster=devnet) |
+| 2a | lender A deposits 80 (0.8 SOL) | [tx](https://explorer.solana.com/tx/5BKn3QjsDBrDReUguiF5X2zgA9d4AH7FpB8ytjnsniFjjTcRhSSt1ok9p8c66iSgaw1C6TrL8kuVRR7gWRqz3v6P?cluster=devnet) |
+| 2b | lender B deposits 80 — capital 160 | [tx](https://explorer.solana.com/tx/4nwrjrVtNBFx2uhQS9uqo1pEBr8EeKDtc8BhJvtxD2U8a1wCvR8cYqCnZNQrQokzRpJSXP5SygbsTo7nxJmEWom7?cluster=devnet) |
 | · | a stranger proposes F-001: refused — NotAParty | |
-| 3 | F-001 (dossier 030103724892…): 50 due, 45 asked, fee 1 — proposed by the AI seat, 1 of 2 | [tx](https://explorer.solana.com/tx/22gEMR4TxBCkK7kf18yz5TTcvzMK4qVZ3fCUdaNgqS8UF38LBFVzut3WxmwjT4TU8jWC6NLMxHnNynY5CoHbSUFD?cluster=devnet) |
+| · | the AI seat proposes F-001 without its memo: refused — AnalysisRequired | |
+| 3 | F-001 (dossier 7478bd584137…, memo dbbfeb80e4c9…): 50 due, 45 asked, fee 1 — proposed by the AI seat with its memo anchored, 1 of 2 | [tx](https://explorer.solana.com/tx/5qnisu7eLCZ2iMPvQtL71xvHETxGawMzMRWErTB5en15Wryt5LwkRfSPHYquEfoi8ttTKEhgNsm4KSQkuXAJsCeL?cluster=devnet) |
 | · | the AI seat approves its own proposal again: refused — AlreadyApproved | |
 | · | a stranger approves: refused — NotAParty | |
-| 4 | F-001 approved by the risk policy: 2 of 2, the supplier receives 45 (0.600 → 1.050 SOL); the act fee 0.0005 SOL left the pool — capital 159.95, outstanding 45, losses 0, fees earned 0, exposures A1rJtd… 46 | [tx](https://explorer.solana.com/tx/2oPCwcvDwNdev6c8E4wSb5Bsrc6kjyZs8BF3hMNnqsvCdMy4xTT6RpWsd5nf2ognPKLsyHvqz3pS8zXPg5r7cXDb?cluster=devnet) |
-| 5 | F-002: 60 due, 54 asked for a second debtor — 54 / 160 = 33.75 % of the capital, above the 30 % cap; proposed by the AI seat | [tx](https://explorer.solana.com/tx/4UPGU42YFrr34K1cNeH9Pm7BNjDJsPdzaTmmLAzSTB8ZyCMpFQmCzwLBvupvgVx8gH2vpaw5pmRM5XJ8USHY556D?cluster=devnet) |
+| 4 | F-001 approved by the risk policy: 2 of 2, the supplier receives 45 (1.180 → 1.630 SOL); the act fee 0.0005 SOL left the pool — capital 159.95, outstanding 45, losses 0, fees earned 0, exposures A1rJtd… 46 | [tx](https://explorer.solana.com/tx/3RWCNohLD7c3RPX3XC5jpk6jqsdGxaeYG7BwttrCfjCh3ufKQfUi67x4p3Ka4TJyfVah8PvyGFzuZn2ELRJ5XE62?cluster=devnet) |
+| 5 | F-002: 60 due, 54 asked for a second debtor — 54 / 160 = 33.75 % of the capital, above the 30 % cap; proposed by the AI seat | [tx](https://explorer.solana.com/tx/xzv8xRYoSRwGRE6tkYTdb4EYLTWM6SCSk6J14iS4dCunQ6powmkYAFCZ9pxxz1YuvxD6Xy1dJoA7gfMzz3rDL2m?cluster=devnet) |
 | · | the operator approves F-002 (AI + operator = 2 of 3, as on XRPL): refused — ConcentrationBreached | |
 | · | the risk policy approves F-002 as well (3 of 3): refused — ConcentrationBreached | |
 | 6 | F-002 stays proposed with 1 approval recorded: the signatures were valid, the program refused (ConcentrationBreached, ConcentrationBreached) — on XRPL the same two signatures paid |  |
-| 7 | F-003: 40 due in 25 s, 36 advanced, fee 1 — operator + AI seat, paid — capital 159.9, outstanding 81, losses 0, fees earned 0, exposures A1rJtd… 46 86Z3ht… 37 | [tx](https://explorer.solana.com/tx/UUHxRn2CC7bfhHkniJXPW4rkcLoPB1TWC6Vrj9qCS8bA6LJpbZ3TKGbvVvPTCcp7ngMbbZ7yqq7gfXMkjAuD7Bf?cluster=devnet) |
+| 7 | F-003: 40 due in 25 s, 36 advanced, fee 1 — operator + AI seat, paid — capital 159.9, outstanding 81, losses 0, fees earned 0, exposures A1rJtd… 46 86Z3ht… 37 | [tx](https://explorer.solana.com/tx/2qiZFX6tosawkLENJNp1EfcyG6t1LBkQ6B3bxjxwJCEtvTU6aFNbLCAtdHG3YaZwjtFNRGLc1qjS6v4fAo1tgBQd?cluster=devnet) |
 | · | lender A withdraws while 81 are out on advances: refused — PoolIlliquid | |
-| 8 | F-001 paid by its debtor: 50 in — 46 to the pool (45 + fee 1), 4 to the supplier (1.410 → 1.450 SOL) — capital 160.9, outstanding 36, losses 0, fees earned 1, exposures 86Z3ht… 37 | [tx](https://explorer.solana.com/tx/3RdKFNcApSKuhp4ywnhdVt4CGxJsq5butpEcTz8irFdHKiy2La6t3b6FDk9K8H85v2an6uZZdUMYmDL5oUTQ8Y1X?cluster=devnet) |
-| 9 | F-003: the debtor pays 10 of 40, then nothing | [tx](https://explorer.solana.com/tx/44GAKDkm918iFepMgom9yLboSysF8uViNZWRceD7JU9gZYJpPUiE7MVio3TxSFrsfkZufP2WxCB68ogbNvHtpaEg?cluster=devnet) |
+| 8 | F-001 paid by its debtor: 50 in — 46 to the pool (45 + fee 1), 4 to the supplier (1.990 → 2.030 SOL) — capital 160.9, outstanding 36, losses 0, fees earned 1, exposures 86Z3ht… 37 | [tx](https://explorer.solana.com/tx/2iFY6NFhpdWias5CuHUMU4Gxc1rFSYK7AG5Gk6ynRNqnAiF2zgwJSMMGEhnJAjzmMuHUwhC4RmEbyDMTQNZ7HQYn?cluster=devnet) |
+| 9 | F-003: the debtor pays 10 of 40, then nothing | [tx](https://explorer.solana.com/tx/5X5pyThSkHPF8gJSjTD3tBdrFZmogUuPR2YbyHfLETCWECzpNaRLLcRKKP5MN25vgW9pV81KqpB7LQc8WPci7RnR?cluster=devnet) |
 | · | default written before due + grace: refused — DefaultTooEarly | |
 | · | buyback before any default: refused — NotDefaulted | |
 | · | a stranger writes the default: refused — NotAParty | |
-| 10 | F-003 in default, written by the AI seat after due + grace: loss 26 on the book (36 − 10), the 10 recovered go to the pool; the program seizes nothing — capital 134.9, outstanding 0, losses 26, fees earned 1, exposures none | [tx](https://explorer.solana.com/tx/MjmqeLBu8uahaSbEioEPRJopeXiwrH2iVAUYiyz9nDNKRN5H6hirQWJK9i9hSpjECK64rwY3kHbNn3cJAod3czW?cluster=devnet) |
-| 11 | lender A leaves: 80 × capital ÷ 160 = 67.450 (deposited 80) — it carries half the loss — capital 67.45, outstanding 0, losses 26, fees earned 1, exposures none | [tx](https://explorer.solana.com/tx/4a1Ai13ogFWA2XVJACysvu2Q1HzExCj7irfY54iHQEybeQKoDZuGHFzphgGzF6QYE42gikj1VEb7yyHviU47EBh1?cluster=devnet) |
-| 12 | F-003 bought back by the supplier: 27 unpaid (36 + 1 − 10) paid to the pool, the loss leaves the book — capital 94.45, outstanding 0, losses 0, fees earned 2, exposures none | [tx](https://explorer.solana.com/tx/4NBnRYFrs51o4mnEBU3nKGCQ8t7pszgkiXp6A4CU9VjkygrNSES1jZhV9BQCiku6BPnynSMPUDGJxLhfYtF5Fn2H?cluster=devnet) |
-| 13 | lender B leaves last with the whole book: 94.450 (deposited 80): the two fees earned, minus the act fees, A's share gone — capital 0, outstanding 0, losses 0, fees earned 2, exposures none | [tx](https://explorer.solana.com/tx/34zuYfTcHGv7pjaYuyCvfjTqsqDdEJFvJtVUkTpQRopHrnZUtYERYfMjbQRWDZARHTUtzV8wdKvCPSBrvuZbWspo?cluster=devnet) |
-| 14 | the operator deletes the three records, rent back — pool https://explorer.solana.com/address/DddwWVqJUQsWrFZj6ib4uRV7Xp38qNUHcbiAQMsUXEff?cluster=devnet | [tx](https://explorer.solana.com/tx/3nmxCGfGDmmPcRQvFrUfBXGX5etB98a71WuxyjQuVTcx1totkqG94MBtpYkJiCCjQwJquUGbWkfFp6uDHqDt4853?cluster=devnet) |
+| 10 | F-003 in default, written by the AI seat after due + grace: loss 26 on the book (36 − 10), the 10 recovered go to the pool; the program seizes nothing — capital 134.9, outstanding 0, losses 26, fees earned 1, exposures none | [tx](https://explorer.solana.com/tx/67dQmED4Po7YD9SMBasN7QZ3tqM4unJZcec1bHubmiXQZvANRQkwWCGZkYesVeJNE6fzyrrNPgQC54mz2qy6gQ4w?cluster=devnet) |
+| 11 | lender A leaves: 80 × capital ÷ 160 = 67.450 (deposited 80) — it carries half the loss — capital 67.45, outstanding 0, losses 26, fees earned 1, exposures none | [tx](https://explorer.solana.com/tx/5siHqD1mQKgQwTt7CtPFj1DdeMVVTnneX8AHYaGgP3Pj5c7aG9WaLktUDa6ijGhgSN5tCvMWWZuzjbsQzZWdSbRC?cluster=devnet) |
+| 12 | F-003 bought back by the supplier: 27 unpaid (36 + 1 − 10) paid to the pool, the loss leaves the book — capital 94.45, outstanding 0, losses 0, fees earned 2, exposures none | [tx](https://explorer.solana.com/tx/4GL5C4hLB54MUvoFJBpVX5kRK7osuDWSfHPDmdGDsdB6R7FTBuo6PcmRicEj7eteZpxMDB8BkxVDGJQypwqrtBtE?cluster=devnet) |
+| 13 | lender B leaves last with the whole book: 94.450 (deposited 80): the two fees earned, minus the act fees, A's share gone — capital 0, outstanding 0, losses 0, fees earned 2, exposures none | [tx](https://explorer.solana.com/tx/4aacAKAVB64TsAfY8gj1WAADqzoBjtpaju2G2Fn6UbZdQmYhqZqShDVjEocQSbKGxh6epkhWPyj1AoYgWAHNXYgJ?cluster=devnet) |
+| 14 | the operator deletes the three records, rent back — pool https://explorer.solana.com/address/hsfRkEtSf39K4KgQAY3JndacW8rmfcWpXdYLuuRiaJH?cluster=devnet | [tx](https://explorer.solana.com/tx/62TMmuWnvTBFjMhD9M8BBnawLY97Xuf8thAbFzVct1783aUB6q6kbPaznqSb5pbB2kyJviqFFHSBmXJYoDwqxHR1?cluster=devnet) |
 
 What this measures, against the XRPL run of 1 November: the same F-002 with the same two
-signatures is **refused by the program**, not by a signer's conscience; the loss of F-003 is
-carried by the lenders in proportion and lender A, who leaves before the buyback, takes it
-(67.45 for 80) while lender B, who leaves after, takes the whole book (94.45 for 80); the
-dareskro fee per act is a cost of the pool, visible in `capital` and in the `AdvanceFunded`
-event (`act_fee`).
+signatures is **refused by the program**, not by a signer's conscience; no proposal is even
+written without the AI seat's memo; the loss of F-003 is carried by the lenders in proportion
+and lender A, who leaves before the buyback, takes it (67.45 for 80) while lender B, who
+leaves after, takes the whole book (94.45 for 80); the dareskro fee per act is a cost of the
+pool, visible in `capital` and in the `AdvanceFunded` event (`act_fee`).
 
 ## Honest limits
 
@@ -541,7 +548,10 @@ event (`act_fee`).
   escrow already knows USDC; the pool does not yet), the lenders share pro rata without
   interest or seniority, the book is lamport-exact but not an accounting standard, and the
   pool's signers are plain keys — the AI seat's reading of the dossier happens off-chain, as
-  on XRPL, and only its decision reaches the program.
+  on XRPL; what reaches the program is its signature and the hash of its memo, not the memo.
+  The ceilings are fixed at the pool's creation: nobody, not even the operator, changes them
+  afterwards (a `pool_set_limits` under compiled caps would be the next step, with a policy
+  administrator key).
 - Devnet only for the hackathon. On mainnet the upgrade authority would be
   revoked before the first real escrow; the fee administrator (`set_fee`,
   `withdraw_fees`) is a separate key that survives that, bounded by the two

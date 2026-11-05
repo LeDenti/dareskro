@@ -61,13 +61,15 @@ function invoice(name, { supplier, debtor, pool, montant, avance, fraisPct, eche
     id: name, fournisseur: { nom: "Fournisseur SAS", adresse: supplier.toBase58() }, client: { nom: "Client SA", adresse: debtor.toBase58() },
     montant: String(montant), unite: "SOL×0.01", emission: "2026-11-05", echeance, pieces: [piece], tauxAvance: avance / montant, fraisPct, pool: pool.toBase58(),
   });
-  return { dossier: d, hash: Buffer.from(empreinte(d), "hex") };
+  // the AI seat's memo: a deterministic stand-in for facture/analyse.mjs (no LLM is called), anchored by its hash
+  const memo = { version: "dareskro/analyse/solana-standin", facture_sha256: d.sha256, faits: [`pièce ${piece.nom} présente, sha256 ${piece.sha256.slice(0, 12)}…`, `avance ${d.avance.montant} / ${d.montant} = ${(100 * d.avance.taux).toFixed(1)} %`], recommandation: "ACCEPTE" };
+  return { dossier: d, hash: Buffer.from(empreinte(d), "hex"), memo, analysis: sha256(Buffer.from(JSON.stringify(memo))) };
 }
 
 if (cmd === "show") {
   const pool = new PublicKey(a[0]);
   const P = await program.account.pool.fetch(pool);
-  console.log(JSON.stringify({ pool: pool.toBase58(), operator: P.operator.toBase58(), signers: P.signers.map((k) => k.toBase58()), threshold: P.threshold, policy: { maxShareBps: P.policy.maxShareBps, maxAdvanceBps: P.policy.maxAdvanceBps, maxTermS: P.policy.maxTerm.toNumber(), graceS: P.policy.grace.toNumber() }, capitalSol: P.capital.toNumber() / LAMPORTS, depositsSol: P.deposits.toNumber() / LAMPORTS, outstandingSol: P.outstanding.toNumber() / LAMPORTS, lossesSol: P.losses.toNumber() / LAMPORTS, feesEarnedSol: P.feesEarned.toNumber() / LAMPORTS, advancesFunded: P.advancesFunded.toNumber(), lenders: P.lenders.map((l) => ({ key: l.key.toBase58(), sol: l.amount.toNumber() / LAMPORTS })), exposures: P.exposures.map((e) => ({ debtor: e.debtor.toBase58(), owedSol: e.owed.toNumber() / LAMPORTS })) }, null, 2));
+  console.log(JSON.stringify({ pool: pool.toBase58(), operator: P.operator.toBase58(), signers: P.signers.map((k) => k.toBase58()), threshold: P.threshold, policy: { maxShareBps: P.policy.maxShareBps, maxAdvanceBps: P.policy.maxAdvanceBps, maxDebtorAbsSol: P.policy.maxDebtorAbs.toNumber() / LAMPORTS, maxTermS: P.policy.maxTerm.toNumber(), graceS: P.policy.grace.toNumber() }, capitalSol: P.capital.toNumber() / LAMPORTS, depositsSol: P.deposits.toNumber() / LAMPORTS, outstandingSol: P.outstanding.toNumber() / LAMPORTS, lossesSol: P.losses.toNumber() / LAMPORTS, feesEarnedSol: P.feesEarned.toNumber() / LAMPORTS, advancesFunded: P.advancesFunded.toNumber(), lenders: P.lenders.map((l) => ({ key: l.key.toBase58(), sol: l.amount.toNumber() / LAMPORTS })), exposures: P.exposures.map((e) => ({ debtor: e.debtor.toBase58(), owedSol: e.owed.toNumber() / LAMPORTS })) }, null, 2));
   const advances = await program.account.advance.all([{ memcmp: { offset: 8, bytes: pool.toBase58() } }]);
   for (const { publicKey, account: A } of advances) console.log(`advance ${publicKey.toBase58()} invoice ${Buffer.from(A.invoice).toString("hex").slice(0, 12)}… ${statusName(A.status)} face ${A.face.toNumber() / U} advance ${A.advance.toNumber() / U} fee ${A.fee.toNumber() / U} repaid ${A.repaid.toNumber() / U} approvals ${A.approvals.length}`);
 } else if (cmd === "leave") {
@@ -97,15 +99,15 @@ if (cmd === "show") {
   // the pool: 2 of 3, 30 % per debtor, 90 % of the face, 90 days, grace 20 s (the demo's)
   const id = new BN(Date.now());
   const pool = poolAddress(operator.publicKey, id);
-  const pol = { maxShareBps: 3000, maxAdvanceBps: 9000, maxTerm: new BN(90 * 86400), grace: new BN(20) };
+  const pol = { maxShareBps: 3000, maxDebtorAbs: new BN(100 * U), maxAdvanceBps: 9000, maxTerm: new BN(90 * 86400), grace: new BN(20) };
   let sig = await program.methods.poolCreate(id, [ia.publicKey, policy.publicKey, operator.publicKey], 2, pol).accountsPartial({ operator: operator.publicKey }).signers([operator]).rpc();
-  line(1, `pool ${pool.toBase58()} created: 2 of 3, one debtor ≤ 30 % of the capital, advance ≤ 90 % of the face, term ≤ 90 d, grace 20 s — ${explorerAccount(pool, cluster)}`, sig);
+  line(1, `pool ${pool.toBase58()} created: 2 of 3, one debtor ≤ 30 % of the capital and ≤ 100 absolute, advance ≤ 90 % of the face, term ≤ 90 d, grace 20 s, the AI seat's memo mandatory — ${explorerAccount(pool, cluster)}`, sig);
   const deposit = (who, n) => program.methods.poolDeposit(new BN(n * U)).accountsPartial({ lender: who.publicKey, pool }).signers([who]).rpc();
   sig = await deposit(lenderA, 80); line("2a", `lender A deposits 80 (0.8 SOL)`, sig);
   sig = await deposit(lenderB, 80); line("2b", `lender B deposits 80 — capital 160`, sig);
 
   const now = await chainNow(connection);
-  const propose = (who, inv, debtor, face, adv, fee, due) => program.methods.advancePropose([...inv.hash], supplier.publicKey, debtor, new BN(face * U), new BN(adv * U), new BN(fee * U), new BN(due)).accountsPartial({ signer: who.publicKey, pool, advance: advanceAddress(pool, inv.hash) }).signers([who]).rpc();
+  const propose = (who, inv, debtor, face, adv, fee, due, analysis = inv.analysis) => program.methods.advancePropose([...inv.hash], [...analysis], supplier.publicKey, debtor, new BN(face * U), new BN(adv * U), new BN(fee * U), new BN(due)).accountsPartial({ signer: who.publicKey, pool, advance: advanceAddress(pool, inv.hash) }).signers([who]).rpc();
   const approve = (who, inv) => program.methods.advanceApprove().accountsPartial({ signer: who.publicKey, pool, advance: advanceAddress(pool, inv.hash), supplier: supplier.publicKey, config: feeConfigAddress() }).signers([who]).rpc();
   const repay = (who, inv, n) => program.methods.advanceRepay(new BN(n * U)).accountsPartial({ payer: who.publicKey, pool, advance: advanceAddress(pool, inv.hash), supplier: supplier.publicKey }).signers([who]).rpc();
   const dflt = (who, inv) => program.methods.advanceDefault().accountsPartial({ signer: who.publicKey, pool, advance: advanceAddress(pool, inv.hash) }).signers([who]).rpc();
@@ -118,8 +120,9 @@ if (cmd === "show") {
   // F-001: 50 due in 30 days, 45 advanced, fee 1 — the AI seat proposes, the risk policy approves
   const f1 = invoice("F-2026-001", { supplier: supplier.publicKey, debtor: d1.publicKey, pool, montant: 50, avance: 45, fraisPct: 2, echeance: "2026-12-05" });
   await refused("a stranger proposes F-001", propose(stranger, f1, d1.publicKey, 50, 45, 1, now + 30 * 86400));
+  await refused("the AI seat proposes F-001 without its memo", propose(ia, f1, d1.publicKey, 50, 45, 1, now + 30 * 86400, Buffer.alloc(32)));
   sig = await propose(ia, f1, d1.publicKey, 50, 45, 1, now + 30 * 86400);
-  line(3, `F-001 (dossier ${f1.hash.toString("hex").slice(0, 12)}…): 50 due, 45 asked, fee 1 — proposed by the AI seat, 1 of 2`, sig);
+  line(3, `F-001 (dossier ${f1.hash.toString("hex").slice(0, 12)}…, memo ${f1.analysis.toString("hex").slice(0, 12)}…): 50 due, 45 asked, fee 1 — proposed by the AI seat with its memo anchored, 1 of 2`, sig);
   await refused("the AI seat approves its own proposal again", approve(ia, f1));
   await refused("a stranger approves", approve(stranger, f1));
   const s0 = await bal(supplier);
@@ -175,7 +178,7 @@ if (cmd === "show") {
   for (const inv of [f1, f2, f3]) sig = await closeAdv(inv);
   line(14, `the operator deletes the three records, rent back — pool ${explorerAccount(pool, cluster)}`, sig);
   const file = join(OUT, `affacturage_${stamp}.json`);
-  writeFileSync(file, JSON.stringify({ cluster, program: PROGRAM_ID.toBase58(), pool: pool.toBase58(), policy: pol, unitLamports: U, seats: { ia: ia.publicKey.toBase58(), policy: policy.publicKey.toBase58(), operator: operator.publicKey.toBase58() }, invoices: { f1: f1.dossier, f2: f2.dossier, f3: f3.dossier }, rows }, null, 2));
+  writeFileSync(file, JSON.stringify({ cluster, program: PROGRAM_ID.toBase58(), pool: pool.toBase58(), policy: pol, unitLamports: U, seats: { ia: ia.publicKey.toBase58(), policy: policy.publicKey.toBase58(), operator: operator.publicKey.toBase58() }, invoices: { f1: { dossier: f1.dossier, memo: f1.memo }, f2: { dossier: f2.dossier, memo: f2.memo }, f3: { dossier: f3.dossier, memo: f3.memo } }, rows }, null, 2));
   console.log(`→ ${file}`);
 } else {
   console.log("usage: node affacturage.mjs measure | show <pool> | leave <pool>");

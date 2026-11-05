@@ -677,6 +677,7 @@ pub mod dareskro_escrow {
     pub fn advance_propose(
         ctx: Context<AdvancePropose>,
         invoice: [u8; 32],
+        analysis: [u8; 32],
         supplier: Pubkey,
         debtor: Pubkey,
         face: u64,
@@ -687,6 +688,7 @@ pub mod dareskro_escrow {
         let signer = ctx.accounts.signer.key();
         let p = &ctx.accounts.pool;
         require!(p.signers.contains(&signer), EscrowError::NotAParty);
+        require!(analysis != [0u8; 32], EscrowError::AnalysisRequired);
         require!(supplier != Pubkey::default() && debtor != Pubkey::default(), EscrowError::NoDestination);
         require!(face > 0 && advance > 0, EscrowError::ZeroAmount);
         require!(advance <= face, EscrowError::AmountExceeds);
@@ -697,6 +699,7 @@ pub mod dareskro_escrow {
         let a = &mut ctx.accounts.advance;
         a.pool = p.key();
         a.invoice = invoice;
+        a.analysis = analysis;
         a.supplier = supplier;
         a.debtor = debtor;
         a.face = face;
@@ -711,15 +714,15 @@ pub mod dareskro_escrow {
         a.funded_at = None;
         a.closed_at = None;
         a.bump = ctx.bumps.advance;
-        emit!(AdvanceProposed { advance: a.key(), pool: a.pool, invoice, supplier, debtor, face, amount: advance, fee, due, by: signer });
+        emit!(AdvanceProposed { advance: a.key(), pool: a.pool, invoice, analysis, supplier, debtor, face, amount: advance, fee, due, by: signer });
         Ok(())
     }
 
     /// Another signer approves. The approval that reaches the threshold pays the
     /// supplier in the same call — **after** the program checked the pool's
     /// ceilings: advance ≤ `max_advance_bps` of the face, the debtor's exposure
-    /// (this advance and its fee included) ≤ `max_share_bps` of the capital, and
-    /// cash on hand. Two signers out of three cannot pass what the policy
+    /// (this advance and its fee included) ≤ `max_share_bps` of the capital and
+    /// ≤ `max_debtor_abs`, and cash on hand. Two signers out of three cannot pass what the policy
     /// refuses: the refusal comes from the program, with the signatures valid.
     /// The dareskro fee per act is taken from the pool here, as a cost.
     pub fn advance_approve(ctx: Context<AdvanceApprove>) -> Result<()> {
@@ -744,6 +747,10 @@ pub mod dareskro_escrow {
         require!(
             (already + owed) as u128 * 10_000 <= p.capital as u128 * p.policy.max_share_bps as u128,
             EscrowError::ConcentrationBreached
+        );
+        require!(
+            p.policy.max_debtor_abs == 0 || already + owed <= p.policy.max_debtor_abs,
+            EscrowError::DebtorCapBreached
         );
         require!(a.advance <= p.capital - p.outstanding, EscrowError::PoolIlliquid);
         // dareskro's fee per act, paid by the pool on top of the advance
@@ -1719,6 +1726,8 @@ pub struct AdvanceClose<'info> {
 pub struct PoolPolicy {
     /// of the pool's capital, what one debtor may owe, the new advance and its fee included
     pub max_share_bps: u16,
+    /// in lamports, what one debtor may owe at most, whatever the capital (0: no absolute cap)
+    pub max_debtor_abs: u64,
     /// of the invoice's face, what may be advanced
     pub max_advance_bps: u16,
     /// seconds between the proposal and the invoice's due date, at most
@@ -1783,6 +1792,9 @@ pub struct Advance {
     pub pool: Pubkey,
     /// SHA-256 of the canonical dossier, the fingerprint the XRPL version anchors
     pub invoice: [u8; 32],
+    /// SHA-256 of the AI seat's memo on this dossier (`facture/analyse.mjs`): anchored here
+    /// before any funding, never empty — what the policy of `facture/` calls "analyse obligatoire"
+    pub analysis: [u8; 32],
     pub supplier: Pubkey,
     pub debtor: Pubkey,
     pub face: u64,
@@ -1843,6 +1855,7 @@ pub struct AdvanceProposed {
     pub advance: Pubkey,
     pub pool: Pubkey,
     pub invoice: [u8; 32],
+    pub analysis: [u8; 32],
     pub supplier: Pubkey,
     pub debtor: Pubkey,
     pub face: u64,
@@ -2017,4 +2030,8 @@ pub enum EscrowError {
     NotDefaulted,
     #[msg("the advance does not belong to this pool")]
     WrongPool,
+    #[msg("no advance without the AI seat's memo: its SHA-256 must be anchored with the proposal")]
+    AnalysisRequired,
+    #[msg("refused by the program: this debtor would owe more than the pool's absolute cap per debtor")]
+    DebtorCapBreached,
 }
