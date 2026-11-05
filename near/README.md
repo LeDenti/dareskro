@@ -15,6 +15,11 @@ cannot move except through the contract's own methods. Tags: `pre-hackathon` (d3
 
 Developer feedback for the NEAR team, every item pinned to a line of code or a transaction: [`FEEDBACK.md`](FEEDBACK.md).
 
+**After the submission, 5 November 2026:** the contract keeps a **claimable balance** for every transfer the chain refuses (the answer to
+near-sdk-rs [#1666](https://github.com/near/near-sdk-rs/issues/1666), measured below). `dareskro.testnet` cannot be redeployed, so this
+version runs on `dareskro-v2.testnet` ([deploy](https://testnet.nearblocks.io/txns/CzjumvVentpCiikLFXH2eeTrtvA6VY8L59Phv8kZ6kJn)), which keeps its
+keys for now; `DARESKRO_CONTRACT=dareskro-v2.testnet` points every script at it.
+
 ## What changes when the ledger has no escrow
 
 On the XRP Ledger `EscrowCreate` is a native transaction: the ledger itself holds the money and enforces the date. NEAR has no native
@@ -29,6 +34,7 @@ measured on XRPL are written as code and measured again:
 | release by a secret | `Condition` / `Fulfillment` (PREIMAGE-SHA-256) | `condition` = sha256 hex; `finish(id, fulfillment)` checks it and **records the secret on chain** |
 | several payees, one signature, all or nothing | Batch (XLS-56) | `create_batch(items)`: amounts + storage must fit the deposit or nothing is created; surplus returned |
 | who holds the funds | the ledger | the contract account — **after `deploy_near.mjs lock` it has no keys left**: nobody can change the code or move the balance except through `create` / `finish` / `cancel`; the administrator account can only set the fee per act and withdraw what was charged |
+| the destination no longer exists | the ledger refuses `EscrowFinish` (`tecNO_DST`), the escrow stays | the transfer is refused, the record is closed and the amount is **credited to the destination's name**: `claim()` by the name, `claim_for(name)` by the payer after 30 days (v2, below) |
 
 Three records live next to the escrows, the first two measured on 01/11, the third on 02/11 (tables below):
 
@@ -214,6 +220,67 @@ fills: at the deadline a stranger returns the two shares to their payers in one 
 | 21:45:31 | 7b dareskro-stranger.testnet returns the shares → Cancelled: guarantor 9.6293 → 9.8289 NEAR, tenant 11.4160 → 11.4232 NEAR, closed by dareskro-stranger.testnet | [D9Bj7o5H…](https://testnet.nearblocks.io/txns/D9Bj7o5H8AKSSgtPwPYGa2cPk9xPKgQfuNbsKrhxhQkh) |
 | 21:45:33 | 7c refund twice → refused: pool full or closed: nothing to return | [FEqQJDgN…](https://testnet.nearblocks.io/txns/FEqQJDgNv1MNXjsy5NdZjgVcSZi8iMqyPR5WRoRghLBk) |
 
+## Measured on testnet, 05/11/2026 18:54–18:56 UTC — the transfer the chain refuses, and the claimable balance
+
+Issue near-sdk-rs [#1666](https://github.com/near/near-sdk-rs/issues/1666), filed on 2 November: after `Promise::and(a, b).then(callback)`, the
+callback could not tell which leg had failed, and a transfer refused by the chain (the receiving account deleted between creation and the
+date) came back to the contract with nothing recording it. The maintainer's answer: the results come back in the flattened join order
+(`a.and(b.and(c))` → `[a, b, c]`) with no receiver attached, so pass the legs to the callback yourself; and do not retry, credit the amount
+to a balance the receiver can claim, because a deleted name can be re-registered by someone else. PR [#1668](https://github.com/near/near-sdk-rs/pull/1668)
+(open) adds `#[callback_vec] results: Vec<Result<T, PromiseError>>` keeping the failures as `Err`. dareskro
+[promised on the issue](https://github.com/near/near-sdk-rs/issues/1666#issuecomment-6665500283) to do exactly that; this is it.
+
+**What the contract does now** (`contract/src/lib.rs`, section "the claimable balance"). Every payout — `finish`, `cancel`, the two legs of
+a decided deposit, `vault_timeout`, `pool_finish`, every share of `pool_refund`, `withdraw_fees`, and the surplus returned by `create_batch`,
+`issue_payslip` and `pool_fund` — goes through one `pay(legs)`: a transfer per leg, joined, then `on_paid(legs)`, which reads the results by
+index (`env::promise_result_checked(i)` for now, `#[callback_vec]` once #1668 lands — the `TODO #1668` in the code) and, for each refused leg,
+credits `Claimable { amount, payer, since, act }` under the receiver written at creation (`credit_claimable` event). The record stays closed;
+nothing is retried. `claim()` pays the name everything credited to it; `claim_for(name)` pays the payer of the act back, line by line, once
+`CLAIM_DELAY` (30 days, `claim_delay()`) has passed since the credit. Both remove the lines **before** the transfer and write them back,
+dates unchanged, if that transfer fails in turn (`claim_failed`): no double withdrawal, nothing lost. Views: `claimable_of(name)`,
+`claimable_lines(name)`, `claimable_total()`. The lines' storage comes from the contract's balance and is freed on claim. `migrate()` reads
+the fourth deployment's state and adds the empty map (not run: `dareskro.testnet` has no key).
+
+What this does not solve: the name *is* the receiver. Whoever registers the deleted name again can claim within the 30 days — on testnet
+below it is the same employer, with a new key each time. The payer's recourse is `claim_for` after the delay; a shorter delay or a
+per-escrow delay is a parameter, not a redesign.
+
+**Measured.** Contract `dareskro-v2.testnet`, employer `dareskro-employer.testnet`, the receiver `fantome2.dareskro-employer.testnet`
+(a sub-account the employer creates, deletes and re-creates). Full log: [`reclamation.log`](reclamation.log); every hash, event and state:
+[`compte_rendu_claimable.json`](compte_rendu_claimable.json). Script: [`reclamation_near.mjs`](reclamation_near.mjs).
+
+| UTC | step | tx |
+|---|---|---|
+| 18:55:17 | 1 the employer creates `fantome2.dareskro-employer.testnet` with 0.2 NEAR | [28g6GQoX…](https://testnet.nearblocks.io/txns/28g6GQoXqAuXcxm29DFJAaWCo4Crh5bQJ8Z4r5oTFNBF) |
+| 18:55:19 | 1b escrow #2: 0.2970 NEAR to that name, no date, payable by anyone | [4xe19GsB…](https://testnet.nearblocks.io/txns/4xe19GsBny9Jg5yV95rUdQwGooiVpGJZT9kLDvbyqpQU) |
+| 18:55:26 | 2 the name deletes itself, balance to the employer | [5UNGVbKA…](https://testnet.nearblocks.io/txns/5UNGVbKAoWzweTKkNy2BdRhrhxkYMXtNYoWHETHmHYaj) |
+| 18:55:33 | 3 a stranger finishes → the transfer is refused, callback `false`; escrow **Finished**, **0.2970 NEAR claimable by the name** (payer the employer, act `escrow:2`), events `transfer_failed` + `credit_claimable`; contract balance 10.5974 → 10.5974 NEAR | [HKQinjUF…](https://testnet.nearblocks.io/txns/HKQinjUF91W3mcYAALLwfn3b9AxLT2JiTceW4yFeVtc2) |
+| 18:55:36 | 4a a stranger claims → `nothing to claim` | [CD24LfiC…](https://testnet.nearblocks.io/txns/CD24LfiC5uBZMSwrM7iGk1mG4RCaPTdCzhSoLCRmGeb) |
+| 18:55:37 | 4b a stranger claims for the name → `you are not the payer of any credit to this account` | [Efo6mydV…](https://testnet.nearblocks.io/txns/Efo6mydV3mUjMvgUbWF55AFyskumFUmz52EMYJEGFMCk) |
+| 18:55:39 | 4c the payer, the same day → `too early: the receiver has 30 days to claim before the payer may take it back` | [9pdUYXaF…](https://testnet.nearblocks.io/txns/9pdUYXaFDjJZ2Q4XS6cq5F1EZ2id1Ez7nguuQawohzhA) |
+| 18:55:42 | 5 the employer registers the name again, new key, 0.1 NEAR | [5eQeRJxw…](https://testnet.nearblocks.io/txns/5eQeRJxwBkXwSbv1w18bzjTfMe4iFhuje4ni31eEKPzN) |
+| 18:55:48 | 5b the name claims → callback `true`: 0.1000 → 0.3965 NEAR (+0.2965, the call's gas aside), claimable 0 | [H1WZjCFR…](https://testnet.nearblocks.io/txns/H1WZjCFR5BAGoCeWko9YbvxMREFPf2XnURjb8m7gptr2) |
+| 18:55:50 | 5c claim twice → `nothing to claim` | [F1zQritR…](https://testnet.nearblocks.io/txns/F1zQritRRC2dMvxbxBXvRvhjbDRCmJZM7m5zYNvdgrbJ) |
+| 18:55:53 | 6 deposit vault #1: 0.4959 NEAR by the tenant `dareskro-employee.testnet`, beneficiary the name, 2 of 3 | [BAt4Krtz…](https://testnet.nearblocks.io/txns/BAt4Krtz6Q1mdACRfix81aZMn23wLMgRC4BiTUc3tbpJ) |
+| 18:55:55 | 6b the name deletes itself again | [8Rxtu6io…](https://testnet.nearblocks.io/txns/8Rxtu6io5CAnGQYaWczh7kG9YUps1pPz79hThUqy6yif) |
+| 18:55:57 | 6c the mediator votes 0.15 NEAR to the beneficiary → recorded, nothing moves | [EupmcFyP…](https://testnet.nearblocks.io/txns/EupmcFyPybjPYQ53vHhPDWd6cxBPDzyaH7uuYei2KPZ2) |
+| 18:56:03 | 6d the stranger votes the same → **Finished**, two legs: the tenant's **landed** (10.9230 → 11.2689 NEAR, +0.3459), the beneficiary's **refused and credited**, 0.1500 NEAR to the name (payer the tenant, act `vault:1`); callback `false` | [6oWdB3D3…](https://testnet.nearblocks.io/txns/6oWdB3D3zV3cvVKEQJEunDUaS8xuEGNY2TMQmtZzvknB) |
+| 18:56:05 | 7 the name registered a third time | [Hy9B2kD8…](https://testnet.nearblocks.io/txns/Hy9B2kD8KnrzLTV9cKtAUQdbBTuEyWstmb6JUKpmPGVw) |
+| 18:56:10 | 7b the name claims the 0.15 → 0.1000 → 0.2495 NEAR; nothing left for it | [Bzf3DYvL…](https://testnet.nearblocks.io/txns/Bzf3DYvLNDiRq7vt3aFjiAkUM6kBTUgSMiqSTB9aGDbb) |
+| 18:56:12 | 7c the name deleted, balance back to the employer | [BKVMQiSM…](https://testnet.nearblocks.io/txns/BKVMQiSMKbRNR22feBMC6juYNnjaJNVmT7HNrHVBtNBy) |
+
+The contract's `claimable_total` ends at 0.2970 NEAR: that is escrow #1 of a first run at 18:54 UTC ([finish refused and credited](https://testnet.nearblocks.io/txns/AUZcXBX14HwtqQ5zJy9tobw5AVqEwbqwXHX9CtZ7oQ7t)),
+credited to `fantome.dareskro-employer.testnet`, whose second key the script of that run kept only in memory and lost when the run stopped
+(the re-registered name had 0.05 NEAR, under the 0.061 NEAR a 60 TGas call prepays). A real case of the rule: the name cannot claim, the
+employer can take it back with `claim_for` from 5 December 2026. The script now writes the name's key to `cles/` (never in git).
+
+The same five scenarios run against a local node in [`contract/tests/escrow.rs`](contract/tests/escrow.rs): the refused `finish` credited
+and claimed by the re-registered name; `claim_for` refused a day short and accepted at 30 days (the sandbox clock gains 0.3 s per
+fast-forwarded block, 86 s of wall time for 10 000 blocks, so the credit's date is moved back in the state with `patch_state` rather than
+8.6 million blocks produced); the two-leg deposit with the beneficiary gone; the claim whose own transfer is refused (the name deleted,
+with a second key, between the claim and the transfer) credited again; the pool refund with one payer gone. Four unit tests mock the
+promise results. 25 unit tests and 12 sandbox tests, all green.
+
 ## Do X, see Y
 
 ```bash
@@ -222,9 +289,9 @@ brew install rustup near && rustup-init -y && rustup target add wasm32-unknown-u
 # on macOS 26 with a beta SDK, cargo may need: export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
 
 cd near/contract
-cargo test --lib                      # 21 unit tests, 40 s the first time
-cargo test --test escrow              # 7 sandbox tests on a real local node (downloads near-sandbox once), ≈ 2 min
-cargo near build non-reproducible-wasm   # → target/near/dareskro_escrow.wasm, 311 KB
+cargo test --lib                      # 25 unit tests, 40 s the first time
+cargo test --test escrow              # 12 sandbox tests on a real local node (downloads near-sandbox once), ≈ 2 min
+cargo near build non-reproducible-wasm   # → target/near/dareskro_escrow.wasm, 333 KB
 
 cd ..
 npm install
@@ -233,6 +300,7 @@ for a in dareskro dareskro-employer dareskro-employee dareskro-oracle dareskro-s
   near account create-account sponsor-by-faucet-service $a.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
 done
 node deploy_near.mjs deploy --admin dareskro-oracle.testnet   # deploy + new(admin) on dareskro.testnet (DARESKRO_CONTRACT to change the name)
+DARESKRO_CONTRACT=dareskro-v2.testnet node reclamation_near.mjs   # the refused transfer credited, refused claims, the name claims; reclamation.log
 node scelle.mjs init                  # the four readers' X25519 keys (near/cles/, never in this repo) and cles_publiques.json
 node demo_near.mjs                    # the 10 steps above, ≈ 4 min; writes run.log and compte_rendu.json
 node scelle.mjs open <sealed.json> retraite   # the pension fund reads a sealed payslip with its key
@@ -252,8 +320,9 @@ names are taken, create your own with `DARESKRO_CONTRACT=<you>.testnet` and the 
 
 | file | what |
 |---|---|
-| `contract/src/lib.rs` | the contract: escrows (`create`, `create_batch`, `finish`, `cancel`), sealed payslips (`issue_payslip`, NEP-171/177 views, transfers refused), deposits (`vault_create`, `vault_vote`, `vault_timeout`), pools (`pool_create`, `pool_fund`, `pool_finish`, `pool_refund`), the fee per act (`set_fee`, `set_admin`, `withdraw_fees`, `fee`, `fees`), views; `migrate`; 21 unit tests |
-| `contract/tests/escrow.rs` | sandbox tests: payroll's one possible outcome, delivery by secret and refund at the deadline, batch all-or-nothing, the payslip token, the deposit decided 2 of 3 or returned at the deadline, the fee zero by default then set, charged, held and withdrawn, the pool filled by three payers and paid at the date or its shares returned at the deadline |
+| `contract/src/lib.rs` | the contract: escrows (`create`, `create_batch`, `finish`, `cancel`), sealed payslips (`issue_payslip`, NEP-171/177 views, transfers refused), deposits (`vault_create`, `vault_vote`, `vault_timeout`), pools (`pool_create`, `pool_fund`, `pool_finish`, `pool_refund`), the fee per act (`set_fee`, `set_admin`, `withdraw_fees`, `fee`, `fees`), the claimable balance (`pay` / `on_paid`, `claim`, `claim_for`, `claimable_of`, `claimable_lines`, `claimable_total`, `claim_delay`), views; `migrate`; 25 unit tests |
+| `contract/tests/escrow.rs` | sandbox tests: payroll's one possible outcome, delivery by secret and refund at the deadline, batch all-or-nothing, the payslip token, the deposit decided 2 of 3 or returned at the deadline, the fee zero by default then set, charged, held and withdrawn, the pool filled by three payers and paid at the date or its shares returned at the deadline, and the five claimable-balance scenarios |
+| `reclamation_near.mjs` | the refused transfer and the claimable balance measured on testnet; `reclamation.log`, `compte_rendu_claimable.json` |
 | `scelle.mjs` | seals a payslip for its readers (X25519 + AES-256-GCM), opens it with a reader's key; `cles_publiques.json` holds the public keys |
 | `desk/desk_near.mjs`, `desk/enregistre.mjs` | the pay desk's NEAR service and the recorded run of the tab; `desk/sortie/` the records |
 | `../app/src/NearDesk.tsx`, `../app/src/near.ts` | the NEAR tab of the React desk |
@@ -274,8 +343,9 @@ of dareskro; the code was run and measured as reported above.
   Ledger NEAR app) signing `create` and `vault_vote` from the pay desk.
 - The readers' keys of the sealed payslip are generated here for the demo; in production each body (URSSAF, pension fund, DGFiP)
   publishes its own X25519 key and the employer's desk wraps for it.
-- A vault's payout is two transfers to accounts that exist; if one disappeared meanwhile the callback logs `vault_transfer_failed`
-  and the record stays decided — the failed leg is a trace to act on, not a reopen.
+- A refused leg is credited to the receiver's *name*; whoever holds that name within 30 days can claim it (see the 05/11 section).
+  The payer's delay is one constant for every act; a per-escrow delay is the next step if a customer needs it.
+- `#[callback_vec]` from near-sdk-rs #1668 is not in a release yet: `on_paid` reads the results by index (`TODO #1668` in the code).
 - `cargo near build reproducible-wasm` (Docker) is not set up; the wasm's sha256 is printed by the non-reproducible build.
 - The fee is charged in NEAR and held by the contract; invoicing it, its VAT and whether charging it makes dareskro a crypto-asset
   service provider under MiCA (the contract never holds the parties' funds beyond the act, only its own fee) are questions for counsel,

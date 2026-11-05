@@ -1,0 +1,19 @@
+2026-11-05 18:55:15 UTC  contract dareskro-v2.testnet: 0.2970 NEAR claimable before this run, delay 30 days; fantome2.dareskro-employer.testnet exists: false
+2026-11-05 18:55:17 UTC  1 fantome2.dareskro-employer.testnet created by the employer with 0.2 NEAR  https://testnet.nearblocks.io/txns/28g6GQoXqAuXcxm29DFJAaWCo4Crh5bQJ8Z4r5oTFNBF
+2026-11-05 18:55:19 UTC  1b escrow #2: 0.2970 NEAR to fantome2.dareskro-employer.testnet, no date, payable by anyone  https://testnet.nearblocks.io/txns/4xe19GsBny9Jg5yV95rUdQwGooiVpGJZT9kLDvbyqpQU
+2026-11-05 18:55:26 UTC  2 fantome2.dareskro-employer.testnet deleted itself, balance to the employer; exists: false  https://testnet.nearblocks.io/txns/5UNGVbKAoWzweTKkNy2BdRhrhxkYMXtNYoWHETHmHYaj
+2026-11-05 18:55:33 UTC  3 dareskro-stranger.testnet finishes → callback false (a leg was refused): escrow Finished, 0.2970 NEAR claimable by fantome2.dareskro-employer.testnet (payer dareskro-employer.testnet, act escrow:2), contract 10.5974 → 10.5974 NEAR; logs: 2 events  https://testnet.nearblocks.io/txns/HKQinjUF91W3mcYAALLwfn3b9AxLT2JiTceW4yFeVtc2
+2026-11-05 18:55:36 UTC  4a a stranger claims → refused: nothing to claim  https://testnet.nearblocks.io/txns/CD24LfiC5uBZMSwrM7iGk1mG4RCaPTdCzhSoLCRmGeb
+2026-11-05 18:55:37 UTC  4b a stranger claims for the name → refused: you are not the payer of any credit to this account  https://testnet.nearblocks.io/txns/Efo6mydV3mUjMvgUbWF55AFyskumFUmz52EMYJEGFMCk
+2026-11-05 18:55:39 UTC  4c the payer, 30 days too early → refused: too early: the receiver has 30 days to claim before the payer may take it back  https://testnet.nearblocks.io/txns/9pdUYXaFDjJZ2Q4XS6cq5F1EZ2id1Ez7nguuQawohzhA
+2026-11-05 18:55:42 UTC  5 fantome2.dareskro-employer.testnet registered again by the employer, new key, 0.1 NEAR for gas  https://testnet.nearblocks.io/txns/5eQeRJxwBkXwSbv1w18bzjTfMe4iFhuje4ni31eEKPzN
+2026-11-05 18:55:48 UTC  5b fantome2.dareskro-employer.testnet claims → callback true: 0.1000 → 0.3965 NEAR (+0.2965), claimable now 0.0000, total 0.2970  https://testnet.nearblocks.io/txns/H1WZjCFR5BAGoCeWko9YbvxMREFPf2XnURjb8m7gptr2
+2026-11-05 18:55:50 UTC  5c claim twice → refused: nothing to claim  https://testnet.nearblocks.io/txns/F1zQritRRC2dMvxbxBXvRvhjbDRCmJZM7m5zYNvdgrbJ
+2026-11-05 18:55:53 UTC  6 vault #1: 0.4959 NEAR by the tenant dareskro-employee.testnet for fantome2.dareskro-employer.testnet, 2 of 3  https://testnet.nearblocks.io/txns/BAt4Krtz6Q1mdACRfix81aZMn23wLMgRC4BiTUc3tbpJ
+2026-11-05 18:55:55 UTC  6b fantome2.dareskro-employer.testnet deleted itself again; exists: false  https://testnet.nearblocks.io/txns/8Rxtu6io5CAnGQYaWczh7kG9YUps1pPz79hThUqy6yif
+2026-11-05 18:55:57 UTC  6c the mediator votes 0.15 NEAR to the beneficiary → false (recorded, nothing moves)  https://testnet.nearblocks.io/txns/EupmcFyPybjPYQ53vHhPDWd6cxBPDzyaH7uuYei2KPZ2
+2026-11-05 18:56:03 UTC  6d the stranger votes the same → Finished, callback false: tenant's leg landed 10.9230 → 11.2689 NEAR (+0.3459), beneficiary's leg 0.1500 NEAR credited to fantome2.dareskro-employer.testnet (payer dareskro-employee.testnet, act vault:1)  https://testnet.nearblocks.io/txns/6oWdB3D3zV3cvVKEQJEunDUaS8xuEGNY2TMQmtZzvknB
+2026-11-05 18:56:05 UTC  7 fantome2.dareskro-employer.testnet registered a third time  https://testnet.nearblocks.io/txns/Hy9B2kD8KnrzLTV9cKtAUQdbBTuEyWstmb6JUKpmPGVw
+2026-11-05 18:56:10 UTC  7b fantome2.dareskro-employer.testnet claims → callback true: 0.1000 → 0.2495 NEAR (+0.1495); claimable total of the contract: 0.2970 NEAR  https://testnet.nearblocks.io/txns/Bzf3DYvLNDiRq7vt3aFjiAkUM6kBTUgSMiqSTB9aGDbb
+2026-11-05 18:56:12 UTC  7c fantome2.dareskro-employer.testnet deleted, balance back to the employer  https://testnet.nearblocks.io/txns/BKVMQiSMKbRNR22feBMC6juYNnjaJNVmT7HNrHVBtNBy
+2026-11-05 18:56:12 UTC  done

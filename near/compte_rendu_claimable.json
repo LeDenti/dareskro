@@ -1,0 +1,202 @@
+{
+  "network": "testnet",
+  "contract": "dareskro-v2.testnet",
+  "deploy": {
+    "hash": "CzjumvVentpCiikLFXH2eeTrtvA6VY8L59Phv8kZ6kJn",
+    "admin": "dareskro-oracle.testnet",
+    "wasm_sha256": "0d6ac30f0be7924d42e9f4acfb80f9b28b0bdd1e578dbc81c1917d2349e1c96c",
+    "note": "dareskro.testnet (hackathon version) is locked and untouched; v2 keeps its keys"
+  },
+  "issue": "https://github.com/near/near-sdk-rs/issues/1666",
+  "pull_request": "https://github.com/near/near-sdk-rs/pull/1668",
+  "earlier_run": {
+    "started": "2026-11-05T18:54:09Z",
+    "receiver": "fantome.dareskro-employer.testnet",
+    "steps": {
+      "receiver created": "5KhTs8tp2mL8jF53zYEpqu2vsd9kM5oVByXMrTG2y1FJ",
+      "escrow #1 created 0.2970 NEAR": "G5oqWiYPcDzMn4hT1zDSWYtDAQb9y6fQ4PonfRqyXNuD",
+      "receiver deleted": "A4o2gTYo55FPvWWLTaUUjtaqJrdSUd3f8s9Ej3Nfw45t",
+      "finish refused and credited": "AUZcXBX14HwtqQ5zJy9tobw5AVqEwbqwXHX9CtZ7oQ7t",
+      "stranger claim refused": "EKpr4962VMzWg3GuMRNUA6DL73euxgfGdRKhJ65xD8pU",
+      "stranger claim_for refused": "Ffo49k9MZz4oenuQKXNfvjhH5bMoJvqMcv8M5v9UomDU",
+      "payer claim_for too early": "7Qih1F9B7eAh6KhZb7McR8UHex3bB2PStfh8Ye69bppW",
+      "receiver registered again with 0.05 NEAR": "DgW7FVLQtgs18rujwdR9E1zV3nr4d48SuQ4xDJzmWL1h"
+    },
+    "stopped": "the re-registered name had 0.05 NEAR, under the 0.061 NEAR a 60 TGas call prepays; its key was kept in memory only and is lost",
+    "left": "0.2970 NEAR credited to fantome.dareskro-employer.testnet; dareskro-employer.testnet may take it back with claim_for from 2026-12-05"
+  },
+  "started": "2026-11-05T18:55:14.592Z",
+  "steps": [
+    {
+      "name": "1 receiver created",
+      "account": "fantome2.dareskro-employer.testnet",
+      "hash": "28g6GQoXqAuXcxm29DFJAaWCo4Crh5bQJ8Z4r5oTFNBF"
+    },
+    {
+      "name": "1b create",
+      "id": "2",
+      "escrow": {
+        "owner": "dareskro-employer.testnet",
+        "destination": "fantome2.dareskro-employer.testnet",
+        "amount": "297020000000000000000000",
+        "finish_after": null,
+        "cancel_after": null,
+        "condition": null,
+        "memos": [
+          "net 440.36 EUR",
+          "the receiver will be deleted before the date"
+        ],
+        "status": "Locked",
+        "created_at": "1793904918161156540",
+        "closed_at": null,
+        "closed_by": null,
+        "fulfillment": null
+      },
+      "hash": "4xe19GsBny9Jg5yV95rUdQwGooiVpGJZT9kLDvbyqpQU"
+    },
+    {
+      "name": "2 receiver deleted",
+      "hash": "5UNGVbKAoWzweTKkNy2BdRhrhxkYMXtNYoWHETHmHYaj",
+      "exists": false
+    },
+    {
+      "name": "3 finish to a deleted account",
+      "callback": false,
+      "status": "Finished",
+      "claimable": "297020000000000000000000",
+      "lines": [
+        {
+          "amount": "297020000000000000000000",
+          "payer": "dareskro-employer.testnet",
+          "since": "1793904929069552268",
+          "act": "escrow:2"
+        }
+      ],
+      "contract_before": "10597409198071819200000000",
+      "contract_after": "10597409198071819200000000",
+      "events": [
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"finish\",\"data\":[{\"id\":\"2\",\"by\":\"dareskro-stranger.testnet\",\"to\":\"fantome2.dareskro-employer.testnet\",\"amount\":\"297020000000000000000000\",\"fulfillment\":null}]}",
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"transfer_failed\",\"data\":[{\"act\":\"escrow:2\",\"to\":\"fantome2.dareskro-employer.testnet\",\"amount\":\"297020000000000000000000\"}]}",
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"credit_claimable\",\"data\":[{\"to\":\"fantome2.dareskro-employer.testnet\",\"amount\":\"297020000000000000000000\",\"payer\":\"dareskro-employer.testnet\",\"act\":\"escrow:2\",\"since\":\"1793904929069552268\",\"claimable_total\":\"594050000000000000000000\"}]}"
+      ],
+      "hash": "HKQinjUF91W3mcYAALLwfn3b9AxLT2JiTceW4yFeVtc2"
+    },
+    {
+      "name": "4a a stranger claims",
+      "expected": "refused: nothing to claim",
+      "got": "nothing to claim",
+      "hash": "CD24LfiC5uBZMSwrM7iGk1mG4RCaPTdCzhSoLCRmGeb",
+      "as_expected": true
+    },
+    {
+      "name": "4b a stranger claims for the name",
+      "expected": "refused: not the payer",
+      "got": "you are not the payer of any credit to this account",
+      "hash": "Efo6mydV3mUjMvgUbWF55AFyskumFUmz52EMYJEGFMCk",
+      "as_expected": true
+    },
+    {
+      "name": "4c the payer, 30 days too early",
+      "expected": "refused: too early",
+      "got": "too early: the receiver has 30 days to claim before the payer may take it back",
+      "hash": "9pdUYXaFDjJZ2Q4XS6cq5F1EZ2id1Ez7nguuQawohzhA",
+      "as_expected": true
+    },
+    {
+      "name": "5 receiver registered again",
+      "hash": "5eQeRJxwBkXwSbv1w18bzjTfMe4iFhuje4ni31eEKPzN"
+    },
+    {
+      "name": "5b claim",
+      "callback": true,
+      "before": "100000000000000000000000",
+      "after": "396538036156398100000000",
+      "claimable": "0",
+      "hash": "H1WZjCFR5BAGoCeWko9YbvxMREFPf2XnURjb8m7gptr2"
+    },
+    {
+      "name": "5c claim twice",
+      "expected": "refused: nothing to claim",
+      "got": "nothing to claim",
+      "hash": "F1zQritRRC2dMvxbxBXvRvhjbDRCmJZM7m5zYNvdgrbJ",
+      "as_expected": true
+    },
+    {
+      "name": "6 vault_create",
+      "id": "1",
+      "vault": {
+        "owner": "dareskro-employee.testnet",
+        "beneficiary": "fantome2.dareskro-employer.testnet",
+        "amount": "495900000000000000000000",
+        "parties": [
+          "dareskro-employee.testnet",
+          "dareskro-oracle.testnet",
+          "dareskro-stranger.testnet"
+        ],
+        "threshold": 2,
+        "votes": [],
+        "deadline": null,
+        "memos": [
+          "lease:L-fantome",
+          "the landlord will be deleted before the decision"
+        ],
+        "status": "Locked",
+        "paid_to_beneficiary": "0",
+        "created_at": "1793904951652444560",
+        "closed_at": null,
+        "closed_by": null
+      },
+      "hash": "BAt4Krtz6Q1mdACRfix81aZMn23wLMgRC4BiTUc3tbpJ"
+    },
+    {
+      "name": "6b beneficiary deleted",
+      "hash": "8Rxtu6io5CAnGQYaWczh7kG9YUps1pPz79hThUqy6yif"
+    },
+    {
+      "name": "6c first vote",
+      "decided": false,
+      "hash": "EupmcFyPybjPYQ53vHhPDWd6cxBPDzyaH7uuYei2KPZ2"
+    },
+    {
+      "name": "6d decided, one leg refused",
+      "status": "Finished",
+      "callback": false,
+      "paid_to_beneficiary": "150000000000000000000000",
+      "tenant_before": "10922976896263287200000000",
+      "tenant_after": "11268876896263287200000000",
+      "claimable": "150000000000000000000000",
+      "lines": [
+        {
+          "amount": "150000000000000000000000",
+          "payer": "dareskro-employee.testnet",
+          "since": "1793904960158517356",
+          "act": "vault:1"
+        }
+      ],
+      "events": [
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_vote\",\"data\":[{\"id\":\"1\",\"party\":\"dareskro-stranger.testnet\",\"to_beneficiary\":\"150000000000000000000000\",\"agree\":2,\"threshold\":2}]}",
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"vault_decided\",\"data\":[{\"id\":\"1\",\"by\":\"dareskro-stranger.testnet\",\"to_beneficiary\":\"150000000000000000000000\",\"to_owner\":\"345900000000000000000000\",\"votes\":2,\"timeout\":false}]}",
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"transfer_failed\",\"data\":[{\"act\":\"vault:1\",\"to\":\"fantome2.dareskro-employer.testnet\",\"amount\":\"150000000000000000000000\"}]}",
+        "EVENT_JSON:{\"standard\":\"dareskro\",\"version\":\"1.0.0\",\"event\":\"credit_claimable\",\"data\":[{\"to\":\"fantome2.dareskro-employer.testnet\",\"amount\":\"150000000000000000000000\",\"payer\":\"dareskro-employee.testnet\",\"act\":\"vault:1\",\"since\":\"1793904960158517356\",\"claimable_total\":\"447030000000000000000000\"}]}"
+      ],
+      "hash": "6oWdB3D3zV3cvVKEQJEunDUaS8xuEGNY2TMQmtZzvknB"
+    },
+    {
+      "name": "7 receiver registered again",
+      "hash": "Hy9B2kD8KnrzLTV9cKtAUQdbBTuEyWstmb6JUKpmPGVw"
+    },
+    {
+      "name": "7b claim",
+      "callback": true,
+      "before": "100000000000000000000000",
+      "after": "249518074583216100000000",
+      "claimable_total": "297030000000000000000000",
+      "hash": "Bzf3DYvLNDiRq7vt3aFjiAkUM6kBTUgSMiqSTB9aGDbb"
+    },
+    {
+      "name": "7c receiver deleted",
+      "hash": "BKVMQiSMKbRNR22feBMC6juYNnjaJNVmT7HNrHVBtNBy"
+    }
+  ],
+  "finished": "2026-11-05T18:56:12.466Z"
+}

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- *   node deploy_near.mjs deploy --admin <id>   deploy contract/target/near/dareskro_escrow.wasm on dareskro.testnet
- *                                              and call new(admin): the account that sets the fee per act
+ *   node deploy_near.mjs deploy --admin <id>   deploy contract/target/near/dareskro_escrow.wasm on $DARESKRO_CONTRACT
+ *                                              (dareskro.testnet by default, locked since 3 November 2026: use
+ *                                              DARESKRO_CONTRACT=dareskro-v2.testnet) and call new(admin): the
+ *                                              account that sets the fee per act
  *   node deploy_near.mjs deploy --migrate   redeploy on an initialised account and call migrate(): state layout changed,
  *                                           every record, the administrator and the schedule are kept
  *   node deploy_near.mjs keys       list the contract account's access keys
@@ -31,7 +33,7 @@ if (cmd === 'deploy') {
   else if (migrate) acts.push(actions.functionCall('migrate', {}, teraToGas('30'), 0n));
   const r = await owner.signAndSendTransaction({ receiverId: CONTRACT, actions: acts });
   console.log(`${initialised ? (process.argv.includes('--migrate') ? 'code replaced and state migrated' : 'code replaced') : 'deployed and initialised'} on ${CONTRACT}: ${EXPLORER(r.transaction.hash)}`);
-  console.log(`count = ${await view('count')}, vaults = ${await view('vault_count')}, pools = ${await view('pool_count')}, fees = ${JSON.stringify(await view('fees'))}`);
+  console.log(`count = ${await view('count')}, vaults = ${await view('vault_count')}, pools = ${await view('pool_count')}, fees = ${JSON.stringify(await view('fees'))}, claimable = ${await view('claimable_total')}`);
 } else if (cmd === 'keys') {
   const l = await owner.getAccessKeyList();
   for (const k of l.keys) console.log(k.public_key, JSON.stringify(k.access_key.permission));

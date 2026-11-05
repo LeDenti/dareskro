@@ -28,6 +28,12 @@
 //! and is withdrawn by the administrator in one call; releasing, cancelling, voting and
 //! the deadline cost nothing. The administrator can change the schedule and nothing else.
 //!
+//! A transfer the chain refuses — the receiving account was deleted meanwhile — strands
+//! nothing: the callback reads the result leg by leg and credits the amount to a balance
+//! keyed on the receiver written at creation, who claims it at any time (`claim`); after
+//! 30 days the payer may take it back (`claim_for`). Nothing is retried: a deleted name
+//! can be re-registered by someone else (near-sdk-rs #1666).
+//!
 //! Who holds the funds: this contract account. Deploy it, then delete its
 //! full-access keys (`near account delete-keys`): from then on nobody can change
 //! the code or take the balance beyond the fees already charged.
@@ -37,11 +43,16 @@ use near_sdk::json_types::{Base64VecU8, U64, U128};
 use near_sdk::serde_json::json;
 use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{
-    AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, PromiseError, PromiseOrValue,
-    PromiseResult, env, near, require,
+    AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault, Promise, PromiseError, PromiseOrValue, env, near,
+    require,
 };
 
 const CALLBACK_GAS: Gas = Gas::from_tgas(5);
+
+/// The payout callback credits every failed leg: 5 TGas for the first, 2 more per extra leg.
+fn callback_gas(legs: usize) -> Gas {
+    Gas::from_tgas(5 + 2 * legs.saturating_sub(1) as u64)
+}
 
 #[near(serializers = [borsh, json])]
 #[derive(Clone, Debug, PartialEq)]
@@ -95,6 +106,7 @@ enum StorageKey {
     PayslipsByOwner,
     Vaults,
     Pools,
+    Claimable,
 }
 
 #[near(contract_state)]
@@ -120,11 +132,17 @@ pub struct Contract {
     /// the pools, escrows funded by several payers
     pools: IterableMap<u64, Pool>,
     next_pool: u64,
+    /// what the chain refused to deliver, by receiver: claimable by them, by the payer after 30 days
+    claimable: LookupMap<AccountId, Vec<Claimable>>,
+    /// the sum of every line of `claimable`: part of this account's balance
+    claimable_total: NearToken,
 }
 
-/// The state before the pool existed (migrated 02/11/2026 21:14 UTC); `migrate` reads it.
+/// The state of the fourth deployment (escrows, payslips, deposits, the fee, the pool: the
+/// one judged at the hackathon, locked on `dareskro.testnet` on 3 November 2026); `migrate`
+/// reads it and adds the claimable balance.
 #[near(serializers = [borsh])]
-pub struct ContractV3 {
+pub struct ContractV4 {
     escrows: IterableMap<u64, Escrow>,
     next_id: u64,
     payslips: IterableMap<String, Payslip>,
@@ -137,6 +155,53 @@ pub struct ContractV3 {
     fees_held: NearToken,
     fees_total: NearToken,
     acts_charged: u64,
+    pools: IterableMap<u64, Pool>,
+    next_pool: u64,
+}
+
+// ------------------------------------------------------------------------------------------
+// The claimable balance. Every payout of this contract is a `Promise::transfer` the chain
+// may refuse: the receiving account was deleted between creation and the date. The money
+// then comes back to this account, and before 5 November 2026 nothing recorded it
+// (near-sdk-rs #1666). Now the callback knows the legs it paid, reads the results in the
+// same order and credits each failed leg here, keyed on the receiver written at creation.
+// The receiver claims it whenever it exists again (`claim`); the payer of the act takes it
+// back after `CLAIM_DELAY` (`claim_for`). Nothing is retried, because a deleted name can be
+// re-registered by someone else; and nothing is lost, because a claim whose own transfer
+// fails credits the lines again. The lines' storage is paid by this account's balance and
+// freed when they are claimed.
+// ------------------------------------------------------------------------------------------
+
+/// Thirty days: how long the receiver has the credit for themself before the payer may take it back.
+pub const CLAIM_DELAY: u64 = 30 * 24 * 3600 * 1_000_000_000;
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Claimable {
+    pub amount: NearToken,
+    /// who funded the act: the escrow's owner, the vault's owner, the pool's creator, the
+    /// administrator for the fees, the caller for a surplus
+    pub payer: AccountId,
+    /// when it was credited; `claim_for` is possible from `since + CLAIM_DELAY`
+    pub since: U64,
+    /// which act: `escrow:3`, `vault:2`, `pool:1`, `fees`, `surplus:payslip-4`
+    pub act: String,
+}
+
+/// One leg of a payout, given to the callback so it knows which result belongs to which transfer.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Leg {
+    pub to: AccountId,
+    pub amount: NearToken,
+    pub payer: AccountId,
+    pub act: String,
+}
+
+impl Leg {
+    fn new(to: AccountId, amount: NearToken, payer: AccountId, act: String) -> Self {
+        Self { to, amount, payer, act }
+    }
 }
 
 // ------------------------------------------------------------------------------------------
@@ -383,15 +448,18 @@ impl Contract {
             acts_charged: 0,
             pools: IterableMap::new(StorageKey::Pools),
             next_pool: 1,
+            claimable: LookupMap::new(StorageKey::Claimable),
+            claimable_total: NearToken::from_yoctonear(0),
         }
     }
 
-    /// From the third deployment (escrows, payslips, deposits, the fee) to this one. Keeps
-    /// every record, the administrator and the schedule.
+    /// From the fourth deployment (escrows, payslips, deposits, the fee, the pool) to this
+    /// one. Keeps every record, the administrator and the schedule; the claimable balance
+    /// starts empty.
     #[private]
     #[init(ignore_state)]
     pub fn migrate() -> Self {
-        let old: ContractV3 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
+        let old: ContractV4 = env::state_read().unwrap_or_else(|| env::panic_str("no state to migrate"));
         Self {
             escrows: old.escrows,
             next_id: old.next_id,
@@ -405,8 +473,10 @@ impl Contract {
             fees_held: old.fees_held,
             fees_total: old.fees_total,
             acts_charged: old.acts_charged,
-            pools: IterableMap::new(StorageKey::Pools),
-            next_pool: 1,
+            pools: old.pools,
+            next_pool: old.next_pool,
+            claimable: LookupMap::new(StorageKey::Claimable),
+            claimable_total: NearToken::from_yoctonear(0),
         }
     }
 
@@ -475,7 +545,8 @@ impl Contract {
         }
         let surplus = deposit.saturating_sub(needed);
         if surplus.as_yoctonear() > 0 {
-            Promise::new(env::predecessor_account_id()).transfer(surplus).detach();
+            let caller = env::predecessor_account_id();
+            Self::pay(vec![Leg::new(caller.clone(), surplus, caller, "surplus:batch".into())]).detach();
         }
         ids.into_iter().map(U64).collect()
     }
@@ -508,11 +579,9 @@ impl Contract {
         e.closed_at = Some(U64(now));
         e.closed_by = Some(caller.clone());
         e.fulfillment = fulfillment.clone();
-        let (destination, amount) = (e.destination.clone(), e.amount);
+        let (owner, destination, amount) = (e.owner.clone(), e.destination.clone(), e.amount);
         event("finish", json!({"id": id, "by": caller, "to": destination, "amount": amount, "fulfillment": fulfillment}));
-        Promise::new(destination).transfer(amount).then(
-            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_transfer(id),
-        )
+        Self::pay(vec![Leg::new(destination, amount, owner, format!("escrow:{}", id.0))])
     }
 
     /// Refund the owner, only after `cancel_after`. An escrow created without
@@ -529,28 +598,144 @@ impl Contract {
         e.closed_by = Some(caller.clone());
         let (owner, amount) = (e.owner.clone(), e.amount);
         event("cancel", json!({"id": id, "by": caller, "to": owner, "amount": amount}));
-        Promise::new(owner).transfer(amount).then(
-            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_transfer(id),
+        Self::pay(vec![Leg::new(owner.clone(), amount, owner, format!("escrow:{}", id.0))])
+    }
+
+    // ------------------------------------------------------ the claimable balance
+
+    /// Every payout goes through here: one transfer per leg, joined, then `on_paid` with the
+    /// legs in the same order. A leg of zero is skipped.
+    fn pay(legs: Vec<Leg>) -> Promise {
+        let legs: Vec<Leg> = legs.into_iter().filter(|l| l.amount.as_yoctonear() > 0).collect();
+        require!(!legs.is_empty(), "nothing to pay");
+        let mut p: Option<Promise> = None;
+        for l in &legs {
+            let q = Promise::new(l.to.clone()).transfer(l.amount);
+            p = Some(match p {
+                Some(a) => a.and(q),
+                None => q,
+            });
+        }
+        let gas = callback_gas(legs.len());
+        p.unwrap().then(Self::ext(env::current_account_id()).with_static_gas(gas).on_paid(legs))
+    }
+
+    /// After a payout. The results come back in the join order of the legs (`a.and(b)` →
+    /// `[a, b]`), with no receiver attached, so the legs are passed in and zipped with
+    /// them: a failed leg (the account was deleted meanwhile) is credited to its receiver.
+    /// The record stays closed; the credit is the trace, and the money, to act on.
+    // TODO #1668: `#[callback_vec] results: Vec<Result<(), PromiseError>>` once near-sdk-rs#1668
+    // lands; until then the results are read by index with `env::promise_result(i)`.
+    #[private]
+    pub fn on_paid(&mut self, legs: Vec<Leg>) -> bool {
+        let n = env::promise_results_count();
+        require!(n as usize == legs.len(), "legs and results differ");
+        let mut ok = true;
+        for (i, leg) in legs.into_iter().enumerate() {
+            // a transfer returns nothing; only a refused one is `Failed`
+            if !matches!(env::promise_result_checked(i as u64, 64), Err(PromiseError::Failed)) {
+                continue;
+            }
+            ok = false;
+            event("transfer_failed", json!({"act": leg.act, "to": leg.to, "amount": leg.amount}));
+            self.credit(leg.to, leg.amount, leg.payer, leg.act, env::block_timestamp());
+        }
+        ok
+    }
+
+    /// Add a line to `to`'s claimable balance.
+    fn credit(&mut self, to: AccountId, amount: NearToken, payer: AccountId, act: String, since: u64) {
+        let mut lines = self.claimable.get(&to).cloned().unwrap_or_default();
+        lines.push(Claimable { amount, payer: payer.clone(), since: U64(since), act: act.clone() });
+        self.claimable.insert(to.clone(), lines);
+        self.claimable_total = self.claimable_total.saturating_add(amount);
+        event("credit_claimable", json!({"to": to, "amount": amount, "payer": payer, "act": act, "since": U64(since), "claimable_total": self.claimable_total}));
+    }
+
+    /// The receiver takes everything credited to them. The lines are removed before the
+    /// transfer, so a second call in the same block finds nothing; if the transfer itself
+    /// fails they are written back as they were.
+    pub fn claim(&mut self) -> Promise {
+        let who = env::predecessor_account_id();
+        let lines = self.claimable.remove(&who).unwrap_or_default();
+        let amount = lines.iter().fold(NearToken::from_yoctonear(0), |a, l| a.saturating_add(l.amount));
+        require!(amount.as_yoctonear() > 0, "nothing to claim");
+        self.claimable_total = self.claimable_total.saturating_sub(amount);
+        event("claim", json!({"by": who, "account": who, "to": who, "amount": amount, "lines": lines}));
+        Promise::new(who.clone()).transfer(amount).then(
+            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_claimed(who.clone(), who, lines),
         )
     }
 
-    /// If the transfer itself failed (destination account gone), reopen the
-    /// escrow so the money is not stranded as "paid".
+    /// The payer takes back what was credited to `account` from their own acts, once
+    /// `CLAIM_DELAY` has passed since the credit. The receiver's other lines stay.
+    pub fn claim_for(&mut self, account: AccountId) -> Promise {
+        let payer = env::predecessor_account_id();
+        let now = env::block_timestamp();
+        let lines = self.claimable.get(&account).cloned().unwrap_or_default();
+        require!(!lines.is_empty(), "nothing is credited to this account");
+        require!(lines.iter().any(|l| l.payer == payer), "you are not the payer of any credit to this account");
+        let (mine, rest): (Vec<Claimable>, Vec<Claimable>) =
+            lines.into_iter().partition(|l| l.payer == payer && now >= l.since.0.saturating_add(CLAIM_DELAY));
+        require!(
+            !mine.is_empty(),
+            format!("too early: the receiver has {} days to claim before the payer may take it back", CLAIM_DELAY / 86_400_000_000_000)
+        );
+        if rest.is_empty() {
+            self.claimable.remove(&account);
+        } else {
+            self.claimable.insert(account.clone(), rest);
+        }
+        let amount = mine.iter().fold(NearToken::from_yoctonear(0), |a, l| a.saturating_add(l.amount));
+        self.claimable_total = self.claimable_total.saturating_sub(amount);
+        event("claim_for", json!({"by": payer, "account": account, "to": payer, "amount": amount, "lines": mine}));
+        Promise::new(payer.clone()).transfer(amount).then(
+            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_claimed(account, payer, mine),
+        )
+    }
+
+    /// After a claim: if the transfer failed, the lines go back under `account`, dates
+    /// unchanged, so the money is never lost and the payer's delay does not restart.
     #[private]
-    pub fn on_transfer(&mut self, id: U64, #[callback_result] result: Result<(), PromiseError>) -> bool {
+    pub fn on_claimed(&mut self, account: AccountId, to: AccountId, lines: Vec<Claimable>, #[callback_result] result: Result<(), PromiseError>) -> bool {
         match result {
-            Ok(()) => true,
+            Ok(()) => {
+                event("claimed", json!({"account": account, "to": to}));
+                true
+            }
             Err(_) => {
-                if let Some(e) = self.escrows.get_mut(&id.0) {
-                    e.status = Status::Locked;
-                    e.closed_at = None;
-                    e.closed_by = None;
-                    e.fulfillment = None;
-                }
-                event("transfer_failed", json!({"id": id}));
+                let amount = lines.iter().fold(NearToken::from_yoctonear(0), |a, l| a.saturating_add(l.amount));
+                let mut all = self.claimable.get(&account).cloned().unwrap_or_default();
+                all.extend(lines);
+                self.claimable.insert(account.clone(), all);
+                self.claimable_total = self.claimable_total.saturating_add(amount);
+                event("claim_failed", json!({"account": account, "to": to, "amount": amount, "claimable_total": self.claimable_total}));
                 false
             }
         }
+    }
+
+    /// What `account` can claim, in total.
+    pub fn claimable_of(&self, account: AccountId) -> NearToken {
+        self.claimable
+            .get(&account)
+            .map(|lines| lines.iter().fold(NearToken::from_yoctonear(0), |a, l| a.saturating_add(l.amount)))
+            .unwrap_or(NearToken::from_yoctonear(0))
+    }
+
+    /// The lines behind `claimable_of`: amount, payer, date, act.
+    pub fn claimable_lines(&self, account: AccountId) -> Vec<Claimable> {
+        self.claimable.get(&account).cloned().unwrap_or_default()
+    }
+
+    /// Everything credited and not yet claimed, every account together.
+    pub fn claimable_total(&self) -> NearToken {
+        self.claimable_total
+    }
+
+    /// The payer's delay, in nanoseconds (30 days).
+    pub fn claim_delay(&self) -> U64 {
+        U64(CLAIM_DELAY)
     }
 
     // ------------------------------------------------------------------- views
@@ -627,7 +812,8 @@ impl Contract {
         require!(deposit >= needed, format!("attach at least {} for this record's storage and the fee {}", needed, fee));
         let surplus = deposit.saturating_sub(needed);
         if surplus.as_yoctonear() > 0 {
-            Promise::new(env::predecessor_account_id()).transfer(surplus).detach();
+            let caller = env::predecessor_account_id();
+            Self::pay(vec![Leg::new(caller.clone(), surplus, caller, format!("surplus:{token_id}"))]).detach();
         }
         env::log_str(&format!(
             "EVENT_JSON:{}",
@@ -827,25 +1013,7 @@ impl Contract {
         v.closed_by = Some(caller.clone());
         let (owner, amount) = (v.owner.clone(), v.amount);
         event("vault_decided", json!({"id": id, "by": caller, "to_beneficiary": NearToken::from_yoctonear(0), "to_owner": amount, "votes": 0, "timeout": true}));
-        Promise::new(owner).transfer(amount).then(
-            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_vault_paid(id),
-        )
-    }
-
-    /// After the payout: if a leg failed (an account deleted meanwhile), say so on the ledger.
-    /// The vault stays decided; the memo of the failed leg is the trace to act on.
-    #[private]
-    pub fn on_vault_paid(&mut self, id: U64) -> bool {
-        let mut ok = true;
-        for i in 0..env::promise_results_count() {
-            if !matches!(env::promise_result(i), PromiseResult::Successful(_)) {
-                ok = false;
-            }
-        }
-        if !ok {
-            event("vault_transfer_failed", json!({"id": id}));
-        }
-        ok
+        Self::pay(vec![Leg::new(owner.clone(), amount, owner, format!("vault:{}", id.0))])
     }
 
     pub fn vault(&self, id: U64) -> Option<Vault> {
@@ -867,19 +1035,13 @@ impl Contract {
         U64(self.next_vault - 1)
     }
 
+    /// Two legs, beneficiary then owner, both funded by the owner; `on_paid` settles each on its own.
     fn pay_out(id: U64, beneficiary: AccountId, to_beneficiary: NearToken, owner: AccountId, to_owner: NearToken) -> Promise {
-        let mut p: Option<Promise> = None;
-        if to_beneficiary.as_yoctonear() > 0 {
-            p = Some(Promise::new(beneficiary).transfer(to_beneficiary));
-        }
-        if to_owner.as_yoctonear() > 0 {
-            let q = Promise::new(owner).transfer(to_owner);
-            p = Some(match p {
-                Some(a) => a.and(q),
-                None => q,
-            });
-        }
-        p.unwrap().then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_vault_paid(id))
+        let act = format!("vault:{}", id.0);
+        Self::pay(vec![
+            Leg::new(beneficiary, to_beneficiary, owner.clone(), act.clone()),
+            Leg::new(owner.clone(), to_owner, owner, act),
+        ])
     }
 
     // ------------------------------------------------------------------ the pool
@@ -974,11 +1136,9 @@ impl Contract {
         p.status = PoolStatus::Finished;
         p.closed_at = Some(U64(now));
         p.closed_by = Some(caller.clone());
-        let (destination, amount) = (p.destination.clone(), p.funded);
+        let (creator, destination, amount) = (p.creator.clone(), p.destination.clone(), p.funded);
         event("pool_finish", json!({"id": id, "by": caller, "to": destination, "amount": amount}));
-        Promise::new(destination).transfer(amount).then(
-            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_pool_paid(id),
-        )
+        Self::pay(vec![Leg::new(destination, amount, creator, format!("pool:{}", id.0))])
     }
 
     /// Still open at the deadline: anyone returns every share to its payer.
@@ -993,36 +1153,16 @@ impl Contract {
         p.closed_by = Some(caller.clone());
         let shares = p.shares.clone();
         event("pool_refund", json!({"id": id, "by": caller, "shares": shares, "funded": p.funded}));
-        let mut promise: Option<Promise> = None;
-        for s in shares.into_iter().filter(|s| s.amount.as_yoctonear() > 0) {
-            let q = Promise::new(s.payer).transfer(s.amount);
-            promise = Some(match promise {
-                Some(a) => a.and(q),
-                None => q,
-            });
+        let act = format!("pool:{}", id.0);
+        let legs: Vec<Leg> = shares
+            .into_iter()
+            .filter(|s| s.amount.as_yoctonear() > 0)
+            .map(|s| Leg::new(s.payer.clone(), s.amount, s.payer, act.clone()))
+            .collect();
+        if legs.is_empty() {
+            return PromiseOrValue::Value(true);
         }
-        match promise {
-            Some(pr) => PromiseOrValue::Promise(
-                pr.then(Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_pool_paid(id)),
-            ),
-            None => PromiseOrValue::Value(true),
-        }
-    }
-
-    /// After a payout: a failed leg (an account gone) is said on the ledger; the record
-    /// stays closed, the memo of the leg is the trace to act on.
-    #[private]
-    pub fn on_pool_paid(&mut self, id: U64) -> bool {
-        let mut ok = true;
-        for i in 0..env::promise_results_count() {
-            if !matches!(env::promise_result(i), PromiseResult::Successful(_)) {
-                ok = false;
-            }
-        }
-        if !ok {
-            event("pool_transfer_failed", json!({"id": id}));
-        }
-        ok
+        PromiseOrValue::Promise(Self::pay(legs))
     }
 
     pub fn pool(&self, id: U64) -> Option<Pool> {
@@ -1063,7 +1203,7 @@ impl Contract {
         }
         event("pool_fund", json!({"id": U64(id), "payer": payer, "share": share, "surplus": surplus, "funded": p.funded, "target": p.target, "full": full}));
         if surplus.as_yoctonear() > 0 {
-            Promise::new(payer).transfer(surplus).detach();
+            Self::pay(vec![Leg::new(payer.clone(), surplus, payer, format!("surplus:pool:{id}"))]).detach();
         }
     }
 
@@ -1095,22 +1235,8 @@ impl Contract {
         let to = to.unwrap_or_else(|| self.admin.clone());
         self.fees_held = NearToken::from_yoctonear(0);
         event("fees_withdrawn", json!({"by": env::predecessor_account_id(), "to": to, "amount": amount}));
-        Promise::new(to).transfer(amount).then(
-            Self::ext(env::current_account_id()).with_static_gas(CALLBACK_GAS).on_fees_withdrawn(amount),
-        )
-    }
-
-    /// If the transfer failed (the account is gone), the fees are held again.
-    #[private]
-    pub fn on_fees_withdrawn(&mut self, amount: NearToken, #[callback_result] result: Result<(), PromiseError>) -> bool {
-        match result {
-            Ok(()) => true,
-            Err(_) => {
-                self.fees_held = self.fees_held.saturating_add(amount);
-                event("fees_withdraw_failed", json!({"amount": amount}));
-                false
-            }
-        }
+        // a failed transfer is credited to `to`, the administrator being its payer
+        Self::pay(vec![Leg::new(to, amount, self.admin.clone(), "fees".into())])
     }
 
     pub fn fee(&self) -> Fee {
@@ -1515,5 +1641,102 @@ mod unit {
             memos: None,
         };
         c.create_batch(vec![line(600), line(600)]);
+    }
+
+    use near_sdk::PromiseResult;
+
+    /// The context of a callback: the contract calls itself, with the results of the legs it paid.
+    fn callback(results: Vec<PromiseResult>, ts: u64) {
+        testing_env!(ctx(0, 0, ts).build(), near_sdk::test_vm_config(), near_sdk::RuntimeFeesConfig::test(), Default::default(), results);
+    }
+
+    fn refused<T>(f: impl FnOnce() -> T) -> bool {
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).is_err()
+    }
+
+    #[test]
+    fn failed_leg_is_credited_claimed_by_the_receiver_never_retried() {
+        testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        let id = c.create(accounts(2), None, None, None, None);
+        let amount = c.get(id).unwrap().amount;
+        testing_env!(ctx(3, 0, 2_000).build());
+        let _ = c.finish(id, None);
+        // the chain refused the transfer: the receiver was deleted meanwhile
+        callback(vec![PromiseResult::Failed], 3_000);
+        assert!(!c.on_paid(vec![Leg::new(accounts(2), amount, accounts(1), "escrow:1".into())]));
+        assert_eq!(c.get(id).unwrap().status, Status::Finished, "the record is not reopened");
+        assert_eq!(c.claimable_of(accounts(2)), amount);
+        assert_eq!(c.claimable_total(), amount);
+        let lines = c.claimable_lines(accounts(2));
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].payer, accounts(1));
+        assert_eq!(lines[0].since, U64(3_000));
+        assert_eq!(lines[0].act, "escrow:1");
+        // a stranger has nothing
+        testing_env!(ctx(4, 0, 4_000).build());
+        assert!(refused(|| c.claim()));
+        // the receiver claims: the lines leave before the transfer
+        testing_env!(ctx(2, 0, 4_000).build());
+        let _ = c.claim();
+        assert_eq!(c.claimable_of(accounts(2)), NearToken::from_yoctonear(0));
+        assert_eq!(c.claimable_total(), NearToken::from_yoctonear(0));
+        assert!(refused(|| c.claim()), "twice: nothing left");
+        testing_env!(ctx(0, 0, 5_000).build());
+        assert!(c.on_claimed(accounts(2), accounts(2), lines, Ok(())));
+        assert_eq!(c.claimable_total(), NearToken::from_yoctonear(0));
+    }
+
+    #[test]
+    fn the_payer_takes_it_back_after_thirty_days_not_before_a_stranger_never() {
+        testing_env!(ctx(1, NearToken::from_near(1).as_yoctonear(), 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        let amount = NearToken::from_millinear(500);
+        callback(vec![PromiseResult::Failed], 3_000);
+        c.on_paid(vec![Leg::new(accounts(2), amount, accounts(1), "escrow:1".into())]);
+        // one day short
+        testing_env!(ctx(1, 0, 3_000 + CLAIM_DELAY - 86_400_000_000_000).build());
+        assert!(refused(|| c.claim_for(accounts(2))));
+        assert_eq!(c.claimable_of(accounts(2)), amount);
+        // a stranger, even late
+        testing_env!(ctx(4, 0, 3_000 + CLAIM_DELAY).build());
+        assert!(refused(|| c.claim_for(accounts(2))));
+        // the payer, thirty days on
+        testing_env!(ctx(1, 0, 3_000 + CLAIM_DELAY).build());
+        let _ = c.claim_for(accounts(2));
+        assert_eq!(c.claimable_of(accounts(2)), NearToken::from_yoctonear(0));
+        assert_eq!(c.claimable_total(), NearToken::from_yoctonear(0));
+    }
+
+    #[test]
+    fn a_claim_whose_transfer_fails_is_credited_again_dates_unchanged() {
+        testing_env!(ctx(1, 0, 1_000).build());
+        let mut c = Contract::new(accounts(5));
+        let amount = NearToken::from_millinear(300);
+        callback(vec![PromiseResult::Failed], 3_000);
+        c.on_paid(vec![Leg::new(accounts(2), amount, accounts(1), "pool:1".into())]);
+        testing_env!(ctx(2, 0, 4_000).build());
+        let _ = c.claim();
+        assert_eq!(c.claimable_total(), NearToken::from_yoctonear(0));
+        let lines = vec![Claimable { amount, payer: accounts(1), since: U64(3_000), act: "pool:1".into() }];
+        testing_env!(ctx(0, 0, 5_000).build());
+        assert!(!c.on_claimed(accounts(2), accounts(2), lines, Err(PromiseError::Failed)));
+        assert_eq!(c.claimable_of(accounts(2)), amount);
+        assert_eq!(c.claimable_total(), amount);
+        assert_eq!(c.claimable_lines(accounts(2))[0].since, U64(3_000), "the payer's delay does not restart");
+    }
+
+    #[test]
+    fn two_legs_only_the_refused_one_is_credited() {
+        let (mut c, _id) = vault_2_of_3();
+        let (cut, rest) = (NearToken::from_millinear(150), NearToken::from_millinear(840));
+        callback(vec![PromiseResult::Successful(vec![]), PromiseResult::Failed], 5_000);
+        let legs = vec![Leg::new(accounts(2), cut, accounts(1), "vault:1".into()), Leg::new(accounts(1), rest, accounts(1), "vault:1".into())];
+        assert!(!c.on_paid(legs));
+        assert_eq!(c.claimable_of(accounts(2)), NearToken::from_yoctonear(0));
+        assert_eq!(c.claimable_of(accounts(1)), rest);
+        // the legs and the results must match one for one
+        callback(vec![PromiseResult::Failed], 6_000);
+        assert!(refused(|| c.on_paid(vec![Leg::new(accounts(2), cut, accounts(1), "vault:1".into()), Leg::new(accounts(1), rest, accounts(1), "vault:1".into())])));
     }
 }
