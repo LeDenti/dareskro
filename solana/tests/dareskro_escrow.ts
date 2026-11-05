@@ -528,6 +528,164 @@ describe("dareskro escrow on Solana", () => {
     await refused(vaultCreate(tenant, landlord.publicKey, [tenant.publicKey, landlord.publicKey], 2, deposit, now - 100), "DeadlinePassed");
   });
 
+  it("invoice advance: a 2-of-3 pool whose ceilings the program holds — two signatures cannot pass a breach; repaid, defaulted, bought back; the lenders carry the loss", async () => {
+    const U = 10_000_000; // 0.01 SOL, the unit of the XRPL measurement (160 XRP pool, 45 advanced…)
+    const ia = Keypair.generate(), policy = Keypair.generate(), operator = Keypair.generate();
+    const lenderA = Keypair.generate(), lenderB = Keypair.generate();
+    const supplier = Keypair.generate(), d1 = Keypair.generate(), d2 = Keypair.generate(), d3 = Keypair.generate();
+    for (const k of [ia, policy, operator, lenderA, lenderB, d1, d3]) await fund(k, 2);
+    const setFee = (bps: number, min: number) => program.methods.setFee(bps, new BN(min)).accountsPartial({ admin: payer.publicKey }).rpc();
+    await setFee(0, 500_000); // the devnet schedule: a floor of 0.0005 SOL per act, paid by the pool
+
+    const id = newId();
+    const pool = PublicKey.findProgramAddressSync([Buffer.from("pool"), operator.publicKey.toBuffer(), id.toArrayLike(Buffer, "le", 8)], program.programId)[0];
+    const advPda = (invoice: Buffer) => PublicKey.findProgramAddressSync([Buffer.from("advance"), pool.toBuffer(), invoice], program.programId)[0];
+    const inv = (name: string) => sha256(Buffer.from(`dareskro/facture/1 ${name}`));
+    const now0 = await chainNow();
+    const pol = { maxShareBps: 3000, maxAdvanceBps: 9000, maxTerm: new BN(90 * 86400), grace: new BN(4) };
+
+    const poolCreate = (signers: PublicKey[], threshold: number, policy: any) =>
+      program.methods.poolCreate(id, signers, threshold, policy).accountsPartial({ operator: operator.publicKey }).signers([operator]).rpc();
+    await refused(poolCreate([ia.publicKey], 1, pol), "BadParties");
+    await refused(poolCreate([ia.publicKey, policy.publicKey, operator.publicKey], 2, { ...pol, maxShareBps: 0 }), "BadPolicy");
+    await poolCreate([ia.publicKey, policy.publicKey, operator.publicKey], 2, pol);
+    const deposit = (who: Keypair, amount: number) => program.methods.poolDeposit(new BN(amount)).accountsPartial({ lender: who.publicKey, pool }).signers([who]).rpc();
+    await deposit(lenderA, 80 * U);
+    await deposit(lenderB, 80 * U);
+    let P = await program.account.pool.fetch(pool);
+    assert.equal(P.capital.toNumber(), 160 * U);
+    assert.equal(P.lenders.length, 2);
+
+    const propose = (who: Keypair, invoice: Buffer, debtor: PublicKey, face: number, advance: number, fee: number, due: number) =>
+      program.methods.advancePropose([...invoice], supplier.publicKey, debtor, new BN(face), new BN(advance), new BN(fee), new BN(due))
+        .accountsPartial({ signer: who.publicKey, pool, advance: advPda(invoice) }).signers([who]).rpc();
+    const approve = (who: Keypair, invoice: Buffer, supplierAcc = supplier.publicKey) =>
+      program.methods.advanceApprove().accountsPartial({ signer: who.publicKey, pool, advance: advPda(invoice), supplier: supplierAcc, config: configPda }).signers([who]).rpc();
+    const repay = (who: Keypair, invoice: Buffer, amount: number) =>
+      program.methods.advanceRepay(new BN(amount)).accountsPartial({ payer: who.publicKey, pool, advance: advPda(invoice), supplier: supplier.publicKey }).signers([who]).rpc();
+    const dflt = (who: Keypair, invoice: Buffer) =>
+      program.methods.advanceDefault().accountsPartial({ signer: who.publicKey, pool, advance: advPda(invoice) }).signers([who]).rpc();
+    const buyback = (who: Keypair, invoice: Buffer) =>
+      program.methods.advanceBuyback().accountsPartial({ payer: who.publicKey, pool, advance: advPda(invoice) }).signers([who]).rpc();
+    const closeAdv = (invoice: Buffer) =>
+      program.methods.advanceClose().accountsPartial({ operator: operator.publicKey, pool, advance: advPda(invoice) }).signers([operator]).rpc();
+    const withdraw = (who: Keypair) => program.methods.poolWithdraw().accountsPartial({ lender: who.publicKey, pool }).signers([who]).rpc();
+
+    // shape, at the proposal
+    const f1 = inv("F-2026-001"), f2 = inv("F-2026-002"), f3 = inv("F-2026-003"), f4 = inv("F-2026-004");
+    await refused(propose(passerby, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 + 600), "NotAParty");
+    await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 6 * U, now0 + 600), "FeeAboveFace");
+    await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 + 91 * 86400), "TermTooLong");
+    await refused(propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 - 10), "DeadlinePassed");
+
+    // F-001: 50 due, 45 advanced, fee 1 — the AI seat proposes, the risk policy approves: paid, 2 of 3
+    await propose(ia, f1, d1.publicKey, 50 * U, 45 * U, 1 * U, now0 + 600);
+    await refused(approve(ia, f1), "AlreadyApproved");
+    await refused(approve(passerby, f1), "NotAParty");
+    await refused(approve(policy, f1, passerby.publicKey), "WrongDestination");
+    const s0 = await connection.getBalance(supplier.publicKey);
+    const held0 = (await program.account.feeConfig.fetch(configPda)).feesHeld.toNumber();
+    await approve(policy, f1);
+    assert.equal((await connection.getBalance(supplier.publicKey)) - s0, 45 * U, "the supplier has the advance");
+    let A = await program.account.advance.fetch(advPda(f1));
+    assert.deepEqual(A.status, { funded: {} });
+    assert.equal(A.approvals.length, 2);
+    P = await program.account.pool.fetch(pool);
+    assert.equal(P.outstanding.toNumber(), 45 * U);
+    assert.equal(P.capital.toNumber(), 160 * U - 500_000, "the act fee left the book");
+    assert.equal((await program.account.feeConfig.fetch(configPda)).feesHeld.toNumber() - held0, 500_000, "dareskro's fee per act, from the pool");
+    assert.equal(P.exposures[0].owed.toNumber(), 46 * U);
+    await refused(closeAdv(f1), "StillLocked");
+
+    // F-002: 60 due, 54 advanced to a second debtor — 54 / 160 = 33.75 % > 30 %.
+    // On XRPL two signers passed it (tesSUCCESS): the ledger knew no cap. Here the second
+    // signature is valid and the program refuses; the third signer changes nothing.
+    await propose(ia, f2, d2.publicKey, 60 * U, 54 * U, 0, now0 + 600);
+    await refused(approve(operator, f2), "ConcentrationBreached");
+    await refused(approve(policy, f2), "ConcentrationBreached");
+    A = await program.account.advance.fetch(advPda(f2));
+    assert.deepEqual(A.status, { proposed: {} });
+    assert.equal(A.approvals.length, 1, "a refused approval is not recorded");
+    // and an advance above 90 % of the face, however many sign
+    await propose(ia, f4, d2.publicKey, 50 * U, 46 * U, 0, now0 + 600);
+    await refused(approve(operator, f4), "AdvanceAboveCap");
+
+    // F-003: 40 due in a few seconds, 36 advanced, fee 1 — funded (37 / 160 = 23 %)
+    const dueF3 = (await chainNow()) + 6;
+    await propose(operator, f3, d3.publicKey, 40 * U, 36 * U, 1 * U, dueF3);
+    await approve(ia, f3);
+    P = await program.account.pool.fetch(pool);
+    assert.equal(P.outstanding.toNumber(), 81 * U);
+    assert.equal(P.advancesFunded.toNumber(), 2);
+    // a lender cannot leave with cash that is out on advances
+    await refused(withdraw(lenderA), "PoolIlliquid");
+
+    // F-001 is paid by its debtor: 50 in, 46 to the pool (45 + fee 1), 4 to the supplier
+    await refused(repay(d1, f2, 10 * U), "NotFunded");
+    const s1 = await connection.getBalance(supplier.publicKey);
+    const p1 = await connection.getBalance(pool);
+    await repay(d1, f1, 50 * U);
+    assert.equal((await connection.getBalance(supplier.publicKey)) - s1, 4 * U);
+    assert.equal((await connection.getBalance(pool)) - p1, 46 * U);
+    A = await program.account.advance.fetch(advPda(f1));
+    assert.deepEqual(A.status, { repaid: {} });
+    P = await program.account.pool.fetch(pool);
+    assert.equal(P.outstanding.toNumber(), 36 * U);
+    assert.equal(P.feesEarned.toNumber(), 1 * U);
+    assert.equal(P.capital.toNumber(), 161 * U - 2 * 500_000);
+    assert.equal(P.exposures.length, 1, "d1 owes nothing any more");
+
+    // F-003: 10 paid, then nothing. Before due + grace no default can be written…
+    await repay(d3, f3, 10 * U);
+    await refused(dflt(ia, f3), "DefaultTooEarly");
+    await refused(buyback(supplier, f3), "NotDefaulted");
+    while ((await chainNow()) < dueF3 + 4) await sleep(1000);
+    await refused(dflt(passerby, f3), "NotAParty");
+    // …after it, a signer writes it: loss 26 on the book, the 10 recovered go to the pool, nothing is seized
+    await dflt(ia, f3);
+    A = await program.account.advance.fetch(advPda(f3));
+    assert.deepEqual(A.status, { defaulted: {} });
+    P = await program.account.pool.fetch(pool);
+    assert.equal(P.losses.toNumber(), 26 * U);
+    assert.equal(P.outstanding.toNumber(), 0);
+    assert.equal(P.capital.toNumber(), 135 * U - 2 * 500_000);
+    assert.equal(P.exposures.length, 0);
+
+    // lender A leaves now: 80 × 134.9 / 160 = 67.45 — it carries half the loss, minus the fee earned
+    const a0 = await connection.getBalance(lenderA.publicKey);
+    await withdraw(lenderA);
+    const paidA = (await connection.getBalance(lenderA.publicKey)) - a0;
+    assert.equal(paidA, Math.floor((80 * U * (135 * U - 2 * 500_000)) / (160 * U)));
+    await refused(withdraw(lenderA), "NotALender");
+
+    // the supplier buys the defaulted invoice back: 27 unpaid (36 + 1 − 10) to the pool; the loss leaves the book
+    await fund(supplier, 1);
+    const p2 = await connection.getBalance(pool);
+    await buyback(supplier, f3);
+    assert.equal((await connection.getBalance(pool)) - p2, 27 * U);
+    P = await program.account.pool.fetch(pool);
+    assert.equal(P.losses.toNumber(), 0);
+    assert.equal(P.feesEarned.toNumber(), 2 * U);
+    A = await program.account.advance.fetch(advPda(f3));
+    assert.deepEqual(A.status, { boughtBack: {} });
+
+    // lender B leaves last and gets the whole book: it is above its 80 (the two fees, minus the act fees, A's share gone)
+    const b0 = await connection.getBalance(lenderB.publicKey);
+    await withdraw(lenderB);
+    const paidB = (await connection.getBalance(lenderB.publicKey)) - b0;
+    assert.equal(paidB, P.capital.toNumber(), "the whole book, 94.45");
+    assert.isAbove(paidB, 80 * U);
+    P = await program.account.pool.fetch(pool);
+    assert.equal(P.capital.toNumber(), 0);
+    assert.equal(P.deposits.toNumber(), 0);
+
+    // the operator deletes the settled records and the never-funded proposals; rent comes back
+    for (const f of [f1, f2, f3, f4]) await closeAdv(f);
+    assert.isNull(await program.account.advance.fetchNullable(advPda(f1)));
+    await setFee(0, 0);
+    await program.methods.withdrawFees().accountsPartial({ admin: payer.publicKey }).rpc(); // the two act fees, so the next test starts from an empty till
+  });
+
   it("fee per act: zero by default, set by the administrator under the ceilings, paid on top of the lock, withdrawn, never skippable", async () => {
     const setFee = (who: Keypair, bps: number, min: number) =>
       program.methods.setFee(bps, new BN(min)).accountsPartial({ admin: who.publicKey }).signers([who]).rpc();
@@ -536,6 +694,7 @@ describe("dareskro escrow on Solana", () => {
     const SIG = 5000; // one signature
 
     let cfg = await program.account.feeConfig.fetch(configPda);
+    const acts0 = cfg.actsCharged.toNumber(), total0 = cfg.feesTotal.toNumber();
     assert.equal(cfg.feeBps, 0);
     assert.equal(cfg.feeMin.toNumber(), 0);
     assert.equal(cfg.admin.toBase58(), payer.publicKey.toBase58());
@@ -600,7 +759,7 @@ describe("dareskro escrow on Solana", () => {
     await refused(withConfig(escrow), "AccountDiscriminatorMismatch");
     assert.equal(await held(), 9_000_000);
     cfg = await program.account.feeConfig.fetch(configPda);
-    assert.equal(cfg.actsCharged.toNumber(), 4);
+    assert.equal(cfg.actsCharged.toNumber() - acts0, 4, "four acts charged in this test (the counter is cumulative)");
 
     // only the administrator withdraws, in one call; the account keeps its rent
     await refused(withdraw(passerby), "NotAdmin");
@@ -613,7 +772,7 @@ describe("dareskro escrow on Solana", () => {
     assert.isBelow(a1 - a0 + SIG, 9_001_000);
     assert.equal(await connection.getBalance(configPda), rentCfg);
     assert.equal(await held(), 0);
-    assert.equal((await program.account.feeConfig.fetch(configPda)).feesTotal.toNumber(), 9_000_000);
+    assert.equal((await program.account.feeConfig.fetch(configPda)).feesTotal.toNumber() - total0, 9_000_000, "charged in this test (the total is cumulative)");
     await refused(withdraw(payer), "NothingToWithdraw");
 
     // back to zero: the next act costs nothing beyond rent and gas

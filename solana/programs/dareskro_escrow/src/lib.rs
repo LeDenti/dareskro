@@ -72,6 +72,12 @@ pub const MAX_FEE_BPS: u16 = 100;
 /// …nor a floor of 0.01 SOL, whoever administers
 #[constant]
 pub const MAX_FEE_MIN: u64 = 10_000_000;
+#[constant]
+pub const POOL_SEED: &[u8] = b"pool";
+#[constant]
+pub const ADVANCE_SEED: &[u8] = b"advance";
+pub const MAX_LENDERS: u8 = 5;
+pub const MAX_EXPOSURES: u8 = 8;
 
 #[program]
 pub mod dareskro_escrow {
@@ -558,6 +564,334 @@ pub mod dareskro_escrow {
         require!(reader.role.len() <= 16, EscrowError::RoleTooLong);
         require!(st.readers.iter().all(|r| r.key != reader.key), EscrowError::ReaderExists);
         st.readers.push(reader);
+        Ok(())
+    }
+    // ------------------------------------------------------ the invoice advance
+
+    /// A lending pool decided by `threshold` of `signers` (the AI seat, the risk
+    /// policy, the operator), whose ceilings are **held by the program**: on XRPL
+    /// the pool's 2-of-3 account could overrule its own policy (two signers
+    /// passed a 33.8 % concentration, the ledger knew no cap); here the cap is
+    /// in `policy`, checked at the moment the advance is paid, whoever signed.
+    pub fn pool_create(
+        ctx: Context<PoolCreate>,
+        id: u64,
+        signers: Vec<Pubkey>,
+        threshold: u8,
+        policy: PoolPolicy,
+    ) -> Result<()> {
+        require!(
+            signers.len() >= 2 && signers.len() <= MAX_PARTIES as usize,
+            EscrowError::BadParties
+        );
+        require!(
+            threshold >= 1 && (threshold as usize) <= signers.len(),
+            EscrowError::BadThreshold
+        );
+        for (i, p) in signers.iter().enumerate() {
+            require!(!signers[..i].contains(p), EscrowError::DuplicateParty);
+        }
+        require!(
+            policy.max_share_bps >= 1
+                && policy.max_share_bps <= 10_000
+                && policy.max_advance_bps >= 1
+                && policy.max_advance_bps <= 10_000
+                && policy.max_term > 0
+                && policy.grace >= 0,
+            EscrowError::BadPolicy
+        );
+        let p = &mut ctx.accounts.pool;
+        p.operator = ctx.accounts.operator.key();
+        p.signers = signers;
+        p.threshold = threshold;
+        p.policy = policy;
+        p.capital = 0;
+        p.deposits = 0;
+        p.outstanding = 0;
+        p.losses = 0;
+        p.fees_earned = 0;
+        p.advances_funded = 0;
+        p.lenders = Vec::new();
+        p.exposures = Vec::new();
+        p.id = id;
+        p.created_at = Clock::get()?.unix_timestamp;
+        p.bump = ctx.bumps.pool;
+        emit!(PoolCreated { pool: p.key(), operator: p.operator, signers: p.signers.clone(), threshold, policy, id });
+        Ok(())
+    }
+
+    /// A lender funds the pool. Lamports go to the pool account; the book
+    /// (`capital`, `deposits`) records the claim.
+    pub fn pool_deposit(ctx: Context<PoolDeposit>, amount: u64) -> Result<()> {
+        require!(amount > 0, EscrowError::ZeroAmount);
+        let lender = ctx.accounts.lender.key();
+        anchor_lang::system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.key(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.lender.to_account_info(),
+                    to: ctx.accounts.pool.to_account_info(),
+                },
+            ),
+            amount,
+        )?;
+        let p = &mut ctx.accounts.pool;
+        match p.lenders.iter_mut().find(|l| l.key == lender) {
+            Some(l) => l.amount += amount,
+            None => {
+                require!(p.lenders.len() < MAX_LENDERS as usize, EscrowError::TooManyLenders);
+                p.lenders.push(Lender { key: lender, amount });
+            }
+        }
+        p.capital += amount;
+        p.deposits += amount;
+        emit!(PoolFunded { pool: p.key(), lender, amount, capital: p.capital });
+        Ok(())
+    }
+
+    /// A lender leaves with its share of the book: deposit × capital ÷ deposits.
+    /// A loss written by `advance_default` lowers it, fees earned raise it; only
+    /// cash not out on advances can leave.
+    pub fn pool_withdraw(ctx: Context<PoolWithdraw>) -> Result<()> {
+        let lender = ctx.accounts.lender.key();
+        let p = &mut ctx.accounts.pool;
+        let i = p.lenders.iter().position(|l| l.key == lender).ok_or(EscrowError::NotALender)?;
+        let deposit = p.lenders[i].amount;
+        let share = (deposit as u128 * p.capital as u128 / p.deposits as u128) as u64;
+        require!(share <= p.capital - p.outstanding, EscrowError::PoolIlliquid);
+        p.lenders.remove(i);
+        p.deposits -= deposit;
+        p.capital -= share;
+        p.sub_lamports(share)?;
+        ctx.accounts.lender.add_lamports(share)?;
+        emit!(PoolWithdrawn { pool: p.key(), lender, deposit, paid: share });
+        Ok(())
+    }
+
+    /// One signer proposes an advance on an invoice: `invoice` is the SHA-256 of
+    /// the canonical dossier (`facture/facture.mjs`, `empreinte`), the same
+    /// fingerprint the XRPL version anchors. Shape is checked here; the pool's
+    /// ceilings are checked when the threshold is reached, not before, so that a
+    /// breach is measured against the signatures themselves.
+    #[allow(clippy::too_many_arguments)]
+    pub fn advance_propose(
+        ctx: Context<AdvancePropose>,
+        invoice: [u8; 32],
+        supplier: Pubkey,
+        debtor: Pubkey,
+        face: u64,
+        advance: u64,
+        fee: u64,
+        due: i64,
+    ) -> Result<()> {
+        let signer = ctx.accounts.signer.key();
+        let p = &ctx.accounts.pool;
+        require!(p.signers.contains(&signer), EscrowError::NotAParty);
+        require!(supplier != Pubkey::default() && debtor != Pubkey::default(), EscrowError::NoDestination);
+        require!(face > 0 && advance > 0, EscrowError::ZeroAmount);
+        require!(advance <= face, EscrowError::AmountExceeds);
+        require!(fee <= face - advance, EscrowError::FeeAboveFace);
+        let now = Clock::get()?.unix_timestamp;
+        require!(due > now, EscrowError::DeadlinePassed);
+        require!(due <= now + p.policy.max_term, EscrowError::TermTooLong);
+        let a = &mut ctx.accounts.advance;
+        a.pool = p.key();
+        a.invoice = invoice;
+        a.supplier = supplier;
+        a.debtor = debtor;
+        a.face = face;
+        a.advance = advance;
+        a.fee = fee;
+        a.due = due;
+        a.approvals = vec![signer];
+        a.status = AdvanceStatus::Proposed;
+        a.repaid = 0;
+        a.proposed_by = signer;
+        a.created_at = now;
+        a.funded_at = None;
+        a.closed_at = None;
+        a.bump = ctx.bumps.advance;
+        emit!(AdvanceProposed { advance: a.key(), pool: a.pool, invoice, supplier, debtor, face, amount: advance, fee, due, by: signer });
+        Ok(())
+    }
+
+    /// Another signer approves. The approval that reaches the threshold pays the
+    /// supplier in the same call — **after** the program checked the pool's
+    /// ceilings: advance ≤ `max_advance_bps` of the face, the debtor's exposure
+    /// (this advance and its fee included) ≤ `max_share_bps` of the capital, and
+    /// cash on hand. Two signers out of three cannot pass what the policy
+    /// refuses: the refusal comes from the program, with the signatures valid.
+    /// The dareskro fee per act is taken from the pool here, as a cost.
+    pub fn advance_approve(ctx: Context<AdvanceApprove>) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let signer = ctx.accounts.signer.key();
+        let p = &mut ctx.accounts.pool;
+        let a = &mut ctx.accounts.advance;
+        require!(p.signers.contains(&signer), EscrowError::NotAParty);
+        require!(a.status == AdvanceStatus::Proposed, EscrowError::NotProposed);
+        require!(!a.approvals.contains(&signer), EscrowError::AlreadyApproved);
+        a.approvals.push(signer);
+        if a.approvals.len() < p.threshold as usize {
+            return Ok(());
+        }
+        // the ceilings, held by the program
+        require!(
+            a.advance as u128 * 10_000 <= a.face as u128 * p.policy.max_advance_bps as u128,
+            EscrowError::AdvanceAboveCap
+        );
+        let owed = a.advance + a.fee;
+        let already = p.exposures.iter().find(|e| e.debtor == a.debtor).map(|e| e.owed).unwrap_or(0);
+        require!(
+            (already + owed) as u128 * 10_000 <= p.capital as u128 * p.policy.max_share_bps as u128,
+            EscrowError::ConcentrationBreached
+        );
+        require!(a.advance <= p.capital - p.outstanding, EscrowError::PoolIlliquid);
+        // dareskro's fee per act, paid by the pool on top of the advance
+        let cfg = &mut ctx.accounts.config;
+        let pct = (a.advance as u128 * cfg.fee_bps as u128 / 10_000) as u64;
+        let act_fee = pct.max(cfg.fee_min);
+        if act_fee > 0 {
+            require!(act_fee <= p.capital - p.outstanding - a.advance, EscrowError::PoolIlliquid);
+            p.sub_lamports(act_fee)?;
+            cfg.add_lamports(act_fee)?;
+            cfg.fees_held += act_fee;
+            cfg.fees_total += act_fee;
+            cfg.acts_charged += 1;
+            p.capital -= act_fee;
+        }
+        // the advance itself
+        p.sub_lamports(a.advance)?;
+        ctx.accounts.supplier.add_lamports(a.advance)?;
+        p.outstanding += a.advance;
+        match p.exposures.iter_mut().find(|e| e.debtor == a.debtor) {
+            Some(e) => e.owed += owed,
+            None => {
+                require!(p.exposures.len() < MAX_EXPOSURES as usize, EscrowError::TooManyDebtors);
+                p.exposures.push(Exposure { debtor: a.debtor, owed });
+            }
+        }
+        p.advances_funded += 1;
+        a.status = AdvanceStatus::Funded;
+        a.funded_at = Some(now);
+        emit!(AdvanceFunded {
+            advance: a.key(),
+            pool: p.key(),
+            supplier: a.supplier,
+            debtor: a.debtor,
+            amount: a.advance,
+            fee: a.fee,
+            by: signer,
+            approvals: a.approvals.len() as u8,
+            act_fee,
+            capital: p.capital,
+            outstanding: p.outstanding,
+        });
+        Ok(())
+    }
+
+    /// The debtor (or anyone) pays the invoice into the advance account. Once
+    /// advance + fee are covered, the pool is repaid, the fee is booked and
+    /// whatever is above goes to the supplier, in the same call.
+    pub fn advance_repay(ctx: Context<AdvanceRepay>, amount: u64) -> Result<()> {
+        require!(amount > 0, EscrowError::ZeroAmount);
+        let now = Clock::get()?.unix_timestamp;
+        require!(ctx.accounts.advance.status == AdvanceStatus::Funded, EscrowError::NotFunded);
+        anchor_lang::system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.key(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.payer.to_account_info(),
+                    to: ctx.accounts.advance.to_account_info(),
+                },
+            ),
+            amount,
+        )?;
+        let p = &mut ctx.accounts.pool;
+        let a = &mut ctx.accounts.advance;
+        a.repaid += amount;
+        let owed = a.advance + a.fee;
+        if a.repaid < owed {
+            return Ok(());
+        }
+        let to_supplier = a.repaid - owed;
+        a.sub_lamports(a.repaid)?;
+        p.add_lamports(owed)?;
+        if to_supplier > 0 {
+            ctx.accounts.supplier.add_lamports(to_supplier)?;
+        }
+        p.capital += a.fee;
+        p.fees_earned += a.fee;
+        p.outstanding -= a.advance;
+        release_exposure(p, a.debtor, owed);
+        a.status = AdvanceStatus::Repaid;
+        a.closed_at = Some(now);
+        emit!(AdvanceRepaid { advance: a.key(), pool: p.key(), payer: ctx.accounts.payer.key(), repaid: a.repaid, to_pool: owed, to_supplier, capital: p.capital });
+        Ok(())
+    }
+
+    /// Past due + grace with the advance not covered, a signer writes the
+    /// default: the loss leaves the book (the lenders carry it), what was
+    /// partly paid goes to the pool. The program holds nothing of the
+    /// supplier's: there is nothing to seize, only `advance_buyback` to offer.
+    pub fn advance_default(ctx: Context<AdvanceDefault>) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let signer = ctx.accounts.signer.key();
+        let p = &mut ctx.accounts.pool;
+        let a = &mut ctx.accounts.advance;
+        require!(p.signers.contains(&signer), EscrowError::NotAParty);
+        require!(a.status == AdvanceStatus::Funded, EscrowError::NotFunded);
+        require!(now >= a.due + p.policy.grace, EscrowError::DefaultTooEarly);
+        let owed = a.advance + a.fee;
+        let loss = a.advance.saturating_sub(a.repaid);
+        let fee_got = a.repaid.saturating_sub(a.advance);
+        if a.repaid > 0 {
+            a.sub_lamports(a.repaid)?;
+            p.add_lamports(a.repaid)?;
+        }
+        p.capital = p.capital - loss + fee_got;
+        p.losses += loss;
+        p.fees_earned += fee_got;
+        p.outstanding -= a.advance;
+        release_exposure(p, a.debtor, owed);
+        a.status = AdvanceStatus::Defaulted;
+        a.closed_at = Some(now);
+        emit!(AdvanceDefaulted { advance: a.key(), pool: p.key(), by: signer, loss, recovered: a.repaid, unpaid: owed - a.repaid, capital: p.capital, losses: p.losses });
+        Ok(())
+    }
+
+    /// The recourse: the supplier (or anyone for it) buys the defaulted invoice
+    /// back by paying what is unpaid to the pool. The loss leaves the book.
+    pub fn advance_buyback(ctx: Context<AdvanceBuyback>) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        require!(ctx.accounts.advance.status == AdvanceStatus::Defaulted, EscrowError::NotDefaulted);
+        let owed = ctx.accounts.advance.advance + ctx.accounts.advance.fee;
+        let unpaid = owed - ctx.accounts.advance.repaid;
+        anchor_lang::system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.key(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.payer.to_account_info(),
+                    to: ctx.accounts.pool.to_account_info(),
+                },
+            ),
+            unpaid,
+        )?;
+        let p = &mut ctx.accounts.pool;
+        let a = &mut ctx.accounts.advance;
+        let loss = a.advance.saturating_sub(a.repaid);
+        p.capital += unpaid;
+        p.losses -= loss;
+        p.fees_earned += unpaid - loss;
+        a.repaid = owed;
+        a.status = AdvanceStatus::BoughtBack;
+        a.closed_at = Some(now);
+        emit!(AdvanceBoughtBack { advance: a.key(), pool: p.key(), payer: ctx.accounts.payer.key(), paid: unpaid, capital: p.capital, losses: p.losses });
+        Ok(())
+    }
+
+    /// The operator deletes a settled (or never funded) advance record and takes
+    /// the rent back; a Funded one stays.
+    pub fn advance_close(_ctx: Context<AdvanceClose>) -> Result<()> {
         Ok(())
     }
 }
@@ -1241,6 +1575,332 @@ pub struct Cancelled {
 
 // -------------------------------------------------------------------- errors
 
+// -------------------------------------------------------- the invoice advance
+
+#[derive(Accounts)]
+#[instruction(id: u64)]
+pub struct PoolCreate<'info> {
+    #[account(mut)]
+    pub operator: Signer<'info>,
+    #[account(
+        init,
+        payer = operator,
+        space = 8 + Pool::INIT_SPACE,
+        seeds = [POOL_SEED, operator.key().as_ref(), &id.to_le_bytes()],
+        bump
+    )]
+    pub pool: Account<'info, Pool>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct PoolDeposit<'info> {
+    #[account(mut)]
+    pub lender: Signer<'info>,
+    #[account(mut, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct PoolWithdraw<'info> {
+    #[account(mut)]
+    pub lender: Signer<'info>,
+    #[account(mut, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+}
+
+#[derive(Accounts)]
+#[instruction(invoice: [u8; 32])]
+pub struct AdvancePropose<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    #[account(seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + Advance::INIT_SPACE,
+        seeds = [ADVANCE_SEED, pool.key().as_ref(), &invoice],
+        bump
+    )]
+    pub advance: Account<'info, Advance>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdvanceApprove<'info> {
+    pub signer: Signer<'info>,
+    #[account(mut, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    #[account(
+        mut,
+        has_one = pool @ EscrowError::WrongPool,
+        seeds = [ADVANCE_SEED, pool.key().as_ref(), &advance.invoice],
+        bump = advance.bump,
+    )]
+    pub advance: Account<'info, Advance>,
+    /// CHECK: the supplier written at the proposal, the only account the advance can reach
+    #[account(mut, address = advance.supplier @ EscrowError::WrongDestination)]
+    pub supplier: UncheckedAccount<'info>,
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)]
+    pub config: Account<'info, FeeConfig>,
+}
+
+#[derive(Accounts)]
+pub struct AdvanceRepay<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    #[account(
+        mut,
+        has_one = pool @ EscrowError::WrongPool,
+        seeds = [ADVANCE_SEED, pool.key().as_ref(), &advance.invoice],
+        bump = advance.bump,
+    )]
+    pub advance: Account<'info, Advance>,
+    /// CHECK: the supplier written at the proposal
+    #[account(mut, address = advance.supplier @ EscrowError::WrongDestination)]
+    pub supplier: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdvanceDefault<'info> {
+    pub signer: Signer<'info>,
+    #[account(mut, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    #[account(
+        mut,
+        has_one = pool @ EscrowError::WrongPool,
+        seeds = [ADVANCE_SEED, pool.key().as_ref(), &advance.invoice],
+        bump = advance.bump,
+    )]
+    pub advance: Account<'info, Advance>,
+}
+
+#[derive(Accounts)]
+pub struct AdvanceBuyback<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    #[account(
+        mut,
+        has_one = pool @ EscrowError::WrongPool,
+        seeds = [ADVANCE_SEED, pool.key().as_ref(), &advance.invoice],
+        bump = advance.bump,
+    )]
+    pub advance: Account<'info, Advance>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdvanceClose<'info> {
+    #[account(mut)]
+    pub operator: Signer<'info>,
+    #[account(has_one = operator @ EscrowError::WrongOwner, seeds = [POOL_SEED, pool.operator.as_ref(), &pool.id.to_le_bytes()], bump = pool.bump)]
+    pub pool: Account<'info, Pool>,
+    #[account(
+        mut,
+        close = operator,
+        has_one = pool @ EscrowError::WrongPool,
+        seeds = [ADVANCE_SEED, pool.key().as_ref(), &advance.invoice],
+        bump = advance.bump,
+        constraint = advance.status != AdvanceStatus::Funded @ EscrowError::StillLocked,
+    )]
+    pub advance: Account<'info, Advance>,
+}
+
+/// The pool's ceilings, compiled into the account at creation and checked by the
+/// program when an advance is paid, whatever the signers agreed.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, InitSpace)]
+pub struct PoolPolicy {
+    /// of the pool's capital, what one debtor may owe, the new advance and its fee included
+    pub max_share_bps: u16,
+    /// of the invoice's face, what may be advanced
+    pub max_advance_bps: u16,
+    /// seconds between the proposal and the invoice's due date, at most
+    pub max_term: i64,
+    /// seconds after the due date before a default may be written
+    pub grace: i64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, InitSpace)]
+pub struct Lender {
+    pub key: Pubkey,
+    pub amount: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, InitSpace)]
+pub struct Exposure {
+    pub debtor: Pubkey,
+    /// advances and fees not yet repaid by this debtor
+    pub owed: u64,
+}
+
+/// A lending pool: lamports held by this account, decided by `threshold` of `signers`.
+#[account]
+#[derive(InitSpace)]
+pub struct Pool {
+    pub operator: Pubkey,
+    #[max_len(5)]
+    pub signers: Vec<Pubkey>,
+    pub threshold: u8,
+    pub policy: PoolPolicy,
+    /// the book: cash on hand + advances outstanding; losses leave it, fees earned join it
+    pub capital: u64,
+    /// the lenders' deposits still on the book
+    pub deposits: u64,
+    /// advances paid and not yet repaid
+    pub outstanding: u64,
+    pub losses: u64,
+    pub fees_earned: u64,
+    pub advances_funded: u64,
+    #[max_len(5)]
+    pub lenders: Vec<Lender>,
+    #[max_len(8)]
+    pub exposures: Vec<Exposure>,
+    pub id: u64,
+    pub created_at: i64,
+    pub bump: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub enum AdvanceStatus {
+    Proposed,
+    Funded,
+    Repaid,
+    Defaulted,
+    BoughtBack,
+}
+
+/// One invoice advanced: who gets the money, who owes the invoice, how much, when.
+#[account]
+#[derive(InitSpace)]
+pub struct Advance {
+    pub pool: Pubkey,
+    /// SHA-256 of the canonical dossier, the fingerprint the XRPL version anchors
+    pub invoice: [u8; 32],
+    pub supplier: Pubkey,
+    pub debtor: Pubkey,
+    pub face: u64,
+    pub advance: u64,
+    /// the pool's fee, taken from the invoice when it is paid
+    pub fee: u64,
+    pub due: i64,
+    #[max_len(5)]
+    pub approvals: Vec<Pubkey>,
+    pub status: AdvanceStatus,
+    /// paid into this account so far
+    pub repaid: u64,
+    pub proposed_by: Pubkey,
+    pub created_at: i64,
+    pub funded_at: Option<i64>,
+    pub closed_at: Option<i64>,
+    pub bump: u8,
+}
+
+/// The debtor's exposure drops by what was repaid, written off or bought back.
+fn release_exposure(p: &mut Pool, debtor: Pubkey, owed: u64) {
+    if let Some(i) = p.exposures.iter().position(|e| e.debtor == debtor) {
+        p.exposures[i].owed = p.exposures[i].owed.saturating_sub(owed);
+        if p.exposures[i].owed == 0 {
+            p.exposures.remove(i);
+        }
+    }
+}
+
+#[event]
+pub struct PoolCreated {
+    pub pool: Pubkey,
+    pub operator: Pubkey,
+    pub signers: Vec<Pubkey>,
+    pub threshold: u8,
+    pub policy: PoolPolicy,
+    pub id: u64,
+}
+
+#[event]
+pub struct PoolFunded {
+    pub pool: Pubkey,
+    pub lender: Pubkey,
+    pub amount: u64,
+    pub capital: u64,
+}
+
+#[event]
+pub struct PoolWithdrawn {
+    pub pool: Pubkey,
+    pub lender: Pubkey,
+    pub deposit: u64,
+    pub paid: u64,
+}
+
+#[event]
+pub struct AdvanceProposed {
+    pub advance: Pubkey,
+    pub pool: Pubkey,
+    pub invoice: [u8; 32],
+    pub supplier: Pubkey,
+    pub debtor: Pubkey,
+    pub face: u64,
+    pub amount: u64,
+    pub fee: u64,
+    pub due: i64,
+    pub by: Pubkey,
+}
+
+#[event]
+pub struct AdvanceFunded {
+    pub advance: Pubkey,
+    pub pool: Pubkey,
+    pub supplier: Pubkey,
+    pub debtor: Pubkey,
+    pub amount: u64,
+    pub fee: u64,
+    pub by: Pubkey,
+    pub approvals: u8,
+    /// dareskro's fee per act, taken from the pool
+    pub act_fee: u64,
+    pub capital: u64,
+    pub outstanding: u64,
+}
+
+#[event]
+pub struct AdvanceRepaid {
+    pub advance: Pubkey,
+    pub pool: Pubkey,
+    pub payer: Pubkey,
+    pub repaid: u64,
+    pub to_pool: u64,
+    pub to_supplier: u64,
+    pub capital: u64,
+}
+
+#[event]
+pub struct AdvanceDefaulted {
+    pub advance: Pubkey,
+    pub pool: Pubkey,
+    pub by: Pubkey,
+    pub loss: u64,
+    pub recovered: u64,
+    pub unpaid: u64,
+    pub capital: u64,
+    pub losses: u64,
+}
+
+#[event]
+pub struct AdvanceBoughtBack {
+    pub advance: Pubkey,
+    pub pool: Pubkey,
+    pub payer: Pubkey,
+    pub paid: u64,
+    pub capital: u64,
+    pub losses: u64,
+}
+
 #[error_code]
 pub enum EscrowError {
     #[msg("escrow already closed")]
@@ -1327,4 +1987,34 @@ pub enum EscrowError {
     FeeAboveCeiling,
     #[msg("nothing to withdraw")]
     NothingToWithdraw,
+    #[msg("a pool policy must have shares and caps between 1 and 10000 bps, a positive term, a non-negative grace")]
+    BadPolicy,
+    #[msg("at most 5 lenders in a pool")]
+    TooManyLenders,
+    #[msg("the signer is not a lender of this pool")]
+    NotALender,
+    #[msg("not enough cash in the pool: advances are still out")]
+    PoolIlliquid,
+    #[msg("the pool's fee cannot exceed what the invoice leaves above the advance")]
+    FeeAboveFace,
+    #[msg("the invoice is due beyond the pool's maximum term")]
+    TermTooLong,
+    #[msg("this advance is not open to approval")]
+    NotProposed,
+    #[msg("this signer already approved")]
+    AlreadyApproved,
+    #[msg("refused by the program: the advance exceeds the pool's cap on the invoice's face")]
+    AdvanceAboveCap,
+    #[msg("refused by the program: this debtor would owe more than the pool's concentration cap, whoever signed")]
+    ConcentrationBreached,
+    #[msg("at most 8 debtors with advances outstanding")]
+    TooManyDebtors,
+    #[msg("this advance is not funded")]
+    NotFunded,
+    #[msg("too early: the due date plus the grace period is not reached")]
+    DefaultTooEarly,
+    #[msg("this advance is not in default")]
+    NotDefaulted,
+    #[msg("the advance does not belong to this pool")]
+    WrongPool,
 }
