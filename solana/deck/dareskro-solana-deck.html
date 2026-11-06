@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>dareskro on Solana — deck</title>
+<style>
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0f1115; color: #e8e8e8; font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .slide { width: 1280px; height: 720px; padding: 64px 80px; page-break-after: always; break-after: page; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  h1 { font-size: 64px; margin: 0 0 12px; letter-spacing: -1px; }
+  h2 { font-size: 40px; margin: 0 0 28px; letter-spacing: -0.5px; color: #ffffff; }
+  h3 { font-size: 24px; margin: 24px 0 8px; color: #9fd3c7; }
+  p, li { font-size: 24px; line-height: 1.38; }
+  ul { margin: 0; padding-left: 28px; }
+  li { margin-bottom: 10px; }
+  .sub { color: #9fd3c7; font-size: 28px; margin: 0; }
+  .muted { color: #9aa3ad; }
+  .k { color: #ffd166; }
+  .cols { display: flex; gap: 48px; flex: 1; }
+  .col { flex: 1; }
+  .big { font-size: 34px; line-height: 1.35; margin: 0 0 18px; }
+  .num { font-size: 72px; color: #ffd166; margin: 0; line-height: 1; }
+  .num + p { margin-top: 8px; }
+  .foot { position: absolute; bottom: 28px; left: 80px; right: 80px; display: flex; justify-content: space-between; font-size: 16px; color: #6f7a86; }
+  table { border-collapse: collapse; width: 100%; font-size: 21px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #2a2f38; vertical-align: top; }
+  th { color: #9fd3c7; font-weight: 600; }
+  code { font-family: Menlo, Consolas, monospace; font-size: 0.9em; color: #cde; }
+  .tag { display: inline-block; padding: 2px 10px; border: 1px solid #2f8f7a; border-radius: 999px; color: #9fd3c7; font-size: 18px; margin-right: 8px; }
+  .quote { font-size: 30px; color: #fff; border-left: 6px solid #ffd166; padding-left: 20px; margin: 10px 0 24px; }
+  .rule { font-size: 40px; text-align: center; margin: 40px 0; color: #fff; }
+  .rule span { color: #ffd166; }
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <div style="margin-top: 120px;">
+    <h1>dareskro on Solana</h1>
+    <p class="sub">The payroll vault nobody owns — the AI reads, the code computes, a human approves, the program pays.</p>
+    <p class="muted" style="margin-top: 40px; font-size: 22px;">Encode Solana Hackathon 2026 · Best Consumer App · Aurora Intents<br/>Program on devnet <code>6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu</code> · github.com/LeDenti/dareskro · solana/</p>
+  </div>
+  <div class="foot"><span>matter-x- · November 2026</span><span>1 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>The problem: paid for work nobody can fully verify</h2>
+  <div class="cols">
+    <div class="col">
+      <p class="big">A pharmacist opens the on-call pharmacy on a Sunday. The collective agreement pays those hours more. Who proves them?</p>
+      <p class="big">Every month, someone chases a salary already earned. The one who pays holds both the money and the proof.</p>
+    </div>
+    <div class="col">
+      <h3>Same shape, other jobs</h3>
+      <ul>
+        <li>a freelancer's delivery, judged against a spec</li>
+        <li>a sales commission, judged against a contract</li>
+        <li>a supplier's invoice, advanced before the debtor pays</li>
+      </ul>
+      <h3>What is missing</h3>
+      <p>Not a promise. A place where the money sits that the payer can no longer empty or redirect, and a rule for who opens it.</p>
+    </div>
+  </div>
+  <div class="foot"><span>dareskro on Solana</span><span>2 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>The rule</h2>
+  <p class="rule"><span>The agent reads.</span> The code computes. <span>A human approves.</span> Solana pays.</p>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li><b>The AI agent</b> gathers the evidence: the rota, the badge log, the Sunday hours, the invoice dossier. It writes a memo. It never moves money.</li>
+        <li><b>The code</b> computes the amount line by line; anyone can replay it.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <ul>
+        <li><b>A human</b> approves the statement with a signature. Nothing moves before it.</li>
+        <li><b>The program</b> locks the money with one possible outcome, and on the date pays the one address set at creation. Not before. Not to anyone else.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>dareskro on Solana</span><span>3 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>How Solana powers it: a program with no owner</h2>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li>Solana has no native escrow, so the Anchor program <b>is</b> the escrow: the funds sit in a PDA nobody has the key to, in SOL or USDC.</li>
+        <li><b>Time-locked</b> (payroll): no release before the date by the cluster clock, no cancel ever, not even by the employer; anyone may release after, only to the destination written at creation.</li>
+        <li><b>Hash-locked</b> (delivery): only the secret releases, and the secret becomes public in that same call.</li>
+        <li>Several escrows in one transaction: all or nothing (net pay + contributions + tax).</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Measured, not promised</h3>
+      <ul>
+        <li>15 tests against a local validator, one per guarantee</li>
+        <li>every refusal replayed on devnet with its signature in the README: <code>TooEarly</code>, <code>NotCancellable</code>, <code>WrongDestination</code>…</li>
+        <li>the sealed payslip: a non-transferable NFT, readable by the named readers only</li>
+        <li>a shared vault, 2 of 3: the rental deposit, run with Phantom</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>dareskro on Solana</span><span>4 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>A consumer app: one page, no terminal</h2>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li>Phantom, or a throwaway devnet key created in the browser</li>
+        <li>recipient, amount in dollars, date — lock</li>
+        <li>release, cancel, close, each with its explorer link; the refusals are shown as the program returns them</li>
+        <li>the payer chooses what to pay with: <b>SOL, XRP or NEAR</b> — Aurora quotes live</li>
+        <li>the fee per act is shown before the lock, and paid on top: what the recipient gets is never touched</li>
+      </ul>
+      <p class="muted" style="font-size: 20px;">Live on devnet: <code>ledenti.github.io/dareskro/</code></p>
+    </div>
+    <div class="col">
+      <h3>The pay desk, same desk, another ledger</h3>
+      <ul>
+        <li>the dareskro pay desk (XRPL, NEAR, PayPal) has a Solana tab: the agent reads the proof, the code computes, the human approves, the desk locks on Solana</li>
+        <li>the registry is the chain itself: <code>listEscrows({ owner })</code> is a <code>getProgramAccounts</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>dareskro on Solana</span><span>5 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>Aurora Intents: the employer pays from the chain they hold</h2>
+  <div class="cols">
+    <div class="col">
+      <p class="num">37 s</p>
+      <p>XRP on the XRP Ledger → <b>3 USDC on Solana</b>, live on mainnet, 1 November 2026. Swap API: quote, deposit address, status polled to SUCCESS, refund path handled.</p>
+      <p class="muted" style="font-size: 19px;">XRPL tx 56205926… · Solana tx 58Az4DDm…</p>
+    </div>
+    <div class="col">
+      <ul>
+        <li>no bridge for the user to manage: one deposit address per quote, Aurora routes</li>
+        <li>the page quotes XRP and NEAR for every lock; the desk records what was asked and what Aurora applied</li>
+        <li>measured and written down: Aurora's own 10 bps fee is applied whatever <code>appFees</code> says — no integrator cut on this key</li>
+        <li>next: Intents Connect, deposit and lock in one flow</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>dareskro on Solana</span><span>6 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>The invoice advance: the program holds the ceilings</h2>
+  <p class="quote">On the XRP Ledger, two signers out of three passed an advance above the 30 % concentration cap: the ledger knew no cap. On Solana the program holds it.</p>
+  <table>
+    <tr><th>step</th><th>what the program did on devnet, 5 November</th></tr>
+    <tr><td>pool</td><td>2 of 3 (AI seat, risk policy, operator), capital 160, caps written at creation; no proposal without the hash of the AI seat's memo</td></tr>
+    <tr><td>F-001</td><td>45 advanced on 50, AI seat + policy: paid, 2 of 3</td></tr>
+    <tr><td>F-002</td><td>54 on 160 = 33.75 %: AI seat + operator → <code>ConcentrationBreached</code>; the third signer changes nothing</td></tr>
+    <tr><td>F-003</td><td>36 advanced, 10 repaid, default after due + grace: the lenders carry the loss, nothing is seized; the supplier buys it back</td></tr>
+    <tr><td>lenders</td><td>A leaves before the buyback: 67.45 for 80; B leaves after: 94.45 for 80</td></tr>
+  </table>
+  <p class="muted" style="font-size: 19px; margin-top: 14px;">Also: a fee per act bounded by the program (≤ 1 %, floor ≤ 0.01 SOL), zero by default, paid on top of the lock.</p>
+  <div class="foot"><span>dareskro on Solana</span><span>7 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>What works, what's next, what we say honestly</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Works today, on devnet</h3>
+      <ul>
+        <li>payroll and delivery escrows, SOL and USDC</li>
+        <li>sealed payslip, shared vault 2/3, fee per act, invoice advance</li>
+        <li>the page, the desk, Aurora on mainnet</li>
+      </ul>
+      <h3>Next</h3>
+      <ul>
+        <li>Intents Connect · USDC in the pool · policy administrator under compiled caps · mainnet with the upgrade authority revoked</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Honest limits</h3>
+      <ul>
+        <li>devnet only; on mainnet "no owner" means the upgrade authority is burnt</li>
+        <li>the AI seat reads off-chain; the program sees its signature and the hash of its memo</li>
+        <li>the invoice advance is a lending activity: the licence question is open</li>
+        <li>no French administration publishes a reading key yet</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>dareskro on Solana</span><span>8 / 9</span></div>
+</section>
+
+<section class="slide">
+  <h2>Where to look</h2>
+  <table>
+    <tr><th>code</th><td>github.com/LeDenti/dareskro/tree/main/solana — README with every measured run and its signatures</td></tr>
+    <tr><th>program</th><td>devnet <code>6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu</code></td></tr>
+    <tr><th>try it</th><td>ledenti.github.io/dareskro/ — a burner key, a lock, a release, on devnet</td></tr>
+    <tr><th>film</th><td>youtube.com/watch?v=Uen4K_TKGLo — 3 minutes, the Sunday shift</td></tr>
+    <tr><th>release</th><td>github.com/LeDenti/dareskro/releases/tag/v0.3-solana-final — films, this deck</td></tr>
+    <tr><th>prior work</th><td>the XRPL version, XRPL Hackathon NYC, October 2026; NEAR and PayPal rails of the same desk</td></tr>
+  </table>
+  <p class="rule" style="margin-top: 48px;"><span>The agent reads.</span> The code computes. <span>A human approves.</span> Solana pays.</p>
+  <div class="foot"><span>dareskro on Solana</span><span>9 / 9</span></div>
+</section>
+
+</body>
+</html>
