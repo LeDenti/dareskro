@@ -75,3 +75,10 @@ paypal/sortie_mock/
 paypal/sortie/*.mp4
 paypal/sortie/.video_*
 paypal/sortie_hosted/
+
+# Casper rail: the testnet key (0600, copied from the VPS), dependencies, the Odra build tree and the livenet .env
+casper/cles/
+casper/node_modules/
+casper/contract/target/
+casper/contract/.env
+casper/contract/*.env

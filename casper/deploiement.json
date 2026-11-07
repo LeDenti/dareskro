@@ -1,0 +1,17 @@
+{
+  "chain": "casper-test",
+  "node": "https://node.testnet.casper.network/rpc",
+  "deployer": "01ba235fa01a50d8068c7c7edfb35acd7577de850b9bf8930a3ae028183d1023b4",
+  "deployer_account": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+  "deployer_link": "https://testnet.cspr.live/account/01ba235fa01a50d8068c7c7edfb35acd7577de850b9bf8930a3ae028183d1023b4",
+  "package_hash": "hash-daff0600705aad5ca85b7a653043eeae2a5de7d743fe90d4abf9a95166933de6",
+  "package_link": "https://testnet.cspr.live/contract-package/daff0600705aad5ca85b7a653043eeae2a5de7d743fe90d4abf9a95166933de6",
+  "named_key": "dareskro_escrow",
+  "install_transaction": "2dfce9ca39c3aba8c0c730a70c5dd4495a31a7aa4265950cb5ad6417b639970d",
+  "install_link": "https://testnet.cspr.live/transaction/2dfce9ca39c3aba8c0c730a70c5dd4495a31a7aa4265950cb5ad6417b639970d",
+  "install_cost_motes": "400000000000",
+  "wasm_bytes": 316789,
+  "wasm_sha256": "51d48473684abaf195a727edb020022a43f0a9283eacd7ec9acc65e42e5cacb6",
+  "odra": "2.10.0",
+  "installed_at": "2026-11-07T07:31:45.355Z"
+}

@@ -1,0 +1,31 @@
+2026-11-07 07:37:59 UTC  dareskro on Casper — chain casper-test, node api 2, package hash-daff0600705aad5ca85b7a653043eeae2a5de7d743fe90d4abf9a95166933de6
+2026-11-07 07:37:59 UTC  employer 01ba235fa01a50d8068c7c7edfb35acd7577de850b9bf8930a3ae028183d1023b4 658.951 CSPR
+2026-11-07 07:37:59 UTC  oracle   011d2a1cdd90b390f27f3e2fc974677b950f3acb10c3bfeb27b4e0162b0fbb71d9 26.322 CSPR
+2026-11-07 07:37:59 UTC  stranger 0169c7d66c2cd202610e5fa19db81b662f4f9b07b0269a8298e02889f11da8f427 0.000 CSPR
+2026-11-07 07:37:59 UTC  employee 01dee7f60cb2c37177a0bc2a023f3c1c19313b64659ea45a8ec6a762c27c510087 19.900 CSPR
+2026-11-07 07:38:01 UTC  employer balance 658.951 CSPR; contract count=3 fee_bps=100 oracle=account-hash-7d657d83d1dbe4c1b7147c543cf853cb3239b704b901c17a51fc723e6b6566c2
+2026-11-07 07:38:07 UTC  0 fund oracle with 40 CSPR → executed  https://testnet.cspr.live/transaction/b5d51f539efd9c07527c377730fdf04cc4406a8acb23735510a17383d626b08e
+2026-11-07 07:38:15 UTC  0 fund stranger with 60 CSPR → executed  https://testnet.cspr.live/transaction/ae7de35be76836ea751c8c59a6326eab72aa406c8a22e50457473a1190c7b7c8
+2026-11-07 07:38:23 UTC  0 set_fee(0) (reset) → executed  https://testnet.cspr.live/transaction/b7eb71ae8237561f244057a4314a9563bc431133993deb9b5b998a272400d92b
+2026-11-07 07:38:32 UTC  1 create 10 CSPR → employee, release_after = +70 s, no cancel date, memo = statement sha256 → executed  https://testnet.cspr.live/transaction/f64a769b9668be726b5587a1e52f4fcfa577ad0ed65c601d54ab27d1c90b2252
+2026-11-07 07:38:32 UTC     escrow #4: {"id":"4","payer":"account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b","beneficiary":"account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b","amount":"10000000000","release_after":"1794037172300","cancel_after":"0","condition":null,"memo":"sha256:e1537eda93fa56819e53981e0d6343c4602cbb8e8f9fd591048eb0bed6a58835","status":"open","created_at":"1794037110301","closed_at":"0","closed_by":null,"fulfillment":null,"fee_paid":"0"}
+2026-11-07 07:38:39 UTC  2 release(#4) by the oracle BEFORE the date → refused: TooEarly  https://testnet.cspr.live/transaction/a88caa4fdb885915b9dae86858f3767cc11e1ad50d2386e4a0eb31076f189dfe
+2026-11-07 07:38:47 UTC  5 create 5 CSPR → employee, condition = sha256(secret), cancel_after = +60 s (a delivery nobody will prove) → executed  https://testnet.cspr.live/transaction/3d8681816777a91d5c50f8bfc4effa257c5a720c712983e8361591f42a132167
+2026-11-07 07:38:54 UTC  5a refund(#5) by the employer BEFORE cancel_after → refused: CancelTooEarly  https://testnet.cspr.live/transaction/35d99abe281498debf15b96d18688919718f11e73bff359c879ddfc03af66830
+2026-11-07 07:39:04 UTC  3b release(#5) by a stranger with the WRONG fulfillment → refused: WrongFulfillment  https://testnet.cspr.live/transaction/8db552c01a0006a68312084abcc8833e9bfbd79e322f92771c841c3d6da4b7ae
+2026-11-07 07:39:04 UTC     waiting for the chain's clock: release_after of #4 in 29 s
+2026-11-07 07:39:19 UTC     waiting for the chain's clock: release_after of #4 in 13 s
+2026-11-07 07:39:43 UTC  3 release(#4) by a stranger AFTER the date (not the oracle, no condition) → refused: NotAuthorized  https://testnet.cspr.live/transaction/672c58559570b86d250b84955d64ac89b4ca8198c13487fddc9cd75aa68c241c
+2026-11-07 07:39:51 UTC  3 release(#4) by the payer itself (the employer) → refused: NotAuthorized  https://testnet.cspr.live/transaction/6ac3862d981acc3a11cc2481a014e08b358ecc0fa2fbecb621e6a1b53245ff79
+2026-11-07 07:39:59 UTC  4 release(#4) by the oracle after the date → employee 19.900 → 29.900 CSPR → executed  https://testnet.cspr.live/transaction/a34500571ce81cfd8d291e5d34d48fbd533cd8e9cb4e6c1d2f25b3a9065a6646
+2026-11-07 07:40:07 UTC  7 release(#4) again by the oracle → refused: AlreadyClosed  https://testnet.cspr.live/transaction/2412879393adf36e5cb68ffca57ec442272f65a50267fa371898421a538ddbb7
+2026-11-07 07:40:15 UTC  5b refund(#5) by a stranger after cancel_after → employer 524.985 → 529.985 CSPR (+5) → executed  https://testnet.cspr.live/transaction/0a5536c187e34dc83aa6c8d086b5a347b373e6c72e70b2f469eaabbc4fd6a5a7
+2026-11-07 07:40:23 UTC  6 set_fee(101 bps) by the administrator → refused: FeeTooHigh  https://testnet.cspr.live/transaction/0e6a8e45b0f314182dff30bad17daaa56f4f1b305dfb33f2126f7a6438b7dacd
+2026-11-07 07:40:31 UTC  6 set_fee(10 bps) by a stranger → refused: NotAdmin  https://testnet.cspr.live/transaction/127aef1c49684ef55b1dea01e9d28a8bfd92e883d2fc310fc33e9c3697ec14be
+2026-11-07 07:40:39 UTC  6 set_fee(100 bps = 1 %) by the administrator → executed  https://testnet.cspr.live/transaction/2decc40a75678460349cdfcbdf0f032451bab1b815c339a850b03d84f02de591
+2026-11-07 07:40:48 UTC  6 create 10 CSPR → employee, condition = sha256(secret), payable at once → executed  https://testnet.cspr.live/transaction/2e0b129d3e99ecd1f208ba7a4e5d998b4145399ab00b00659a8c0eb4e73748de
+2026-11-07 07:40:56 UTC  6 release(#6) by a stranger WITH the right secret → employee +9.900 CSPR (9.9), fee kept 0.1 → executed  https://testnet.cspr.live/transaction/ef9b542253befd5db60661d4c708ffa406f0078d1de0680ecfd1a9e5ac54527f
+2026-11-07 07:41:04 UTC  6 withdraw_fees by a stranger → refused: NotAdmin  https://testnet.cspr.live/transaction/fbdca31b906c9ad3e94037bc5bd069cda2865542d620dd520a0558df4d14b8db
+2026-11-07 07:41:12 UTC  6 withdraw_fees to the administrator → executed  https://testnet.cspr.live/transaction/219c7869261c058e3ce68315e34bada5f96a909768606d11312dad9b9fa04de8
+2026-11-07 07:41:19 UTC  6 set_fee(0) back to zero → executed  https://testnet.cspr.live/transaction/291d9edef6514bbfe768c41b2d35267b4a422f1e042fd22e37f46967cfd9cd17
+2026-11-07 07:41:20 UTC  done: 23 steps, all as expected: true; employer 658.951 → 505.332 CSPR

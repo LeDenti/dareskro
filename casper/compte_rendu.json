@@ -1,0 +1,303 @@
+{
+  "chain": "casper-test",
+  "package_hash": "hash-daff0600705aad5ca85b7a653043eeae2a5de7d743fe90d4abf9a95166933de6",
+  "package_link": "https://testnet.cspr.live/contract-package/daff0600705aad5ca85b7a653043eeae2a5de7d743fe90d4abf9a95166933de6",
+  "started": "2026-11-07T07:37:58.831Z",
+  "accounts": {
+    "employer": {
+      "public_key": "01ba235fa01a50d8068c7c7edfb35acd7577de850b9bf8930a3ae028183d1023b4",
+      "account_hash": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+      "link": "https://testnet.cspr.live/account/01ba235fa01a50d8068c7c7edfb35acd7577de850b9bf8930a3ae028183d1023b4",
+      "balance_before": "658951553248",
+      "balance_after": "505332712254"
+    },
+    "oracle": {
+      "public_key": "011d2a1cdd90b390f27f3e2fc974677b950f3acb10c3bfeb27b4e0162b0fbb71d9",
+      "account_hash": "account-hash-7d657d83d1dbe4c1b7147c543cf853cb3239b704b901c17a51fc723e6b6566c2",
+      "link": "https://testnet.cspr.live/account/011d2a1cdd90b390f27f3e2fc974677b950f3acb10c3bfeb27b4e0162b0fbb71d9",
+      "balance_before": "26322853411",
+      "balance_after": "52736219264"
+    },
+    "stranger": {
+      "public_key": "0169c7d66c2cd202610e5fa19db81b662f4f9b07b0269a8298e02889f11da8f427",
+      "account_hash": "account-hash-970d9c892d13ab11d39180287549efabe7b6021644347bbc894cf45153803316",
+      "link": "https://testnet.cspr.live/account/0169c7d66c2cd202610e5fa19db81b662f4f9b07b0269a8298e02889f11da8f427",
+      "balance_before": "0",
+      "balance_after": "32546700421"
+    },
+    "employee": {
+      "public_key": "01dee7f60cb2c37177a0bc2a023f3c1c19313b64659ea45a8ec6a762c27c510087",
+      "account_hash": "account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b",
+      "link": "https://testnet.cspr.live/account/01dee7f60cb2c37177a0bc2a023f3c1c19313b64659ea45a8ec6a762c27c510087",
+      "balance_before": "19900000000",
+      "balance_after": "39800000000"
+    }
+  },
+  "steps": [
+    {
+      "name": "0 fund oracle with 40 CSPR",
+      "hash": "b5d51f539efd9c07527c377730fdf04cc4406a8acb23735510a17383d626b08e",
+      "link": "https://testnet.cspr.live/transaction/b5d51f539efd9c07527c377730fdf04cc4406a8acb23735510a17383d626b08e",
+      "cost_motes": "100000000",
+      "as_expected": true
+    },
+    {
+      "name": "0 fund stranger with 60 CSPR",
+      "hash": "ae7de35be76836ea751c8c59a6326eab72aa406c8a22e50457473a1190c7b7c8",
+      "link": "https://testnet.cspr.live/transaction/ae7de35be76836ea751c8c59a6326eab72aa406c8a22e50457473a1190c7b7c8",
+      "cost_motes": "100000000",
+      "as_expected": true
+    },
+    {
+      "name": "0 set_fee(0) (reset)",
+      "hash": "b7eb71ae8237561f244057a4314a9563bc431133993deb9b5b998a272400d92b",
+      "link": "https://testnet.cspr.live/transaction/b7eb71ae8237561f244057a4314a9563bc431133993deb9b5b998a272400d92b",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "1 create 10 CSPR → employee, release_after = +70 s, no cancel date, memo = statement sha256",
+      "hash": "f64a769b9668be726b5587a1e52f4fcfa577ad0ed65c601d54ab27d1c90b2252",
+      "link": "https://testnet.cspr.live/transaction/f64a769b9668be726b5587a1e52f4fcfa577ad0ed65c601d54ab27d1c90b2252",
+      "cost_motes": "10000000000",
+      "as_expected": true
+    },
+    {
+      "name": "1 state",
+      "id": "4",
+      "escrow": {
+        "id": "4",
+        "payer": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+        "beneficiary": "account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b",
+        "amount": "10000000000",
+        "release_after": "1794037172300",
+        "cancel_after": "0",
+        "condition": null,
+        "memo": "sha256:e1537eda93fa56819e53981e0d6343c4602cbb8e8f9fd591048eb0bed6a58835",
+        "status": "open",
+        "created_at": "1794037110301",
+        "closed_at": "0",
+        "closed_by": null,
+        "fulfillment": null,
+        "fee_paid": "0"
+      }
+    },
+    {
+      "name": "2 release(#4) by the oracle BEFORE the date",
+      "expected": "refused: TooEarly",
+      "got": "TooEarly (User error: 3)",
+      "hash": "a88caa4fdb885915b9dae86858f3767cc11e1ad50d2386e4a0eb31076f189dfe",
+      "link": "https://testnet.cspr.live/transaction/a88caa4fdb885915b9dae86858f3767cc11e1ad50d2386e4a0eb31076f189dfe",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "5 create 5 CSPR → employee, condition = sha256(secret), cancel_after = +60 s (a delivery nobody will prove)",
+      "hash": "3d8681816777a91d5c50f8bfc4effa257c5a720c712983e8361591f42a132167",
+      "link": "https://testnet.cspr.live/transaction/3d8681816777a91d5c50f8bfc4effa257c5a720c712983e8361591f42a132167",
+      "cost_motes": "10000000000",
+      "as_expected": true
+    },
+    {
+      "name": "5 state",
+      "id": "5",
+      "escrow": {
+        "id": "5",
+        "payer": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+        "beneficiary": "account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b",
+        "amount": "5000000000",
+        "release_after": "0",
+        "cancel_after": "1794037178302",
+        "condition": "141ef78b22a03d008c1105e6f4835f636f0f49e8a7b538b96a9d41f14522c2de",
+        "memo": "sha256:54fa315b7d69c6b4a346a234247dfcf3536e5a9828d33c830079aa8996c308b1",
+        "status": "open",
+        "created_at": "1794037126303",
+        "closed_at": "0",
+        "closed_by": null,
+        "fulfillment": null,
+        "fee_paid": "0"
+      }
+    },
+    {
+      "name": "5a refund(#5) by the employer BEFORE cancel_after",
+      "expected": "refused: CancelTooEarly",
+      "got": "CancelTooEarly (User error: 5)",
+      "hash": "35d99abe281498debf15b96d18688919718f11e73bff359c879ddfc03af66830",
+      "link": "https://testnet.cspr.live/transaction/35d99abe281498debf15b96d18688919718f11e73bff359c879ddfc03af66830",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "3b release(#5) by a stranger with the WRONG fulfillment",
+      "expected": "refused: WrongFulfillment",
+      "got": "WrongFulfillment (User error: 11)",
+      "hash": "8db552c01a0006a68312084abcc8833e9bfbd79e322f92771c841c3d6da4b7ae",
+      "link": "https://testnet.cspr.live/transaction/8db552c01a0006a68312084abcc8833e9bfbd79e322f92771c841c3d6da4b7ae",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "3 release(#4) by a stranger AFTER the date (not the oracle, no condition)",
+      "expected": "refused: NotAuthorized",
+      "got": "NotAuthorized (User error: 2)",
+      "hash": "672c58559570b86d250b84955d64ac89b4ca8198c13487fddc9cd75aa68c241c",
+      "link": "https://testnet.cspr.live/transaction/672c58559570b86d250b84955d64ac89b4ca8198c13487fddc9cd75aa68c241c",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "3 release(#4) by the payer itself (the employer)",
+      "expected": "refused: NotAuthorized",
+      "got": "NotAuthorized (User error: 2)",
+      "hash": "6ac3862d981acc3a11cc2481a014e08b358ecc0fa2fbecb621e6a1b53245ff79",
+      "link": "https://testnet.cspr.live/transaction/6ac3862d981acc3a11cc2481a014e08b358ecc0fa2fbecb621e6a1b53245ff79",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "4 release(#4) by the oracle after the date → employee 19.900 → 29.900 CSPR",
+      "hash": "a34500571ce81cfd8d291e5d34d48fbd533cd8e9cb4e6c1d2f25b3a9065a6646",
+      "link": "https://testnet.cspr.live/transaction/a34500571ce81cfd8d291e5d34d48fbd533cd8e9cb4e6c1d2f25b3a9065a6646",
+      "cost_motes": "5000000000",
+      "as_expected": true,
+      "employee_balance_before": "19900000000",
+      "employee_balance_after": "29900000000",
+      "escrow": {
+        "id": "4",
+        "payer": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+        "beneficiary": "account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b",
+        "amount": "10000000000",
+        "release_after": "1794037172300",
+        "cancel_after": "0",
+        "condition": null,
+        "memo": "sha256:e1537eda93fa56819e53981e0d6343c4602cbb8e8f9fd591048eb0bed6a58835",
+        "status": "released",
+        "created_at": "1794037110301",
+        "closed_at": "1794037198316",
+        "closed_by": "account-hash-7d657d83d1dbe4c1b7147c543cf853cb3239b704b901c17a51fc723e6b6566c2",
+        "fulfillment": null,
+        "fee_paid": "0"
+      }
+    },
+    {
+      "name": "7 release(#4) again by the oracle",
+      "expected": "refused: AlreadyClosed",
+      "got": "AlreadyClosed (User error: 7)",
+      "hash": "2412879393adf36e5cb68ffca57ec442272f65a50267fa371898421a538ddbb7",
+      "link": "https://testnet.cspr.live/transaction/2412879393adf36e5cb68ffca57ec442272f65a50267fa371898421a538ddbb7",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "5b refund(#5) by a stranger after cancel_after → employer 524.985 → 529.985 CSPR (+5)",
+      "hash": "0a5536c187e34dc83aa6c8d086b5a347b373e6c72e70b2f469eaabbc4fd6a5a7",
+      "link": "https://testnet.cspr.live/transaction/0a5536c187e34dc83aa6c8d086b5a347b373e6c72e70b2f469eaabbc4fd6a5a7",
+      "cost_motes": "5000000000",
+      "as_expected": true,
+      "employer_balance_before": "524985002861",
+      "employer_balance_after": "529985002861",
+      "escrow": {
+        "id": "5",
+        "payer": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+        "beneficiary": "account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b",
+        "amount": "5000000000",
+        "release_after": "0",
+        "cancel_after": "1794037178302",
+        "condition": "141ef78b22a03d008c1105e6f4835f636f0f49e8a7b538b96a9d41f14522c2de",
+        "memo": "sha256:54fa315b7d69c6b4a346a234247dfcf3536e5a9828d33c830079aa8996c308b1",
+        "status": "refunded",
+        "created_at": "1794037126303",
+        "closed_at": "1794037214320",
+        "closed_by": "account-hash-970d9c892d13ab11d39180287549efabe7b6021644347bbc894cf45153803316",
+        "fulfillment": null,
+        "fee_paid": "0"
+      }
+    },
+    {
+      "name": "6 set_fee(101 bps) by the administrator",
+      "expected": "refused: FeeTooHigh",
+      "got": "FeeTooHigh (User error: 12)",
+      "hash": "0e6a8e45b0f314182dff30bad17daaa56f4f1b305dfb33f2126f7a6438b7dacd",
+      "link": "https://testnet.cspr.live/transaction/0e6a8e45b0f314182dff30bad17daaa56f4f1b305dfb33f2126f7a6438b7dacd",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "6 set_fee(10 bps) by a stranger",
+      "expected": "refused: NotAdmin",
+      "got": "NotAdmin (User error: 1)",
+      "hash": "127aef1c49684ef55b1dea01e9d28a8bfd92e883d2fc310fc33e9c3697ec14be",
+      "link": "https://testnet.cspr.live/transaction/127aef1c49684ef55b1dea01e9d28a8bfd92e883d2fc310fc33e9c3697ec14be",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "6 set_fee(100 bps = 1 %) by the administrator",
+      "hash": "2decc40a75678460349cdfcbdf0f032451bab1b815c339a850b03d84f02de591",
+      "link": "https://testnet.cspr.live/transaction/2decc40a75678460349cdfcbdf0f032451bab1b815c339a850b03d84f02de591",
+      "cost_motes": "5000000000",
+      "as_expected": true,
+      "fee_bps": 100
+    },
+    {
+      "name": "6 create 10 CSPR → employee, condition = sha256(secret), payable at once",
+      "hash": "2e0b129d3e99ecd1f208ba7a4e5d998b4145399ab00b00659a8c0eb4e73748de",
+      "link": "https://testnet.cspr.live/transaction/2e0b129d3e99ecd1f208ba7a4e5d998b4145399ab00b00659a8c0eb4e73748de",
+      "cost_motes": "10000000000",
+      "as_expected": true
+    },
+    {
+      "name": "6 release(#6) by a stranger WITH the right secret → employee +9.900 CSPR (9.9), fee kept 0.1",
+      "hash": "ef9b542253befd5db60661d4c708ffa406f0078d1de0680ecfd1a9e5ac54527f",
+      "link": "https://testnet.cspr.live/transaction/ef9b542253befd5db60661d4c708ffa406f0078d1de0680ecfd1a9e5ac54527f",
+      "cost_motes": "5000000000",
+      "as_expected": true,
+      "employee_balance_before": "29900000000",
+      "employee_balance_after": "39800000000",
+      "escrow": {
+        "id": "6",
+        "payer": "account-hash-a24adc8a34987b8d9751d75d14833f3a43685e3847d856bb33590d2b72b9e45b",
+        "beneficiary": "account-hash-d426a79c3af333279f0d97bad8eb88499f8fc28e6f0dd0acbbcc642e6317507b",
+        "amount": "10000000000",
+        "release_after": "0",
+        "cancel_after": "0",
+        "condition": "141ef78b22a03d008c1105e6f4835f636f0f49e8a7b538b96a9d41f14522c2de",
+        "memo": "sha256:e1537eda93fa56819e53981e0d6343c4602cbb8e8f9fd591048eb0bed6a58835",
+        "status": "released",
+        "created_at": "1794037246325",
+        "closed_at": "1794037254326",
+        "closed_by": "account-hash-970d9c892d13ab11d39180287549efabe7b6021644347bbc894cf45153803316",
+        "fulfillment": "bon de livraison 2026-11-07 signe",
+        "fee_paid": "100000000"
+      },
+      "fees_collected": "200000000"
+    },
+    {
+      "name": "6 withdraw_fees by a stranger",
+      "expected": "refused: NotAdmin",
+      "got": "NotAdmin (User error: 1)",
+      "hash": "fbdca31b906c9ad3e94037bc5bd069cda2865542d620dd520a0558df4d14b8db",
+      "link": "https://testnet.cspr.live/transaction/fbdca31b906c9ad3e94037bc5bd069cda2865542d620dd520a0558df4d14b8db",
+      "cost_motes": "5000000000",
+      "as_expected": true
+    },
+    {
+      "name": "6 withdraw_fees to the administrator",
+      "hash": "219c7869261c058e3ce68315e34bada5f96a909768606d11312dad9b9fa04de8",
+      "link": "https://testnet.cspr.live/transaction/219c7869261c058e3ce68315e34bada5f96a909768606d11312dad9b9fa04de8",
+      "cost_motes": "5000000000",
+      "as_expected": true,
+      "fees_collected_after": "0"
+    },
+    {
+      "name": "6 set_fee(0) back to zero",
+      "hash": "291d9edef6514bbfe768c41b2d35267b4a422f1e042fd22e37f46967cfd9cd17",
+      "link": "https://testnet.cspr.live/transaction/291d9edef6514bbfe768c41b2d35267b4a422f1e042fd22e37f46967cfd9cd17",
+      "cost_motes": "5000000000",
+      "as_expected": true,
+      "fee_bps": 0
+    }
+  ],
+  "finished": "2026-11-07T07:41:20.536Z",
+  "all_as_expected": true
+}

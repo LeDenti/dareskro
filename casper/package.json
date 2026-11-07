@@ -1,0 +1,14 @@
+{
+  "name": "dareskro-casper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "dareskro on Casper 2.x: the Node client, the testnet deploy and the demo for the Odra escrow contract in ./contract",
+  "scripts": {
+    "deploy": "node deploy_testnet.mjs",
+    "demo": "node demo_testnet.mjs"
+  },
+  "dependencies": {
+    "casper-js-sdk": "^5.3.1"
+  }
+}

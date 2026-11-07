@@ -1,0 +1,36 @@
+[package]
+edition = "2021"
+name = "dareskro_casper"
+version = "0.1.0"
+description = "dareskro on Casper 2.x: the escrow with a conditional payment, written with Odra"
+license = "MIT"
+
+[dependencies]
+odra = { version = "^2.10.0", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+
+[dev-dependencies]
+odra-test = { version = "^2.10.0", default-features = false }
+
+[build-dependencies]
+odra-build = { version = "^2.10.0", default-features = false }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+odra-build = { version = "^2.10.0", default-features = false }
+
+[[bin]]
+name = "dareskro_casper_build_contract"
+path = "bin/build_contract.rs"
+test = false
+
+[[bin]]
+name = "dareskro_casper_build_schema"
+path = "bin/build_schema.rs"
+test = false
+
+[profile.release]
+codegen-units = 1
+lto = true
+
+[profile.dev.package."*"]
+opt-level = 3

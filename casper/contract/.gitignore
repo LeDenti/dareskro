@@ -1,0 +1,9 @@
+.idea
+.vscode
+/target
+.backend*
+.builder*
+/wasm
+.env
+*.env
+secret_key*.pem

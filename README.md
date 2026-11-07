@@ -4,6 +4,8 @@
 >
 > **PayPal AI Hackathon, 1 October – 12 November 2026 — the PayPal rail lives in [`paypal/`](paypal/README.md):** the same desk with PayPal's verbs (authorize = lock, capture = release, void = refund, payout = pay), the seven shapes measured on the three ledgers, and the first language model in dareskro — the AI seat that reads through PayPal's Agent Toolkit and has no tool that moves money. Only that folder (and the desk's PayPal tab) is this hackathon's work; diff: tag `pre-paypal` → tag `paypal-submission`. Hosted demo: [dareskro-paypal.onrender.com](https://dareskro-paypal.onrender.com) (mock PayPal, no credentials; [`render.yaml`](render.yaml)).
 >
+> **Casper 2.x — the Casper rail lives in [`casper/`](casper/README.md):** the escrow as an Odra 2.10 contract, **deployed on `casper-test` on 7 November 2026**, package `hash-daff0600705aad5ca85b7a653043eeae2a5de7d743fe90d4abf9a95166933de6` ([install transaction](https://testnet.cspr.live/transaction/2dfce9ca39c3aba8c0c730a70c5dd4495a31a7aa4265950cb5ad6417b639970d)), 14 Odra tests on OdraVM and CasperVM, a Node client on the Casper JS SDK v5 (TransactionV1, Odra's proxy caller for the payable `create`), and the testnet run measured in that README. Nothing on mainnet.
+>
 > **NEAR Hackathon, 1–14 November 2026 — the NEAR integration lives in [`near/`](near/README.md), plus the NEAR tab of the pay desk (`app/src/NearDesk.tsx`, `app/src/near.ts`).** Only that work is built in
 > the NEAR window; the rest of this repository is the XRPL product of the New York hackathon below, baseline for NEAR judging
 > (disclosed as rule Q-002 asks). Diff: tag `pre-hackathon` → tag `hackathon-submission`.
