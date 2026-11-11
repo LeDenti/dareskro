@@ -1,0 +1,12 @@
+08:34:34 [stays] funding the advertiser (BottomRadar stand-in) and a creator on testnet…
+08:34:48 [stays] advertiser rnd6zw3Cy5whfGjUvARChHodgc7Qo8rRFC — creator raPHUYzUxiZBmhb28UqKG6av5edrPfscE3
+08:34:48 [stays] campaign 7f2042e960: contract sha256 6a461b1cf322fb6b…, condition A02580205DFF248F… — creator page http://127.0.0.1:8789/c/7f2042e960
+08:34:48 [stays] before locking: OK — live with "bottomradar.com" (625 chars)
+08:34:56 [stays] EscrowCreate tesSUCCESS #21958499: 25 XRP locked, checked at 2026-10-31T08:49:48.000Z, refund after 2026-10-31T08:59:48.000Z — https://testnet.xrpl.org/transactions/2C22F6DCA9E778EAA62F636F277F4B5160E632EB747B51E9FB10A9D5FF14FE0A
+08:34:56 [stays] oracle watching (registered), looks every 60 s until the date
+08:35:01 [stays] oracle sees: watching — LIVE+TEXT (live with "bottomradar.com" (625 chars))
+08:49:52 [stays] oracle sees: deciding — LIVE+TEXT (live with "bottomradar.com" (625 chars))
+08:50:07 [stays] oracle sees: released — LIVE+TEXT (live with "bottomradar.com" (625 chars))
+08:50:08 [stays] RELEASED — live with "bottomradar.com" (625 chars) — https://testnet.xrpl.org/transactions/46F60DEA4B147DD1560D584DE74888D6C07B7BC9F6767B3E1EB67695165FE2E1 — creator 100 → 125 XRP
+08:50:08 [stays] 16 observation(s) kept by the oracle (GET http://127.0.0.1:8789/campaigns/7f2042e960)
+08:50:08 [stays] written measurements/2026-10-31T08-34-34-stays.json

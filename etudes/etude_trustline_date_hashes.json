@@ -1,0 +1,95 @@
+{
+  "date_utc": "2026-11-05T17:07:35+00:00",
+  "reseau": "https://s.altnet.rippletest.net:51234",
+  "devise": "USD",
+  "montant": "100",
+  "comptes": {
+    "emetteur": "rwcFTR67npu19pwgtDKyxYzZZJxGAj6WDt",
+    "donneur": "rfizBdz1vngWbrXhq7iaN32FFtt1SmrmNK",
+    "tiers": "rhWt3zk1cPbE5NwLLR7JEHR8LS2TShVoNb",
+    "beneficiaire_A": "rBaJnMUAPTE8cTGyUCkrrmPotzKPTr57PQ",
+    "beneficiaire_B": "rpKPPjp3Nw9BkoBY4uQ6Vq3YS5aNAzDM1c",
+    "beneficiaire_C": "r3FZttRPdZjb6wAc3D6tUQ8oUADDNSc2qn"
+  },
+  "preparation": [
+    {
+      "tx": "AccountSet DefaultRipple",
+      "hash": "BAF40CE624C2B89CA26EDBCF6CDB3E434813ACB885346620791A1F571A480A2E",
+      "resultat": "tesSUCCESS"
+    },
+    {
+      "tx": "AccountSet AllowTrustLineLocking",
+      "hash": "FE45300296E64C70BAB372958EB7D338F18D2F0A7B128C3BD5598FFFA6BE74A8",
+      "resultat": "tesSUCCESS"
+    },
+    {
+      "tx": "TrustSet donneur",
+      "hash": "663C04B4467FFE29B4053EA7FE3E584847FFAFE3A965519196195AEF761D2896",
+      "resultat": "tesSUCCESS"
+    },
+    {
+      "tx": "Payment emetteur -> donneur 5000",
+      "hash": "A91EF08842BFA0FB225953C1D7D2A9EF9FA45E04E7EA7BFE5D5642E108EDFD31",
+      "resultat": "tesSUCCESS"
+    },
+    {
+      "tx": "TrustSet beneficiaire C (avant)",
+      "hash": "F8612757ECABD61DA86B55C5367591934A38D39383F5F044E56E978E1DEFA95A",
+      "resultat": "tesSUCCESS"
+    }
+  ],
+  "cas": [
+    {
+      "cas": "A",
+      "trustline_avant": false,
+      "signataire": "tiers",
+      "escrow_create": {
+        "hash": "4517CF4EC0183512D3846DBA5B63A209BF08B5266E1904A68C85040455CB5663",
+        "resultat": "tesSUCCESS",
+        "sequence": 22091202
+      },
+      "escrow_finish": {
+        "hash": "6E7D259C505DD2DDCAA3334D59B26BB3670707F5EA23FA43476A1DCA806B41BD",
+        "resultat": "tecNO_LINE",
+        "ledger": 22091237
+      },
+      "solde_avant": null,
+      "solde_apres": null
+    },
+    {
+      "cas": "B",
+      "trustline_avant": false,
+      "signataire": "beneficiaire",
+      "escrow_create": {
+        "hash": "FE16FB4BD5EF6F3CEC5B325A24A7EBFC37892C2FFFD3477A61EE2A53117ADD38",
+        "resultat": "tesSUCCESS",
+        "sequence": 22091203
+      },
+      "escrow_finish": {
+        "hash": "9B691C6905382B983F4333F476D60F5B967571F74F52C441762560377246D653",
+        "resultat": "tesSUCCESS",
+        "ledger": 22091248
+      },
+      "solde_avant": null,
+      "solde_apres": "100"
+    },
+    {
+      "cas": "C",
+      "trustline_avant": true,
+      "signataire": "tiers",
+      "escrow_create": {
+        "hash": "B0EE0C218933AA67D1A04FD9B393D37ADCE86E2BE8E25F06D83F067FDF9E8DAB",
+        "resultat": "tesSUCCESS",
+        "sequence": 22091204
+      },
+      "escrow_finish": {
+        "hash": "22C0C39015194A992A1814C513F3DEB4ECD61044C2F222F7079B64217C8861AB",
+        "resultat": "tesSUCCESS",
+        "ledger": 22091259
+      },
+      "solde_avant": "0",
+      "solde_apres": "100"
+    }
+  ],
+  "type_escrow": "FinishAfter seul (date), sans Condition ni CancelAfter"
+}

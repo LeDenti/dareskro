@@ -1,0 +1,73 @@
+{
+  "oracle": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+  "schedule": {
+    "drops": 1000,
+    "payTo": "rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW",
+    "memoType": "dareskro/fee",
+    "memoData": "<owner>:<sequence>",
+    "appliesTo": "conditioned escrows (delivery, presence, affiliate) registered from now on; a payroll escrow has no gate",
+    "note": "the oracle signs the release only after a Payment of 1000 drops from the owner with that memo; the refund at CancelAfter does not depend on it"
+  },
+  "client": "rQD6K9dVxWhpCdBKxyAsBX5a5dkb4Mq2Ei",
+  "freelancer": "rNrm6eZWyFDJfUYYuW48oZWLXUm912cbbh",
+  "sequence": 22030056,
+  "createHash": "4A313F47197CED7A182EBE2AA74EFB1142BF83AF85E32F4892AE076011C91395",
+  "feeHash": "D462E57B89E83AD18770F06EE12D16FD37C0A2809DC734A731A70F54D5BF835E",
+  "finishHash": "5D232FA95F9E7222E1DAF07BA1883FA0D49324CFDAAACE0D7FF4DE224259D369",
+  "rows": [
+    {
+      "at": "06:04:18",
+      "step": "0",
+      "text": "oracle rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW; schedule in force: 1000 drops per conditioned escrow, memo dareskro/fee \"<owner>:<sequence>\"",
+      "tx": null
+    },
+    {
+      "at": "06:04:33",
+      "step": "1",
+      "text": "client rQD6K9dVxWhpCdBKxyAsBX5a5dkb4Mq2Ei, freelancer rNrm6eZWyFDJfUYYuW48oZWLXUm912cbbh (testnet faucet)",
+      "tx": null
+    },
+    {
+      "at": "06:04:41",
+      "step": "2",
+      "text": "EscrowCreate #22030056: 20 XRP locked behind the condition, refund after 420 s",
+      "tx": "https://testnet.xrpl.org/transactions/4A313F47197CED7A182EBE2AA74EFB1142BF83AF85E32F4892AE076011C91395"
+    },
+    {
+      "at": "06:04:41",
+      "step": "3",
+      "text": "/watch → fee due: 1000 drops to rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW, memo dareskro/fee \"rQD6K9dVxWhpCdBKxyAsBX5a5dkb4Mq2Ei:22030056\"",
+      "tx": null
+    },
+    {
+      "at": "06:04:47",
+      "step": "4",
+      "text": "RIGHT file published; oracle: match (76 bytes); the service fee is not paid: 1000 drops to rUuvu1XPgd5GtTgrXQKiwrHq3fb2xiHZMW, memo dareskro/fee \"rQD6K9dVxWhpCdBKxyAsBX5a5dkb4Mq2Ei:22030056\" — status waiting, 1 check(s)",
+      "tx": null
+    },
+    {
+      "at": "06:04:56",
+      "step": "4b",
+      "text": "9 s later, still waiting: the proof alone does not open the escrow (freelancer 100 XRP)",
+      "tx": null
+    },
+    {
+      "at": "06:05:01",
+      "step": "5",
+      "text": "client pays the fee: 1000 drops to the oracle, memo \"rQD6K9dVxWhpCdBKxyAsBX5a5dkb4Mq2Ei:22030056\" — tesSUCCESS",
+      "tx": "https://testnet.xrpl.org/transactions/D462E57B89E83AD18770F06EE12D16FD37C0A2809DC734A731A70F54D5BF835E"
+    },
+    {
+      "at": "06:05:13",
+      "step": "6",
+      "text": "oracle: finished — fee seen (1000 drops, D462E57B…) — match (76 bytes)",
+      "tx": "https://testnet.xrpl.org/transactions/5D232FA95F9E7222E1DAF07BA1883FA0D49324CFDAAACE0D7FF4DE224259D369"
+    },
+    {
+      "at": "06:05:13",
+      "step": "7",
+      "text": "freelancer 120 XRP (the full 20 XRP: the fee came on top, from the client); oracle 99.990744 → 99.991284 XRP (+0.000540, the fee minus its own EscrowFinish fee)",
+      "tx": null
+    }
+  ]
+}

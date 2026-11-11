@@ -1,0 +1,40 @@
+{
+  "reseau": "testnet",
+  "grpc": "grpc.testnet.concordium.com:20000",
+  "explorateur": "https://testnet.ccdscan.io",
+  "identite": "Concordium testnet IP (identite de test, ipIdentity 0)",
+  "comptes": {
+    "proprietaire": {
+      "adresse": "3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3",
+      "index": 19355,
+      "role": "Julien : compte verifie, proprietaire du NFT CIS-8004 de l'agent ; clics dans le Browser Wallet, jamais dans le code"
+    },
+    "agent": {
+      "adresse": "4ATXveK2NKvMYSruV7rxKTWmz5Gm4mchtJAEPNToz5UfqHQuzr",
+      "index": 19356,
+      "role": "agent de paie : sponsor et facilitateur x402, compte nomine du PLT EURD, cle exportee dans concordium/cles/ (hors git)"
+    },
+    "salarie": {
+      "adresse": "4RRvkcozfMNxhhsz2uGwqtAzhNvMT2VakjNA81Mc8Shk8HKGjs",
+      "index": 19357,
+      "role": "salarie de la demo : beneficiaire du paiement EURD via x402 ; cree par Julien le 04/11, 20 000 CCD"
+    }
+  },
+  "cree_le": "2026-11-04",
+  "solde_initial_ccd": 20000,
+  "plt": {
+    "token_id": "hh-EURD",
+    "symbole_demande": "EURD",
+    "nom": "dareskro euro de test",
+    "decimales": 6,
+    "offre_initiale": "1000000",
+    "compte_nomine": "agent",
+    "mintable": true,
+    "burnable": true,
+    "allowlist": false,
+    "denylist": false,
+    "metadata_url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/concordium/plt/EURD.json",
+    "demande_soumise_le": "2026-11-04",
+    "etat": "EMIS sur testnet (lu en chaine le 2026-11-11) : 1 000 000 hh-EURD sur le compte agent"
+  }
+}
