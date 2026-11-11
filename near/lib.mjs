@@ -24,21 +24,32 @@ export const balance = async (id) => BigInt((await provider.viewAccount({ accoun
 export const NEAR = 10n ** 24n;
 export const near = (yocto) => (Number(BigInt(yocto) / 10n ** 18n) / 1e6).toFixed(4);
 
-/** One function call; never throws on a contract panic, returns {ok, hash, value|error, logs}. */
+/**
+ * One function call; never throws on a contract panic, returns {ok, hash, value|error, logs}.
+ * near-api-js >= 7.5.3 throws a typed error for a refused call: a contract panic is a
+ * HostGuestPanicError whose `panicMessage` is the contract's own text, and the error carries
+ * `transactionResult`, so the hash and the logs come without a second RPC call
+ * (near/near-api-js#2026; before 7.5.3 the text had to be cut out of a string).
+ * Anything that is not a failed execution (bad key, no network) is still thrown.
+ */
 export async function call(acct, method, args = {}, { deposit = 0n, gas = '60', contractId = CONTRACT } = {}) {
-  const r = await acct.signAndSendTransaction({
-    receiverId: contractId,
-    actions: [actions.functionCall(method, args, teraToGas(gas), BigInt(deposit))],
-    throwOnFailure: false,
-  });
+  const logsOf = (r) => (r?.receipts_outcome || []).flatMap((o) => o.outcome?.logs || []);
+  let r;
+  try {
+    r = await acct.signAndSendTransaction({
+      receiverId: contractId,
+      actions: [actions.functionCall(method, args, teraToGas(gas), BigInt(deposit))],
+    });
+  } catch (e) {
+    const t = e.transactionResult;
+    if (!t) throw e;
+    return { ok: false, hash: t.transaction.hash, error: e.panicMessage ?? e.message, logs: logsOf(t) };
+  }
   const hash = r.transaction.hash;
-  const logs = (r.receipts_outcome || []).flatMap((o) => o.outcome?.logs || []);
   const st = r.status;
   if (st && typeof st === 'object' && 'SuccessValue' in st) {
     const raw = Buffer.from(st.SuccessValue, 'base64').toString();
-    return { ok: true, hash, value: raw ? JSON.parse(raw) : null, logs };
+    return { ok: true, hash, value: raw ? JSON.parse(raw) : null, logs: logsOf(r) };
   }
-  const s = JSON.stringify(st);
-  const m = s.match(/Smart contract panicked: ([^"\\]*)/);
-  return { ok: false, hash, error: m ? m[1] : s, logs };
+  return { ok: false, hash, error: JSON.stringify(st), logs: logsOf(r) };
 }

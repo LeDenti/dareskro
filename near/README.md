@@ -326,7 +326,7 @@ names are taken, create your own with `DARESKRO_CONTRACT=<you>.testnet` and the 
 | `scelle.mjs` | seals a payslip for its readers (X25519 + AES-256-GCM), opens it with a reader's key; `cles_publiques.json` holds the public keys |
 | `desk/desk_near.mjs`, `desk/enregistre.mjs` | the pay desk's NEAR service and the recorded run of the tab; `desk/sortie/` the records |
 | `../app/src/NearDesk.tsx`, `../app/src/near.ts` | the NEAR tab of the React desk |
-| `lib.mjs` | near-api-js 7 helpers: accounts from the legacy keychain, `call` that never throws on a panic, views |
+| `lib.mjs` | near-api-js 7 helpers: accounts from the legacy keychain, `call` that never throws on a panic (it reads the typed `HostGuestPanicError.panicMessage` of near-api-js ≥ 7.5.3, no string parsing), views |
 | `oracle_near.mjs` | the oracle: makes conditions (keeps the secret in `.oracle_near.json`, 0600), reads public facts, finishes and refunds |
 | `deploy_near.mjs` | deploy (`--admin`) / migrate, list keys, **lock** |
 | `frais_near.mjs` | the fee per act measured on testnet; `frais.log`, `frais.json` |
@@ -334,7 +334,7 @@ names are taken, create your own with `DARESKRO_CONTRACT=<you>.testnet` and the 
 | `demo_near.mjs` | the testnet run; `run.log`, `compte_rendu.json` |
 | `../presentation/video/scenarios/near.json` | the film's NEAR scenario, filled from `compte_rendu.json`, plus the second card with the four records measured on 01–02/11 (see `../presentation/video/README.md`) |
 
-Libraries: `near-sdk` 5.30, `hex` 0.4, `near-workspaces` 0.24, `near-api-js` 7.4. Written with Claude Code (Fable 5.1), as the rest
+Libraries: `near-sdk` 5.30, `hex` 0.4, `near-workspaces` 0.24, `near-api-js` 7.5.3 (7.4 for the runs of 31 October to 5 November). Written with Claude Code (Fable 5.1), as the rest
 of dareskro; the code was run and measured as reported above.
 
 ## What is not done
