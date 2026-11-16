@@ -202,7 +202,7 @@ HTTPS (Aurora publishes no SDK for these two flows):
 |---|---|---|---|
 | quote | `POST /api/quote/{apiKey}` with `swapType: EXACT_OUTPUT`, `destinationAsset` = Solana USDC (`nep141:sol-5ce3…omft.near`), `recipient` = the payer's Solana address; then `GET /api/status/{apiKey}?depositAddress=…` | any API key | the desk asks for exactly the escrow's amount; the payer sends the origin asset to the quote's deposit address; on `SUCCESS` the desk calls `create_token` |
 | persistent address | `POST /api/persistent-deposit-address/{apiKey}` (`destinationChain: "sol"`) | organisations approved by Aurora; others get **403** | one address per payer, forever; the module returns `{ approved: false }` on 403 so the desk falls back to a quote — nothing is mocked |
-| Intents Connect | `POST /api/v1/executions/{wallet}` with Solana `steps` (one instruction each, `{INTERMEDIARY}` as the only signer) | any key, header `x-api-key` | the deposit could call `create_token` itself from the payer's intermediary account — the "contract-level composability" bonus; not built yet |
+| Intents Connect | `POST /api/v1/executions/{wallet}` with Solana `steps` (one instruction each, `{INTERMEDIARY}` as the only signer) | any key, header `x-api-key` | the deposit calls `create` itself from the payer's intermediary account: built and checked on 16 November, see the next section; mainnet run pending |
 
 Facts that shape the demo: Aurora runs on **mainnet only** (no testnet), the API
 key goes in the URL path and is documented as not confidential, fees are set per
@@ -241,6 +241,46 @@ nothing more. What the live run proves is the thing Aurora's track asks for: a
 real cross-chain funding flow, refund address validated up front, settlement
 observed on both chains. The full record of the run (quote, hashes, status
 ticks, balances) is written to `client/sortie/`, which stays out of git.
+
+## Intents Connect: the payer's own wallet locks the escrow (16/11/2026)
+
+With the quote flow above, USDC lands on the desk's address and the desk then
+locks it. For a few seconds the desk holds the payer's money. Intents Connect
+removes that hop. Aurora derives, for each origin wallet, an *intermediary*
+Solana account that only that wallet can authorise. A bridge-in execution swaps
+the payer's asset into native SOL, lands it on the intermediary, and runs our
+one step from there: dareskro's `create`, with the intermediary as the escrow's
+owner. The destination is fixed at that moment. A refund goes back to the
+intermediary, which answers only to the payer's wallet.
+
+`client/intents_connect.mjs` builds that step and checks it. Why it fits
+Aurora's rules:
+
+- **One signer.** `create` has a single signer, the owner, and Aurora lets only
+  `{INTERMEDIARY}` sign. The escrow account is a PDA of the owner and an id, so no
+  fresh keypair is needed.
+- **Typed arguments.** Aurora Borsh-encodes `u8`…`i64`, `pubkey`, `string`. An
+  `Option<i64>` goes as a `u8` tag then the `i64`, the 32-byte condition as a
+  `pubkey`, the memos as a `u32` count then strings.
+- **Native SOL only.** On an SPL destination a relayer pays the gas and the
+  intermediary holds no SOL, so it cannot pay the rent of `create_token`'s two
+  accounts. The SOL escrow is the one that runs through Intents Connect.
+
+| Check | Result |
+|---|---|
+| Our encoding against Anchor's, three shapes of optional arguments | identical, 71, 120 and 122 bytes |
+| Devnet replay, a fresh key as intermediary, the Mac key as Aurora's fee payer | [`46a2PUPw…`](https://explorer.solana.com/tx/46a2PUPwAKMCnJTB9h7yvi6bHE5zzxz8dwCRnPUF2uaRJXfZEyFUbp6ZyoidEro5eukWLHqwp48FwMuGDN1hCFtF?cluster=devnet), 15 546 compute units of 200 000 |
+| What the intermediary pays | 0.01 SOL locked + 0.0041656 SOL escrow rent + 0.0005 SOL devnet fee |
+| Released to the employee after the date, by a third party | [`4vakRnRK…`](https://explorer.solana.com/tx/4vakRnRK7JzJ3qUsmqzLhvwrBWfRnssKSDCGuTN9jSNLX11C89EEfWMic6i9PrSa5pTBSjps9aSYGEiTE5XcE22q?cluster=devnet), then the owner closes and gets the rent back [`2oD4p6Kc…`](https://explorer.solana.com/tx/2oD4p6KcQMywsfdx51dG1E7ZGxt4PBz7ejRaQg15fdEEMMzqGiYcWenM4hefrjbAcWva8e9NN3Y1S2xZXjtpSSUs?cluster=devnet) |
+| The transaction Aurora would assemble (nonce advance, compute budget, our step, its fee) | 694 bytes of 1 232 |
+| Aurora dry run on mainnet, USDC on Base → SOL, EXACT_OUTPUT, nothing signed | HTTP 200: 1.08 USDC in for 0.01483 SOL out, network fee 10 000 lamports, 34 s estimated |
+
+The dry run validates the request but does not simulate it: it accepted a
+program that exists only on devnet. A real execution is simulated before
+signing, so it needs the program on mainnet. That deployment costs about
+3.1 SOL of rent (608 KB at 5 080 lamports a byte), returned if the program is
+closed. It is not done. XRP is not yet a source for Intents Connect (it is for
+the quote flow); EVM, Solana, NEAR, Stellar, Tron and TON are.
 
 ## The pay desk on Solana — same desk, another ledger
 
