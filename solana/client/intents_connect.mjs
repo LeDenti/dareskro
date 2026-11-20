@@ -29,6 +29,8 @@
  *   node intents_connect.mjs check                             bytes equal Anchor's, tx size, compute units on devnet
  *   node intents_connect.mjs dry <originWallet> <originAsset> <destination> <lamports> [finishInSec] [cancelInSec]
  *                                                              ask Aurora to price and validate it (mainnet, nothing signed)
+ *   node intents_connect.mjs release <escrow>                  mainnet: release after the date, to the destination only
+ *                                                              (DARESKRO_MAINNET_KEY pays the fee; web/connect.html does the payment)
  */
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -259,6 +261,23 @@ async function dry(wallet, originAsset, destination, lamports, finishIn, cancelI
   console.log(`saved ${save("intents_connect_dry", { wallet, intermediary: im.json, escrow, request: body, response: r })}`);
 }
 
+/** Mainnet: anyone may release after the date, only to the destination; the key here only pays the network fee. */
+async function release(escrowAddr) {
+  const { Connection } = await import("@solana/web3.js");
+  const rpc = process.env.SOLANA_MAINNET_RPC || "https://solana-rpc.publicnode.com";
+  const keyPath = process.env.DARESKRO_MAINNET_KEY || join(process.env.HOME, ".config", "solana", "dareskro-mainnet.json");
+  const caller = loadKeypair(keyPath);
+  const connection = new Connection(rpc, "confirmed");
+  const program = new anchor.Program(IDL, new anchor.AnchorProvider(connection, new anchor.Wallet(caller), { commitment: "confirmed" }));
+  const e = await program.account.escrow.fetch(new PublicKey(escrowAddr));
+  const st = Object.keys(e.status)[0];
+  console.log(`escrow ${escrowAddr}: ${st}, ${Number(e.amount) / LAMPORTS_PER_SOL} SOL for ${e.destination.toBase58()}, owner ${e.owner.toBase58()}, release after ${e.finishAfter ? new Date(e.finishAfter.toNumber() * 1000).toISOString() : "—"}`);
+  if (st !== "locked") return;
+  const sig = await program.methods.finish(null).accountsPartial({ caller: caller.publicKey, escrow: new PublicKey(escrowAddr), destination: e.destination }).signers([caller]).rpc();
+  console.log(`released by ${caller.publicKey.toBase58()} (fee only): https://solscan.io/tx/${sig}`);
+  console.log(`saved ${save("intents_connect_release", { escrow: escrowAddr, destination: e.destination.toBase58(), lamports: e.amount.toString(), tx: sig })}`);
+}
+
 const [cmd, ...a] = process.argv.slice(2);
 if (cmd === "intermediary") { const r = await fetchIntermediary(a[0]); console.log(r.status, JSON.stringify(r.json, null, 2)); }
 else if (cmd === "step") {
@@ -267,4 +286,5 @@ else if (cmd === "step") {
 }
 else if (cmd === "check") await check();
 else if (cmd === "dry") await dry(...a);
+else if (cmd === "release") await release(a[0]);
 else if (import.meta.url === `file://${process.argv[1]}`) console.log("usage: intermediary | step | check | dry (see the header of this file)");

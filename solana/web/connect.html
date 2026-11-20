@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>dareskro — pay from any chain</title>
+<link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+<header>
+  <h1>dareskro <span class="muted">on Solana · mainnet · Intents Connect</span></h1>
+  <p>The payer signs once in the EVM wallet they already have, with USDC or ETH on Base or Arbitrum. Aurora Intents bridges it to SOL and, from the payer's own intermediary account on Solana, runs dareskro's <code>create</code>: the pay is locked for one recipient, released on the date to that recipient only, and nobody, not even the payer, can take it back or redirect it. No desk holds the money in between. Real money: start with a few dollars.</p>
+  <p class="hint"><a href="./">← the devnet page</a> · program <a id="program-link" target="_blank" rel="noreferrer">6NoVNiHv…</a> · <span id="program-state" class="muted">checking mainnet…</span></p>
+</header>
+<main>
+  <section class="card" id="card-evm">
+    <h2><span class="step">1</span> The payer's wallet</h2>
+    <div class="row">
+      <button id="btn-evm" class="primary">Connect an EVM wallet (MetaMask, Rabby, Phantom…)</button>
+    </div>
+    <div id="evm-info" class="box muted">No wallet. Your Solana intermediary is derived by Aurora from this address; only this wallet can authorise what it does.</div>
+  </section>
+
+  <section class="card disabled" id="card-pay">
+    <h2><span class="step">2</span> Lock pay on Solana, paid from another chain</h2>
+    <div class="row">
+      <label>Pay with
+        <select id="origin"></select>
+      </label>
+      <label>Amount
+        <input id="amount" type="number" min="0" step="0.01" value="3" />
+      </label>
+      <label class="grow">Recipient on Solana (who is paid on the date)
+        <input id="dest" placeholder="the employee's Solana address" />
+      </label>
+      <label>Released after
+        <select id="delay"><option value="120">2 minutes</option><option value="600">10 minutes</option><option value="3600">1 hour</option><option value="86400">1 day</option></select>
+      </label>
+    </div>
+    <div class="row">
+      <label class="grow">Memo (on chain, public)
+        <input id="memo" maxlength="120" value="Sunday shift, paid via Intents Connect" />
+      </label>
+      <button id="btn-preview">1. Quote it (nothing signed)</button>
+      <button id="btn-run" class="primary" disabled>2. Sign once and pay</button>
+    </div>
+    <div id="preview" class="box muted">The quote shows what you send, what Aurora's network fee takes, what is locked for the recipient, and the escrow's rent (it comes back to your intermediary when the escrow is closed).</div>
+    <div id="pay-error" class="ko"></div>
+  </section>
+
+  <section class="card" id="card-escrow">
+    <h2><span class="step">3</span> The escrow, read from Solana mainnet</h2>
+    <div class="row">
+      <label class="grow">Escrow address
+        <input id="escrow-addr" placeholder="filled in after a payment, or paste one" />
+      </label>
+      <button id="btn-read">Read</button>
+      <button id="btn-release" disabled>Release to the recipient (Phantom pays the 0.000005 SOL fee)</button>
+      <button id="btn-close" disabled>Get the rent back (signed by the payer's wallet)</button>
+    </div>
+    <div id="escrow-out" class="box muted">Nothing read yet.</div>
+  </section>
+
+  <section class="card" id="card-log">
+    <h2><span class="step">4</span> What happened</h2>
+    <ul id="log"></ul>
+  </section>
+</main>
+<footer class="muted">dareskro · <a href="https://github.com/LeDenti/dareskro/tree/main/solana" target="_blank" rel="noreferrer">github.com/LeDenti/dareskro · solana/</a> · Intents Connect by Aurora (<code>@aurora-is-near/intents-connect</code> 7.28.0). Built after the Encode Solana Hackathon 2026.</footer>
+<script type="module" src="/src/connect.js"></script>
+</body>
+</html>
