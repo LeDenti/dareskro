@@ -4,8 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>dareskro on Solana</title>
-  <script type="module" crossorigin src="/dareskro/assets/index-DtSWEtTN.js"></script>
-  <link rel="stylesheet" crossorigin href="/dareskro/assets/index-kkvnRLu4.css">
+  <script type="module" crossorigin src="/dareskro/assets/index-Dz-m0zLS.js"></script>
+  <link rel="stylesheet" crossorigin href="/dareskro/assets/index-Ce-NcDcW.css">
 </head>
 <body>
 <header>
@@ -86,11 +86,19 @@
     <div id="vlist"></div>
   </section>
 
+  <section class="card" id="card-x402">
+    <h2><span class="step">5</span> x402 — an AI agent's money is locked, not paid</h2>
+    <p class="hint">An agent buys a file over HTTP. The seller answers <code>402 Payment Required</code> and serves the file encrypted. The agent does not pay the seller: its payment is a dareskro escrow for the seller, under the sha256 of the file's key, refundable after a date. The seller is paid only by publishing that key on chain, where the agent reads it. No key, and the agent takes its money back. A facilitator pays the network fee and nothing else. Scheme <code>dareskro-escrow</code> on x402 v2, measured on devnet on 20 November 2026 (<a href="https://github.com/LeDenti/dareskro/tree/main/solana#x402-the-agents-money-is-locked-not-paid-20112026" target="_blank" rel="noreferrer">README</a>, <a href="https://github.com/LeDenti/dareskro/blob/main/solana/client/x402.mjs" target="_blank" rel="noreferrer">code</a>). The seller and facilitator run as servers, so this page does not replay the sale: it re-reads it from the chain, here, in your browser.</p>
+    <div class="row"><button id="btn-x402" class="primary">Check the measured run on devnet</button></div>
+    <div id="x402-out"></div>
+    <p id="x402-error" class="ko" hidden></p>
+  </section>
+
   <section class="card" id="card-log">
-    <h2><span class="step">5</span> What this page sent</h2>
+    <h2><span class="step">6</span> What this page sent</h2>
     <ul id="log"></ul>
   </section>
 </main>
-<footer class="muted">Encode Solana Hackathon 2026 · <a href="https://github.com/LeDenti/dareskro/tree/main/solana" target="_blank" rel="noreferrer">github.com/LeDenti/dareskro · solana/</a> · funding from any chain by Aurora Intents (mainnet only: the quote is real, the devnet escrow is funded by the wallet).</footer>
+<footer class="muted">Encode Solana Hackathon 2026 (x402 added after the deadline) · <a href="https://github.com/LeDenti/dareskro/tree/main/solana" target="_blank" rel="noreferrer">github.com/LeDenti/dareskro · solana/</a> · funding from any chain by Aurora Intents (mainnet only: the quote is real, the devnet escrow is funded by the wallet).</footer>
 </body>
 </html>
