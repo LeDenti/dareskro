@@ -5,7 +5,9 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
   },
   "dependencies": {
-    "@anchor-lang/core": "^1.2.2"
+    "@anchor-lang/core": "^1.2.2",
+    "@x402/core": "^2.31.0",
+    "@x402/svm": "^2.31.0"
   },
   "devDependencies": {
     "@solana/spl-token": "^0.4.15",

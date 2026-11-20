@@ -282,6 +282,66 @@ signing, so it needs the program on mainnet. That deployment costs about
 closed. It is not done. XRP is not yet a source for Intents Connect (it is for
 the quote flow); EVM, Solana, NEAR, Stellar, Tron and TON are.
 
+## x402: the agent's money is locked, not paid (20/11/2026)
+
+With x402's `exact` scheme an agent pays the seller first and trusts it to
+deliver. dareskro adds a scheme, `dareskro-escrow`, in which the payment is a
+dareskro `create_token`: the price goes into a vault only the program controls,
+for one destination (the seller), under a condition (the sha256 of the key that
+decrypts the goods) and with a refund date. The seller is paid only by calling
+`finish_token` with that key, and that call writes the key on the chain, where
+the buyer reads it. If the key never comes, the buyer takes the money back after
+the date. Delivery and payment are one transaction; no oracle, no desk, no trust
+in the seller. The deployed program is unchanged: the scheme only uses
+`create_token`, `finish_token`, `cancel_token` and `close`.
+
+`client/x402_sequestre.mjs` is the scheme, on `@x402/core` 2.31 (x402 v2 wire:
+`PAYMENT-REQUIRED`, `PAYMENT-SIGNATURE`, `PAYMENT-RESPONSE`):
+
+- **Seller.** `GET /files/<name>` answers 402. It encrypts the file with a fresh
+  AES-256-GCM key for each offer, serves the encrypted file to anyone, and puts in
+  the terms the key's sha256 as the condition, the encrypted file's sha256, the
+  refund delay and the facilitator's fee payer.
+- **Agent.** Before signing it checks its own rails: x402's spend controls (this
+  asset only, at most 1 test dollar a payment), then ours (dareskro's program, a
+  32-byte condition, the money locked one hour at most), and it downloads the
+  encrypted file and checks its hash. It signs a transaction whose fee payer is the
+  facilitator.
+- **Facilitator.** It pays the network fee and nothing else. It co-signs only a
+  transaction with a compute budget and exactly one `create_token` whose
+  destination, amount, mint, condition and refund date are the terms, in which its
+  own key is no account of any instruction, and which simulates cleanly. It
+  refuses an escrow it has already settled.
+
+`node client/x402.mjs setup` then `node client/x402.mjs measure` (devnet,
+20 November 2026, 01:02 UTC). The dollars are a test mint we created
+([`xWp5R7iL…`](https://explorer.solana.com/address/xWp5R7iLPoEdGVDiJovXAX2BVzVPwZRy495tYUUnVrB?cluster=devnet), 6 decimals),
+not Circle's USDC; agent [`oiw2HPAR…`](https://explorer.solana.com/address/oiw2HPARwrhewhZA4fYrTpdaozTEphQdaZGMDttgze6?cluster=devnet),
+seller [`F8nKYnvP…`](https://explorer.solana.com/address/F8nKYnvPfg9UUaQTh91RxFfXbUjpdjaWPzZSVWQgT58b?cluster=devnet).
+
+| Case | What happened |
+|---|---|
+| A sale: 402, lock, key published | 0.25 locked [`2xaiYqN6…`](https://explorer.solana.com/tx/2xaiYqN62KCNaHeS2fEgzzXdJufnb6bfstLYxAxvDbDSbbFZ7VZBEyHMdfYZh73jsULkufbPBFgwjqz969SbEX7k?cluster=devnet), released by the seller with the key [`25pSCQzB…`](https://explorer.solana.com/tx/25pSCQzBh3BLvxTcsmM4xojpjTcsEhc4S3hHf9GSPo5UTtT2qddVFqDL7bMwe4rKGV31PzxikFJu3Vy7Agc7zGit?cluster=devnet); the agent reads the key from the escrow account, not from the seller's answer, and decrypts the file (466.57 EUR, the Sunday shift) |
+| The seller wants the money locked 2 hours | the agent pays nothing: its limit is 1 hour |
+| The agent's transaction locks for someone else | facilitator: `wrong_destination` |
+| … locks 0.10 for a price of 0.40 | `wrong_amount` |
+| … under another condition | `wrong_condition` |
+| … with a transfer out of the facilitator's key slipped in | `fee_payer_in_instruction`, nothing signed |
+| The payment of the first sale sent again | seller: not the terms offered; straight to the facilitator: `replay` |
+| A seller that locks, sends a wrong key, then goes silent (refund after 45 s) | lock [`5LBJRyFT…`](https://explorer.solana.com/tx/5LBJRyFTaVpmEzpVrVgifku3NAGiGcXCwFQSNb1cyWJMEtS377yqKEAdcAQLpAmtw54wUKoXW6YeJFXy5L4vf3T3?cluster=devnet); wrong key `WrongFulfillment`; the agent asks at once `CancelTooEarly`; after the date the seller sends the **right** key: `TooLate`; refund [`4C9yqh7W…`](https://explorer.solana.com/tx/4C9yqh7W7fm17hnoW3YGwqmU3iwpgoi67kod2gNZWHYWmm7q2BKnodeKGWnRJAuhdkL65GFgfYNQaPBD6pWaxkzG?cluster=devnet) |
+| The agent closes both records | [`5mEajSsb…`](https://explorer.solana.com/tx/5mEajSsbyFQ2p33iMoYj64dmvkKgRTA8p4nA8UqtKRKTmVzG153d5DrVHVRZNBi7dqpJd3vwACZMdfsfBPhSEGuE?cluster=devnet), [`3VkDHcyc…`](https://explorer.solana.com/tx/3VkDHcycuJamyRk8r1J5VDK5zDMs8ogEYEMSy9LZAguh967w8suLyYq4X3o5ermNnbYyFD4EaqeMH4nNdoh5RzLx?cluster=devnet): rent back |
+
+Balances over the run: agent 8.75 → 8.50 test dollars, seller 1.25 → 1.50 (one
+sale; the silent seller's 0.40 came back). The agent's SOL went from 0.0273308 to
+0.0263158: the escrow and vault rent came back, what is left is dareskro's act
+fee (0.0005 SOL a lock on devnet) and its own refund and close fees. The
+facilitator paid 10 000 lamports a lock (two signatures).
+
+What it does not do yet: the facilitator runs next to the seller (no public
+facilitator knows this scheme); the buyer still holds a little SOL for the rent,
+which comes back; a seller can publish a key that opens a file the buyer finds
+worthless — the scheme proves the file is the one offered, not that it is good.
+
 ## The pay desk on Solana — same desk, another ledger
 
 The pay desk of the XRPL product (`app/`, React) gained a tab, **Solana · same
@@ -600,6 +660,10 @@ pool, visible in `capital` and in the `AdvanceFunded` event (`act_fee`).
   The ceilings are fixed at the pool's creation: nobody, not even the operator, changes them
   afterwards (a `pool_set_limits` under compiled caps would be the next step, with a policy
   administrator key).
+- x402 (`dareskro-escrow`) is our own scheme: an off-the-shelf x402 client that
+  only knows `exact` cannot pay it, and its facilitator is ours. It was built on
+  20 November, after the hackathon's deadline, and is not part of the judged
+  submission. The test dollars are our devnet mint, not Circle's USDC.
 - Devnet only for the hackathon. On mainnet the upgrade authority would be
   revoked before the first real escrow; the fee administrator (`set_fee`,
   `withdraw_fees`) is a separate key that survives that, bounded by the two
