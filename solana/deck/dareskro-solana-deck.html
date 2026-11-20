@@ -32,6 +32,9 @@
   .quote { font-size: 30px; color: #fff; border-left: 6px solid #ffd166; padding-left: 20px; margin: 10px 0 24px; }
   .rule { font-size: 40px; text-align: center; margin: 40px 0; color: #fff; }
   .rule span { color: #ffd166; }
+  .tight li { font-size: 20px; margin-bottom: 6px; }
+  .tight .quote { font-size: 24px; margin-bottom: 16px; }
+  .tight h3 { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -42,7 +45,7 @@
     <p class="sub">The payroll vault nobody owns — the AI reads, the code computes, a human approves, the program pays.</p>
     <p class="muted" style="margin-top: 40px; font-size: 22px;">Encode Solana Hackathon 2026 · Best Consumer App · Aurora Intents<br/>Program on devnet <code>6NoVNiHvEsagkYYobHjrwQgkqL5xHp5zGStZK4YtdPSu</code> · github.com/LeDenti/dareskro · solana/</p>
   </div>
-  <div class="foot"><span>matter-x- · November 2026</span><span>1 / 9</span></div>
+  <div class="foot"><span>matter-x- · November 2026</span><span>1 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -63,7 +66,7 @@
       <p>Not a promise. A place where the money sits that the payer can no longer empty or redirect, and a rule for who opens it.</p>
     </div>
   </div>
-  <div class="foot"><span>dareskro on Solana</span><span>2 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>2 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -83,7 +86,7 @@
       </ul>
     </div>
   </div>
-  <div class="foot"><span>dareskro on Solana</span><span>3 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>3 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -107,7 +110,7 @@
       </ul>
     </div>
   </div>
-  <div class="foot"><span>dareskro on Solana</span><span>4 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>4 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -131,7 +134,7 @@
       </ul>
     </div>
   </div>
-  <div class="foot"><span>dareskro on Solana</span><span>5 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>5 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -151,7 +154,7 @@
       </ul>
     </div>
   </div>
-  <div class="foot"><span>dareskro on Solana</span><span>6 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>6 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -166,7 +169,32 @@
     <tr><td>lenders</td><td>A leaves before the buyback: 67.45 for 80; B leaves after: 94.45 for 80</td></tr>
   </table>
   <p class="muted" style="font-size: 19px; margin-top: 14px;">Also: a fee per act bounded by the program (≤ 1 %, floor ≤ 0.01 SOL), zero by default, paid on top of the lock.</p>
-  <div class="foot"><span>dareskro on Solana</span><span>7 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>7 / 10</span></div>
+</section>
+
+<section class="slide tight">
+  <h2>x402: an AI agent's money is locked, not paid</h2>
+  <p class="quote">With x402's <code>exact</code> scheme the agent pays first and trusts the seller. With <code>dareskro-escrow</code>, the payment is a dareskro escrow: the seller is paid only by publishing the key that opens the file.</p>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li>the seller answers <b>402</b> and serves the file encrypted; its terms carry the sha256 of the key</li>
+        <li>the agent locks the price for the seller, under that hash, refundable after a date it accepts</li>
+        <li><code>finish_token</code> with the key pays the seller and writes the key on chain, where the agent reads it</li>
+        <li>a facilitator pays the network fee and nothing else; x402 v2 headers, <code>@x402/core</code></li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Measured on devnet, 20 November</h3>
+      <ul>
+        <li>a sale: 0.25 locked, released by the key, file decrypted from the chain</li>
+        <li>refused by the facilitator: <code>wrong_destination</code>, <code>wrong_amount</code>, <code>wrong_condition</code>, <code>fee_payer_in_instruction</code>, <code>replay</code></li>
+        <li>a silent seller: <code>WrongFulfillment</code>, <code>CancelTooEarly</code>, then even the right key <code>TooLate</code>; the agent is refunded</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted" style="font-size: 17px; margin: 0 0 40px;">Our own scheme and facilitator; test dollars from our devnet mint; built after the hackathon deadline.</p>
+  <div class="foot"><span>dareskro on Solana</span><span>8 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -178,11 +206,11 @@
         <li>payroll and delivery escrows, SOL and USDC</li>
         <li>sealed payslip, shared vault 2/3, fee per act, invoice advance</li>
         <li>the page, the desk, Aurora on mainnet</li>
-        <li>Intents Connect: our step, byte for byte Anchor's, replayed on devnet</li>
+        <li>Intents Connect replayed on devnet · x402 with the agent's payment locked until the key</li>
       </ul>
       <h3>Next</h3>
       <ul>
-        <li>Intents Connect live, once the program is on mainnet · USDC in the pool · policy administrator under compiled caps · mainnet with the upgrade authority revoked</li>
+        <li>Intents Connect live on mainnet · USDC in the pool · mainnet with the upgrade authority revoked</li>
       </ul>
     </div>
     <div class="col">
@@ -196,7 +224,7 @@
       </ul>
     </div>
   </div>
-  <div class="foot"><span>dareskro on Solana</span><span>8 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>9 / 10</span></div>
 </section>
 
 <section class="slide">
@@ -210,7 +238,7 @@
     <tr><th>prior work</th><td>the XRPL version, XRPL Hackathon NYC, October 2026; NEAR and PayPal rails of the same desk</td></tr>
   </table>
   <p class="rule" style="margin-top: 48px;"><span>The agent reads.</span> The code computes. <span>A human approves.</span> Solana pays.</p>
-  <div class="foot"><span>dareskro on Solana</span><span>9 / 9</span></div>
+  <div class="foot"><span>dareskro on Solana</span><span>10 / 10</span></div>
 </section>
 
 </body>

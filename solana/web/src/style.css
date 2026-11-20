@@ -10,3 +10,4 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}bu
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:500;font-size:12px}td.num{text-align:right;font-variant-numeric:tabular-nums}
 td .acts{display:flex;gap:6px;flex-wrap:wrap}td .acts button{padding:5px 9px;font-size:13px}code{font-size:13px;background:#f1f3f5;padding:1px 5px;border-radius:4px}#log{padding-left:18px;font-size:14px}#log li{margin:4px 0}footer{padding:10px 20px 40px;font-size:13px}
 a{color:#1d4ed8}
+#x402-out ul{list-style:none;padding-left:0;font-size:14px}#x402-out li{margin:5px 0}#x402-out h3{font-size:15px;margin:14px 0 4px}

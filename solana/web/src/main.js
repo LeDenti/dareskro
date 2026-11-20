@@ -5,6 +5,7 @@ import { Connection, Keypair, PublicKey, Transaction, LAMPORTS_PER_SOL } from "@
 import { CLUSTER, RPC, PROGRAM_ID, PAY_WITH, explorerTx, explorerAddr } from "./config.js";
 import { createIx, finishIx, cancelIx, closeIx, listEscrows, errorCode, vaultCreateIx, vaultVoteIx, vaultTimeoutIx, vaultCloseIx, listVaults, fetchFeeConfig, feeFor, CONFIG } from "./program.js";
 import { solPrice, quote as auroraQuote } from "./aurora.js";
+import { checkRun } from "./x402.js";
 
 const $ = (id) => document.getElementById(id);
 const connection = new Connection(RPC, "confirmed");
@@ -242,3 +243,11 @@ async function vaultAct(what, v, amt) {
   } catch (err) { log(`${what} ${short(v.address)}: ${err.message.split("\n")[0]}`, "", true); }
   finally { busy = false; vaultKey = undefined; refreshBalance(); refreshVaults(); }
 }
+
+// ---------------------------------------------------------------- x402 (read-only, no wallet)
+$("btn-x402").onclick = async () => {
+  $("x402-error").hidden = true; $("btn-x402").disabled = true;
+  try { await checkRun(connection, $("x402-out")); }
+  catch (e) { $("x402-error").textContent = `${e.message} (the public devnet RPC limits requests: try again in a few seconds)`; $("x402-error").hidden = false; }
+  finally { $("btn-x402").disabled = false; }
+};
