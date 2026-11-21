@@ -1,0 +1,7 @@
+$ node test/collecteur_testnet.mjs
+PASS  anonymous agent                  -> REFUSED: anonymous agent: no Concordium badge presented
+PASS  revoked agent                    -> REFUSED: agent status is Revoked | badge not valid: agent is not Active on chain; card URL did not return HTTP 200; card SHA-256 does not match the on-chain metadata_hash
+PASS  active agent, no card on chain   -> REFUSED: badge not valid: no agent_uri set on chain — the agent has no card to check
+PASS  valid badge, wrong payer         -> REFUSED: payer 4ATXveK2... is not the agent's wallet 3eM7mwKu...
+PASS  valid badge, its own wallet pays -> ACCEPTED
+5/5

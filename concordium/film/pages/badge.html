@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><div class="badge" id="b"></div>
+<script>
+window.afficher = (d) => {
+  const ch = Object.entries(d.checks || {}).filter(([, v]) => typeof v === 'boolean');
+  document.getElementById('b').innerHTML = `<h1>Official badge check · <span class="${d.badge_valid ? 'accent' : 'ko'}">badge_valid: ${d.badge_valid}</span></h1>
+   <p>GET agent-registry-mcp.concordium.com/v1/check-badge/${d.token_address} · token ${d.token_id} · ${d.network}</p>
+   <div class="grille">${ch.map(([k, v]) => `<div><i>${v ? '✓' : '✗'}</i>${k}</div>`).join('')}</div>
+   <p style="margin-top:22px">issues: ${(d.issues || []).length} · card ${d.agent_uri.split('/').pop()} · sha256 ${d.card_sha256.slice(0, 16)}…</p>`;
+};
+</script></body></html>

@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><div class="carte" id="c"></div>
+<script>
+const C = {
+ titre: `<h1>Agents already pay people.<br><span class="accent">Who answers for them?</span></h1><h2>dareskro Accountable · the payroll agent of a pharmacy, made accountable on Concordium</h2>`,
+ existant: `<h1 style="font-size:60px">The agent we already run</h1>
+  <div class="flux"><div class="boite"><b>Evidence</b><span>schedule + badge clock<br>Sunday shift, 09:00–21:00</span></div><div class="fleche">→</div>
+  <div class="boite"><b>Deterministic code</b><span>on-call pay statement<br>no model touches the amounts</span></div><div class="fleche">→</div>
+  <div class="boite"><b>A named human</b><span>approves before<br>anything is paid</span></div><div class="fleche">→</div>
+  <div class="boite"><b>Payment</b><span>escrow on Solana<br>(program 6NoVNiHv…)</span></div></div>
+  <div class="lignes">Statement <b>stmt-ffff3dd0e216</b> · period 2026-10 · net paid <b>407.33</b></div>`,
+ production: `<h1 style="font-size:60px">Path to production</h1>
+  <div class="lignes" style="font-size:31px"><b>Transfer to the agent</b> → a Simple Lock (Jan 2027): recipient = employee, send right = agent<br>
+  <b>hh-EURD</b> → a MiCA-authorised euro issued as a PLT<br><b>Owner</b> → a company identity (LEI) through an approved provider<br>
+  <b>Fee sponsor key</b> → HSM or MPC wallet, rate limits kept<br><b>Record</b> → kept 6 months to 10 years, erasable without touching the chain</div>`,
+ fin: `<h1>dareskro <span class="accent">Accountable</span></h1><h2>github.com/LeDenti/dareskro · concordium/RESULTS.md<br>agent badge JyP9V7ZjVu29m1xTU1KDH · testnet</h2>`,
+};
+document.getElementById('c').innerHTML = C[new URLSearchParams(location.search).get('id')] ?? '';
+</script></body></html>

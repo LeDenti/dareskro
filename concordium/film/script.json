@@ -1,0 +1,57 @@
+[
+ {
+  "id": "titre",
+  "caption": "dareskro Accountable · Concordium Trusted Agents Hackathon · testnet",
+  "voice": "Agents already pay people. When one of them pays, nobody can prove who answers for it. This is the payroll agent of a pharmacy, made accountable on Concordium."
+ },
+ {
+  "id": "existant",
+  "caption": "The agent we already run: schedule + badge clock → pay statement (deterministic code) → a named human approves → escrow on Solana",
+  "voice": "The agent already runs. It reads the schedule and the badge clock, computes an on-call pay statement with deterministic code, and waits for a named human before anything is paid. On Solana, it releases a payroll escrow."
+ },
+ {
+  "id": "proprietaire",
+  "caption": "Owner check from the Concordium Wallet · zero-knowledge proof of age ≥ 18 · request anchored before, result after",
+  "voice": "First, the owner proves once, from the Concordium wallet, that a verified adult stands behind the agent. It is a zero-knowledge proof: no name, no date of birth. The request is anchored on chain before the proof, the result after."
+ },
+ {
+  "id": "registre",
+  "caption": "Agent Registry (CIS-8004) token 1345 · card hash pinned on chain · Solana key bound with CIS-8 · official badge check: 14/14 green",
+  "voice": "The agent is registered in the Concordium agent registry. Its card is hashed on chain, its existing Solana key is bound with C I S eight, and the official verifier checks the badge. Fourteen checks out of fourteen."
+ },
+ {
+  "id": "rails",
+  "caption": "The agent holds 0 CCD · every transaction it sends is co-signed and paid by the employer (sponsored transactions)",
+  "voice": "Then the rails. The agent holds no C C D at all. Every transaction it sends is co-signed and paid by the employer, so it cannot move anything on its own."
+ },
+ {
+  "id": "cycle",
+  "caption": "Outputs of the runs of 20–21 Nov 2026 (abridged) · proposal anchored · human approval anchored · exact net 407.33 hh-EURD to the agent",
+  "voice": "The agent proposes the statement: four hundred and seven, thirty three. Its fingerprint goes on chain. The employer approves, and only the exact net moves to the agent, with a memo that names the statement and the approval."
+ },
+ {
+  "id": "collecteur",
+  "caption": "Run on 21 Nov 2026: the employee's x402 service checks the payer's badge first · against real testnet agents",
+  "voice": "Now the agent pays the employee over x four oh two. The employee's service checks the payer's badge first. Without a badge, an agent is refused. So are real testnet agents that are revoked, that have no card, or that pay from someone else's wallet."
+ },
+ {
+  "id": "paiement",
+  "caption": "Outputs of the run of 21 Nov 2026 (abridged) · badge accepted · employer's facilitator co-signs as fee sponsor · employee receives 407.33 hh-EURD",
+  "voice": "With its badge, our agent is accepted, and the employer's facilitator co-signs the payment as fee sponsor. The employee receives four hundred and seven, thirty three test euros. The agent is back to zero."
+ },
+ {
+  "id": "journal",
+  "caption": "EU AI Act Article 12 record · 6 entries, chained · only hash(nonce ‖ entry) on chain (register_data) · erasable off chain",
+  "voice": "Every decision leaves a record for Article twelve of the E U A I Act: the proposal, the approval, the payment, the owner check, and two refusals, including our own bugs. Only a fingerprint goes on chain, so the record itself can be erased."
+ },
+ {
+  "id": "production",
+  "caption": "Path to production: Simple Locks (Jan 2027) · MiCA euro PLT · company identity (LEI) · sponsor key in HSM",
+  "voice": "On mainnet, the transfer to the agent becomes a Simple Lock, the token a regulated euro, and the owner a company identity. Today it runs on testnet, and every step links to the explorer."
+ },
+ {
+  "id": "fin",
+  "caption": "github.com/LeDenti/dareskro · concordium/RESULTS.md · built by matter-x-",
+  "voice": "dareskro Accountable. The code and every transaction are on GitHub."
+ }
+]

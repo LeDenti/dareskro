@@ -1,0 +1,16 @@
+$ node journal/proposition.mjs --ancrer          # 20 Nov 2026, 22:05
+{
+  "fichier": "concordium/journal/prive/0001-proposal.json",
+  "hash": "528fce85c24a0e21a07aff9f7016c3f8de62c63d0ea0a72e15b3822ffdaacd77",
+  "net": "407.33"
+}
+proposal anchored 7618fc2f22bf9ad0d1c1b61b0d3c06787c582b0943faff4c7b1b1c018fd8b88a
+# sender: the agent (0 CCD) · fee sponsor: the employer
+
+$ node journal/approbation.mjs --approuve        # the employer, 21 Nov 2026
+pending: stmt-ffff3dd0e216, period 2026-10, net 407.33 (USD)
+approval anchored 1e68cfbe68213ca812f3174875022b4e28a584b829b1242203f39815edc616d6
+net moved to the agent e57122b6b4fbae7b56429308149b5a6bedf674c364f904fa89d9b9e4bad4e4e0
+# memo on the transfer: stmt-ffff3dd0e216|art12:c40675a38b9fa9c0
+
+# balances read from chain:  employer 999,592.67 hh-EURD   agent 407.33 hh-EURD, 0 CCD   employee 0

@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><div id="term"></div>
+<script>
+// Replays a captured output line by line (commands "typed", outputs printed). Started by film.mjs.
+window.rejouer = async (lignes, msParLigne) => {
+  const t = document.getElementById('term'); const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  for (const l of lignes) {
+    const d = document.createElement('div'); t.appendChild(d);
+    const classe = l.startsWith('$') ? 'cmd' : l.startsWith('#') ? 'com' : /REFUSED|refused/.test(l) ? 'ko' : /ACCEPTED|SETTLED true|PASS|anchored|paid|chain ok|5\/5/.test(l) ? 'ok' : '';
+    if (classe) d.className = classe;
+    if (l.startsWith('$')) { for (let i = 0; i <= l.length; i += 3) { d.textContent = l.slice(0, i); await pause(12); } d.textContent = l; await pause(msParLigne); }
+    else { d.textContent = l || ' '; await pause(msParLigne * 0.55); }
+    t.scrollTop = t.scrollHeight;
+  }
+};
+</script></body></html>

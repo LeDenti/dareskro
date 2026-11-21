@@ -1,0 +1,14 @@
+:root{--fond:#0d0f17;--texte:#eef0f5;--doux:#9aa2b4;--accent:#3ee0a1;--accent2:#7aa7ff;--ko:#ff8a80}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--fond);color:var(--texte);font-family:-apple-system,"SF Pro Display",Helvetica,Arial,sans-serif}
+.carte{height:calc(100% - 120px);display:flex;flex-direction:column;justify-content:center;padding:0 140px}
+.carte h1{font-size:78px;line-height:1.08;margin:0 0 28px;letter-spacing:-1px}.carte h2{font-size:38px;color:var(--doux);font-weight:500;margin:0}
+.accent{color:var(--accent)}.bleu{color:var(--accent2)}
+.flux{display:flex;align-items:stretch;gap:22px;margin-top:46px}
+.boite{flex:1;border:1px solid #2a3042;border-radius:18px;padding:26px 28px;background:#141826}
+.boite b{display:block;font-size:30px;margin-bottom:10px}.boite span{font-size:24px;color:var(--doux);line-height:1.35}
+.fleche{align-self:center;font-size:44px;color:var(--doux)}
+.lignes{margin-top:34px;font-size:27px;line-height:1.55;color:var(--doux)}.lignes b{color:var(--texte)}
+#term{height:calc(100% - 120px);padding:46px 70px;font:25px/1.5 "SF Mono",Menlo,monospace;white-space:pre-wrap;word-break:break-all;color:#d7dbe4;overflow:hidden}
+#term .cmd{color:var(--accent)}#term .com{color:#7c849a}#term .ok{color:var(--accent)}#term .ko{color:var(--ko)}
+.badge{padding:40px 90px;height:calc(100% - 120px)}.badge h1{font-size:44px;margin:0 0 6px}.badge p{color:var(--doux);font-size:24px;margin:0 0 22px;font-family:Menlo,monospace}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:10px 40px}.grille div{font-size:27px;font-family:Menlo,monospace}.grille i{font-style:normal;color:var(--accent);margin-right:14px}

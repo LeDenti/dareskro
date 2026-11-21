@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><div class="badge" id="b"></div>
+<script>
+window.afficher = (c, url) => {
+  const e = c.capabilities.extensions[0].params, x = e.externalReference;
+  const l = (k, v) => `<div style="font-size:27px;margin:9px 0;font-family:Menlo,monospace"><span style="color:#9aa2b4">${k}</span>  ${v}</div>`;
+  document.getElementById('b').innerHTML = `<h1>Agent card · ${c.name} · v${c.version}</h1><p>${url}</p>`
+   + l('badge', '<span class="accent">' + e.tokenAddress.split(':').pop() + '</span>  (CIS-8004 12802.0, testnet)')
+   + l('owner', e.owner.account.split(':').pop() + '  (verified identity)')
+   + l('agentWallet', e.agentWallet.split(':').pop() + '  (holds no CCD)')
+   + l('externalReference', 'Cis8 · ' + x.namespace + '<br>&nbsp;&nbsp;' + x.identifier + '  <span class="bleu">(dareskro oracle on Solana devnet)</span>')
+   + l('skills', c.skills.map((s) => s.id).join(' · '))
+   + `<p style="margin-top:24px">its SHA-256 is pinned on chain (setAgentURI) · the verifier refetches it and compares</p>`;
+};
+</script></body></html>

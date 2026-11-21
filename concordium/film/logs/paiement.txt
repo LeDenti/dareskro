@@ -1,0 +1,10 @@
+$ node x402/agent_paie.mjs --anonyme               # 21 Nov 2026, the agent without its badge
+refused by the collector: {"error":"agent_not_accountable","reasons":["anonymous agent: no Concordium badge presented"]}
+
+$ node x402/agent_paie.mjs                         # with its badge JyP9V7ZjVu29m1xTU1KDH
+[employee service]      ACCEPTED agent 1345 owner 3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3
+[employer facilitator]  SETTLED true febf17b2779930804050265e9886dc20ce4a4868b6e5727f1389dca5ae1aa10f
+paid 407.33 hh-EURD tx febf17b2779930804050265e9886dc20ce4a4868b6e5727f1389dca5ae1aa10f
+payment recorded 52ce72c9f9283f4bc464478ad84c70c67f7bcf83d1c28eb091c66ea6074ce662
+
+# balances read from chain:  employer 999,592.67 hh-EURD   agent 0 hh-EURD, 0 CCD   employee 407.33 hh-EURD
