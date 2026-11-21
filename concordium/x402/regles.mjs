@@ -23,3 +23,8 @@ export function approbationOuverte() {
            montant: atomique(a.entree.decision.net), destinataire: a.entree.decision.recipient,
            reseau: CHAINE, actif: JETON.id };
 }
+
+// Who pays: the sender in the header of the signed V1 transaction the client built
+// (payload.signedTransaction.header.sender), the field the Concordium facilitator checks too.
+export const expediteur = (paiement) =>
+  paiement?.payload?.signedTransaction?.header?.sender ?? paiement?.payload?.sender ?? null;

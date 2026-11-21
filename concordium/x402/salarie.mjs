@@ -10,7 +10,7 @@ import { x402ResourceServer, HTTPFacilitatorClient } from '@x402/core/server';
 import { x402HTTPResourceServer } from '@x402/core/http';
 import { ExactConcordiumScheme } from '@x402/concordium/exact/server';
 import { CHAINE, COMPTES, JETON } from '../config.mjs';
-import { approbationOuverte } from './regles.mjs';
+import { approbationOuverte, expediteur } from './regles.mjs';
 import { verifierPayeur } from './collecteur.mjs';
 
 export const PORT = 4022;
@@ -47,8 +47,9 @@ http.createServer(async (req, res) => {
     res.writeHead(r.response.status, r.response.headers); return res.end(JSON.stringify(r.response.body ?? {}));
   }
   if (r.type === 'no-payment-required') { res.writeHead(404); return res.end(); }
-  const payeur = r.paymentPayload?.payload?.sender ?? null;
-  const v = await verifierPayeur({ badge, payeur });
+  const payeur = expediteur(r.paymentPayload);
+  const v = payeur ? await verifierPayeur({ badge, payeur })
+                   : { accepte: false, motifs: ['payer account not found in the payment'] };
   if (!v.accepte) return refuser(v);
   console.log('ACCEPTED agent', v.token_id, 'owner', v.proprietaire);
   const s = await http402.processSettlement(r.paymentPayload, r.paymentRequirements, r.declaredExtensions);

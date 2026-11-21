@@ -13,7 +13,7 @@ import { toConcordiumFacilitatorSigner } from '@x402/concordium';
 import { CHAINE, GRPC, COMPTES, JETON } from '../config.mjs';
 import { client, signataire } from '../chaine.mjs';
 import { ecrire, ancrer } from '../journal/journal.mjs';
-import { DESTINATAIRES, DEBIT_MAX_PAR_HEURE, CCD_MIN_SPONSOR, approbationOuverte } from './regles.mjs';
+import { DESTINATAIRES, DEBIT_MAX_PAR_HEURE, CCD_MIN_SPONSOR, approbationOuverte, expediteur as lireExpediteur } from './regles.mjs';
 
 export const PORT = 4021;
 const sponsor = signataire('proprietaire');
@@ -25,7 +25,7 @@ const reglements = [];
 
 async function garde(payload, req) {
   const motifs = [];
-  const expediteur = payload?.payload?.sender;
+  const expediteur = lireExpediteur(payload);
   if (expediteur !== COMPTES.agent) motifs.push(`sender ${expediteur} is not the payroll agent`);
   if (!DESTINATAIRES.includes(req.payTo)) motifs.push(`payee ${req.payTo} not on the allow-list`);
   if (req.asset !== JETON.id) motifs.push(`asset ${req.asset} is not ${JETON.id}`);
@@ -43,7 +43,7 @@ async function garde(payload, req) {
 async function refuser(motifs, payload, req) {
   const r = ecrire('refusal', {
     task: { what: 'co-sign an agent payment as fee sponsor', given_by: 'x402 resource server' },
-    inputs: { sender: payload?.payload?.sender ?? null, payee: req?.payTo ?? null, asset: req?.asset ?? null, amount: req?.amount ?? null },
+    inputs: { sender: lireExpediteur(payload), payee: req?.payTo ?? null, asset: req?.asset ?? null, amount: req?.amount ?? null },
     decision: { status: 'REFUSED', reasons: motifs },
   });
   try { await ancrer(r.fichier, { par: 'proprietaire' }); } catch (e) { console.error('anchor failed', e.message); }
