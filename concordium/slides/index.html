@@ -1,0 +1,143 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>dareskro Accountable</title>
+<style>
+@page{size:1920px 1080px;margin:0}
+:root{--fond:#0d0f17;--carte:#141826;--bord:#2a3042;--texte:#eef0f5;--doux:#9aa2b4;--vert:#3ee0a1;--bleu:#7aa7ff;--rouge:#ff8a80;--or:#f5c86b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--fond);color:var(--texte);font-family:-apple-system,"SF Pro Display",Helvetica,Arial,sans-serif}
+section{width:1920px;height:1080px;padding:90px 120px 70px;position:relative;page-break-after:always;overflow:hidden}
+h1{font-size:76px;line-height:1.06;margin:0 0 24px;letter-spacing:-1px}h2{font-size:58px;margin:0 0 34px;letter-spacing:-.5px}
+.sous{font-size:34px;color:var(--doux);line-height:1.35;margin:0}
+.pied{position:absolute;left:120px;right:120px;bottom:44px;display:flex;justify-content:space-between;font-size:20px;color:#6d7488;border-top:1px solid #222839;padding-top:14px}
+.v{color:var(--vert)}.b{color:var(--bleu)}.r{color:var(--rouge)}.o{color:var(--or)}
+.grille{display:grid;gap:26px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}
+.boite{background:var(--carte);border:1px solid var(--bord);border-radius:20px;padding:30px 32px}
+.boite b{display:block;font-size:32px;margin-bottom:12px}.boite p,.boite li{font-size:26px;color:var(--doux);line-height:1.4;margin:0}
+.boite ul{margin:0;padding-left:26px}.boite li{margin:6px 0}
+.mono{font-family:"SF Mono",Menlo,monospace}
+.liste{font-size:30px;line-height:1.55;color:var(--doux);margin:0;padding-left:34px}.liste b{color:var(--texte)}.liste li{margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:23px}th,td{text-align:left;padding:11px 14px;border-bottom:1px solid #232a3b;vertical-align:top}th{color:var(--doux);font-weight:600}
+td.h{font-family:"SF Mono",Menlo,monospace;color:var(--bleu);white-space:nowrap}
+.fleche{font-size:42px;color:var(--doux);align-self:center;text-align:center}
+.tag{display:inline-block;font-size:21px;padding:5px 14px;border-radius:999px;border:1px solid var(--bord);color:var(--doux);margin:0 8px 8px 0}
+</style></head><body>
+
+<section>
+ <div style="margin-top:150px"><span class="tag">Concordium Trusted Agents Hackathon</span><span class="tag">Encode Club · 2026</span><span class="tag">testnet</span></div>
+ <h1 style="font-size:104px;margin-top:20px">dareskro <span class="v">Accountable</span></h1>
+ <p class="sous" style="font-size:42px">The payroll agent of a pharmacy, made accountable on Concordium:<br>a verified human answers for it, it pays on its own inside hard limits, and it leaves a record.</p>
+ <p class="sous mono" style="margin-top:60px;font-size:28px">agent badge <span class="v">JyP9V7ZjVu29m1xTU1KDH</span> · video youtu.be/Ike9etJ1p6w · github.com/LeDenti/dareskro</p>
+ <div class="pied"><span>matter-x-</span><span>1 / 9</span></div>
+</section>
+
+<section>
+ <h2>Agents already pay people. <span class="v">Who answers for them?</span></h2>
+ <p class="sous" style="margin-bottom:46px">We did not build a new agent. We took the one we already run, and made it accountable.</p>
+ <div class="grille" style="grid-template-columns:1fr 60px 1fr 60px 1fr 60px 1fr">
+  <div class="boite"><b>Evidence</b><p>the schedule and the badge clock<br>Sunday shift 09:00–21:00</p></div><div class="fleche">→</div>
+  <div class="boite"><b>Deterministic code</b><p>on-call pay statement<br>no model touches the amounts</p></div><div class="fleche">→</div>
+  <div class="boite"><b>A named human</b><p>approves the statement<br>before anything is paid</p></div><div class="fleche">→</div>
+  <div class="boite"><b>Payment</b><p>payroll escrow on Solana devnet<br>(program 6NoVNiHv…)</p></div>
+ </div>
+ <p class="sous" style="margin-top:56px">What it lacked: proof that a <b class="v">verified human</b> stands behind it, a way to <b class="v">pay on its own</b> inside limits nobody can bypass, and a <b class="v">record</b> a regulator can read.</p>
+ <div class="pied"><span>dareskro Accountable</span><span>2 / 9</span></div>
+</section>
+
+<section>
+ <h2>Three accounts, three services</h2>
+ <div class="grille g3" style="margin-bottom:28px">
+  <div class="boite" style="border-color:#3ee0a155"><b class="v">Employer · owner</b><ul><li>verified human (Concordium ID)</li><li>owns the agent NFT</li><li>holds the token reserve</li><li>approves each statement</li><li>pays every fee of the agent</li></ul></div>
+  <div class="boite" style="border-color:#7aa7ff55"><b class="b">Payroll agent</b><ul><li>CIS-8004 token 1345</li><li>its Solana key bound with CIS-8</li><li><b style="display:inline;font-size:26px">0 CCD</b>: cannot send alone</li><li>holds only the approved net</li><li>pays over x402</li></ul></div>
+  <div class="boite" style="border-color:#f5c86b55"><b class="o">Employee</b><ul><li>receives the net in hh-EURD</li><li>runs the x402 service</li><li>checks the payer's badge<br>before accepting money</li></ul></div>
+ </div>
+ <div class="grille g3">
+  <div class="boite"><b>Employer's x402 facilitator</b><p>co-signs as fee sponsor only a payment matching an open human approval</p></div>
+  <div class="boite"><b>Collector</b><p>badge valid, Active, card hash pinned, payer = the agent's registered wallet</p></div>
+  <div class="boite"><b>Article 12 record</b><p>chained entries; only hash(nonce ‖ entry) on chain, with register_data</p></div>
+ </div>
+ <div class="pied"><span>dareskro Accountable</span><span>3 / 9</span></div>
+</section>
+
+<section>
+ <h2>1 · The owner is verified once</h2>
+ <ul class="liste">
+  <li>From the <b>Concordium Wallet</b>, a <b>zero-knowledge proof</b>: age ≥ 18, from a testnet identity provider. <b>No name, no date of birth.</b></li>
+  <li>The proof answers a <b>fresh challenge</b> whose fingerprint is anchored on chain <b>before</b> the request (register_data, tag DKAVR): it cannot be replayed.</li>
+  <li>The server checks it against the chain (<span class="mono">getPublicData</span> + <span class="mono">verifyPresentation</span>): same challenge, same statement, credential <b>Active</b>.</li>
+  <li>The proving credential is mapped to its account: it must be <b>the account that owns the agent</b> (3f3W…Ecx3).</li>
+  <li>The result is an <b>owner_verification</b> entry of the Article 12 record, anchored.</li>
+ </ul>
+ <p class="sous" style="margin-top:34px">On Concordium every account comes from a verified identity; the proof adds a fresh, specific, private claim tied to <i>this</i> agent's owner.</p>
+ <div class="pied"><span>dareskro Accountable</span><span>4 / 9</span></div>
+</section>
+
+<section>
+ <h2>2 · The agent has an identity others can check</h2>
+ <div class="grille g2">
+  <div class="boite"><b>Agent Registry · CIS-8004</b><ul><li>token <b style="display:inline;font-size:26px">1345</b>, badge <span class="mono v">JyP9V7ZjVu29m1xTU1KDH</span></li><li>Agent Card built with the registry's MCP builder, hosted on GitHub, <b style="display:inline;font-size:26px">SHA-256 pinned on chain</b></li><li>setAgentWallet: payments routed to the agent account, proven by the agent's own key</li></ul></div>
+  <div class="boite"><b>CIS-8 · the key it already has</b><ul><li>the dareskro oracle key on <b style="display:inline;font-size:26px">Solana devnet</b> (ed25519)</li><li>signed the canonical bytes itself (solana-ed25519)</li><li>bound to the owner account: from the Solana key, anyone finds the owner, then the agent</li></ul></div>
+ </div>
+ <div class="boite" style="margin-top:26px"><b>Official badge check · <span class="v">14 / 14</span></b><p class="mono" style="font-size:22px">on_chain_agent_found · status_active · has_agent_uri · card_fetched · hash_matches_on_chain · badge_present · badge_well_formed · token_address_matches · owner_matches · contracts_match · verify_present · extension_conformant · verification_present · verify_url_matches</p></div>
+ <div class="pied"><span>dareskro Accountable</span><span>5 / 9</span></div>
+</section>
+
+<section>
+ <h2>3 · It pays on its own, inside hard limits</h2>
+ <div class="grille g2">
+  <div class="boite"><b>Rails available today</b><ul>
+   <li>the agent holds <b style="display:inline;font-size:26px">0 CCD</b>: every transaction it sends is <b style="display:inline;font-size:26px">co-signed and paid by the employer</b> (sponsored transactions)</li>
+   <li>the reserve stays with the employer; after approval, <b style="display:inline;font-size:26px">only the exact net</b> moves to the agent, memo = statement + approval</li>
+   <li>the facilitator co-signs only: payee on the allow-list, exact approved amount, hh-EURD, rate-limited</li></ul></div>
+  <div class="boite"><b>The collector, run on real testnet agents</b>
+   <table><tr><th>caller</th><th>verdict</th></tr>
+   <tr><td>no badge</td><td class="r">refused</td></tr><tr><td>revoked agent</td><td class="r">refused</td></tr>
+   <tr><td>active agent, no card</td><td class="r">refused</td></tr><tr><td>valid badge, someone else's wallet</td><td class="r">refused</td></tr>
+   <tr><td>valid badge, its own wallet</td><td class="v">accepted</td></tr></table></div>
+ </div>
+ <p class="sous" style="margin-top:30px">Paid: <b class="v">407.33 hh-EURD</b> from the agent to the employee over <b>x402</b>, fees sponsored by the employer. The agent is back to zero.</p>
+ <div class="pied"><span>dareskro Accountable</span><span>6 / 9</span></div>
+</section>
+
+<section>
+ <h2>4 · Every decision leaves a record (EU AI Act, Art. 12)</h2>
+ <table style="font-size:26px;margin-bottom:26px">
+  <tr><th>#</th><th>entry</th><th>what it says</th><th>anchor</th></tr>
+  <tr><td>1</td><td>proposal</td><td>the agent computed statement stmt-ffff3dd0e216, net 407.33</td><td class="h">7618fc2f…</td></tr>
+  <tr><td>2</td><td>human_approval</td><td>the employer approved it</td><td class="h">1e68cfbe…</td></tr>
+  <tr><td>3</td><td class="r">refusal</td><td>facilitator refused: could not read the payer (our bug)</td><td class="h">82f219b3…</td></tr>
+  <tr><td>4</td><td>payment</td><td>407.33 hh-EURD paid to the employee, tx febf17b2…</td><td class="h">52ce72c9…</td></tr>
+  <tr><td>5</td><td class="r">refusal</td><td>owner check refused: our checks misread the format (our bug)</td><td class="h">a4237b50…</td></tr>
+  <tr><td>6</td><td>owner_verification</td><td>verified adult, proving account = owner</td><td class="h">6f6b999a…</td></tr>
+ </table>
+ <p class="sous">On chain only <span class="mono">"DKA12" | v1 | SHA-256(nonce ‖ entry)</span>, 38 bytes. Entries and nonces stay off chain: an inspector recomputes the hash; erasing the entry and its nonce makes the anchor meaningless. Entries are chained: none can be dropped or reordered.</p>
+ <div class="pied"><span>dareskro Accountable</span><span>7 / 9</span></div>
+</section>
+
+<section>
+ <h2>Path to production</h2>
+ <table style="font-size:26px">
+  <tr><th style="width:34%">Today, testnet</th><th>On mainnet</th></tr>
+  <tr><td>owner from the test identity provider</td><td>the pharmacy owner via an approved provider, then the pharmacy itself with an <b>LEI</b> company identity</td></tr>
+  <tr><td>CIS-8004 12802 / CIS-8 12801</td><td>same standards on mainnet (10082 / 10081), production Solana key bound</td></tr>
+  <tr><td>hh-EURD test token</td><td>a <b>MiCA-authorised euro</b> issued as a PLT; the x402 flow is asset-agnostic</td></tr>
+  <tr><td>net moved to the agent after approval</td><td><b>Simple Lock</b> (Jan 2027): recipient = employee, expiry = pay date, send right = agent; funds stay with the employer</td></tr>
+  <tr><td>sponsor key on disk</td><td>HSM or MPC wallet (KMS / Dfns), balance alerts, rate limits kept</td></tr>
+  <tr><td>record kept locally</td><td>retention 6 months to 10 years, access log for inspectors, erasable on request</td></tr>
+ </table>
+ <p class="sous" style="margin-top:26px;font-size:28px">Out of scope on purpose: the legal French pay slip stays with the payroll software; dareskro is the proof layer. Limits: testnet, no audit of our code, test tokens, fictitious statement.</p>
+ <div class="pied"><span>dareskro Accountable</span><span>8 / 9</span></div>
+</section>
+
+<section>
+ <h2>Everything is on chain and on GitHub</h2>
+ <table style="font-size:24px">
+  <tr><th>step</th><th>transaction (testnet)</th></tr>
+  <tr><td>reserve and CCD moved from the agent to the employer (sponsored)</td><td class="h">9876d48c… · 330fb3ac…</td></tr>
+  <tr><td>CIS-8 Solana key bound · agent NFT minted · setAgentWallet</td><td class="h">fada50c0… · 9b036880… · f1c048ad…</td></tr>
+  <tr><td>card with badge pinned (v2, v3)</td><td class="h">e7c5cef2… · 350325cb…</td></tr>
+  <tr><td>human approval anchored · exact net to the agent</td><td class="h">1e68cfbe… · e57122b6…</td></tr>
+  <tr><td>x402 payment, agent → employee, employer as sponsor</td><td class="h">febf17b2…</td></tr>
+  <tr><td>owner verification: request anchor · result</td><td class="h">2036438d… · 6f6b999a…</td></tr>
+ </table>
+ <p class="sous mono" style="margin-top:36px;font-size:27px;line-height:1.6">code &nbsp;&nbsp;github.com/LeDenti/dareskro/tree/main/concordium<br>links &nbsp;concordium/RESULTS.md (16 transactions)<br>agent &nbsp;ccdexplorer.io/testnet/account/4ATXveK2…qHQuzr<br>video &nbsp;youtu.be/Ike9etJ1p6w</p>
+ <div class="pied"><span>dareskro Accountable · matter-x-</span><span>9 / 9</span></div>
+</section>
+</body></html>
