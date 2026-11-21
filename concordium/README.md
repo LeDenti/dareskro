@@ -1,5 +1,7 @@
 # dareskro Accountable: the payroll agent, made accountable on Concordium
 
+Demo video (2:26): https://youtu.be/Ike9etJ1p6w · every transaction: [RESULTS.md](RESULTS.md)
+
 Concordium Trusted Agents Hackathon (Encode, November–December 2026). Testnet only.
 
 We do not build a new agent. We take the payroll agent dareskro already runs (it reads the

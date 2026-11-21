@@ -1,5 +1,7 @@
 # Results on Concordium testnet (20–21 November 2026)
 
+Demo video (2:26): https://youtu.be/Ike9etJ1p6w
+
 Every step of the flow ran on testnet. Each line links to the explorer.
 
 Agent: CIS-8004 token **1345**, badge **`JyP9V7ZjVu29m1xTU1KDH`**, checked green by the official verifier
