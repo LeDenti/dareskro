@@ -46,11 +46,13 @@ if (nous.agent_wallet !== COMPTES.agent) {
 }
 
 // 3. card v2 with the badge, then pin it
-if (process.argv.includes('--carte')) {
-  execFileSync('node', [join(ICI, 'carte', 'construire.mjs'), '2', tokenId], { stdio: 'inherit' });
-  const sha = createHash('sha256').update(readFileSync(join(ICI, 'carte', 'agent-card.v2.json'))).digest('hex');
-  const a = await outil('build_set_agent_uri', { token_id: tokenId, agent_uri: carteUrl(2), metadata_hash_hex: sha, sender: COMPTES.proprietaire });
+const iCarte = process.argv.indexOf('--carte');
+if (iCarte > 0) {
+  const v = String(Number(process.argv[iCarte + 1]) || 2);
+  execFileSync('node', [join(ICI, 'carte', 'construire.mjs'), v, tokenId], { stdio: 'inherit' });
+  const sha = createHash('sha256').update(readFileSync(join(ICI, 'carte', `agent-card.v${v}.json`))).digest('hex');
+  const a = await outil('build_set_agent_uri', { token_id: tokenId, agent_uri: carteUrl(v), metadata_hash_hex: sha, sender: COMPTES.proprietaire });
   const r = await soumettre(appel(a), { par: 'proprietaire' });
-  console.log('setAgentURI v2', r.hash, r.lien, 'sha', sha);
+  console.log(`setAgentURI v${v}`, r.hash, r.lien, 'sha', sha);
 }
 console.log(json(await outil('agent_by_token_address', { token_address: badge })));

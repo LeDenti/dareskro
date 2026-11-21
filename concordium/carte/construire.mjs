@@ -3,6 +3,7 @@
 // value pinned on chain. Two passes: v1 before the NFT exists, v2 with the badge.
 //   node carte/construire.mjs 1            -> carte/agent-card.v1.json (no token yet)
 //   node carte/construire.mjs 2 <token_id> -> carte/agent-card.v2.json (badge included)
+//   node carte/construire.mjs 3 <token_id> -> v3: corrected fee sponsor wording (21 Nov)
 import { writeFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -42,7 +43,7 @@ const entree = {
       description: 'The statement leaves as a PROPOSAL; nothing is paid before a human approves it.',
       tags: ['human-in-the-loop'] },
     { id: 'pay.x402', name: 'Pay over x402 in hh-EURD',
-      description: 'Pays the approved net to an allow-listed recipient, fees sponsored by the agent account.',
+      description: 'Pays the approved net to an allow-listed recipient over x402; every fee is sponsored by the employer, the agent holds no CCD.',
       tags: ['x402', 'plt', 'sponsored'] },
     { id: 'record.article12', name: 'Keep an Article 12 record',
       description: 'Hash of each decision record plus a random nonce anchored with register_data; the record stays off chain.',
