@@ -1,0 +1,18 @@
+{
+  "name": "dareskro-concordium",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "dareskro Accountable: the payroll agent made accountable on Concordium testnet (registry, CIS-8 Solana key, x402 in hh-EURD, Article 12 record).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@concordium/web-sdk": "^12.0.2",
+    "@x402/concordium": "^2.29.0",
+    "@x402/core": "^2.29.0",
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3"
+  }
+}

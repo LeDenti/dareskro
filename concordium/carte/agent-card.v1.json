@@ -1,0 +1,104 @@
+{
+  "name": "dareskro payroll agent",
+  "description": "The payroll agent of a pharmacy in Marseille. It reads the schedule and the badge clock, computes the on-call pay statement with deterministic code, waits for a named human to approve it, then pays the employee. On Concordium its owner is a verified human, it pays in hh-EURD over x402 with sponsored fees, and every decision leaves an EU AI Act Article 12 record anchored by hash (register_data). Its existing Solana key is bound through CIS-8.",
+  "url": "https://raw.githubusercontent.com/LeDenti/dareskro/main/concordium/carte/agent-card.v1.json",
+  "version": "0.1.0",
+  "defaultInputModes": [
+    "text/markdown",
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "text/markdown",
+    "application/json"
+  ],
+  "authentication": {
+    "schemes": []
+  },
+  "skills": [
+    {
+      "id": "payroll.compute",
+      "name": "Compute an on-call pay statement",
+      "description": "Deterministic computation from schedule and badge evidence; no model touches the amounts.",
+      "tags": [
+        "payroll",
+        "deterministic"
+      ]
+    },
+    {
+      "id": "payroll.approve-request",
+      "name": "Ask a named human to approve",
+      "description": "The statement leaves as a PROPOSAL; nothing is paid before a human approves it.",
+      "tags": [
+        "human-in-the-loop"
+      ]
+    },
+    {
+      "id": "pay.x402",
+      "name": "Pay over x402 in hh-EURD",
+      "description": "Pays the approved net to an allow-listed recipient, fees sponsored by the agent account.",
+      "tags": [
+        "x402",
+        "plt",
+        "sponsored"
+      ]
+    },
+    {
+      "id": "record.article12",
+      "name": "Keep an Article 12 record",
+      "description": "Hash of each decision record plus a random nonce anchored with register_data; the record stays off chain.",
+      "tags": [
+        "ai-act",
+        "audit"
+      ]
+    },
+    {
+      "id": "escrow.release",
+      "name": "Release a payroll escrow on Solana",
+      "description": "The same agent key releases the dareskro escrow on Solana devnet (program 6NoVNiHv...).",
+      "tags": [
+        "solana",
+        "escrow"
+      ]
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extensions": [
+      {
+        "uri": "https://docs.concordium.com/a2a-extensions/concordium-badge/v1",
+        "description": "Verified by Concordium badge — on-chain agent identity in a CIS-8004 registry",
+        "required": false,
+        "params": {
+          "tokenAddress": null,
+          "owner": {
+            "account": "ccd:4221332d34e1694168c2a0c0b3fd0f27:3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3"
+          },
+          "agentWallet": "ccd:4221332d34e1694168c2a0c0b3fd0f27:4ATXveK2NKvMYSruV7rxKTWmz5Gm4mchtJAEPNToz5UfqHQuzr",
+          "contracts": {
+            "cis8004": "ccd:4221332d34e1694168c2a0c0b3fd0f27:12802.0",
+            "cis8": "ccd:4221332d34e1694168c2a0c0b3fd0f27:12801.0"
+          },
+          "externalReference": {
+            "kind": "Cis8",
+            "namespace": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+            "identifier": "5k8j3SXMp91fyQxC9ifMjQkGTD7aMNKiaVm4zYT8bNaK",
+            "contractAddress": "ccd:4221332d34e1694168c2a0c0b3fd0f27:12801.0"
+          },
+          "verify": "Resolve tokenAddress via CIS-8004 agent_of; confirm owner + status=Active + card SHA-256 == metadata_hash.",
+          "verification": {
+            "service": "Concordium Agent Registry",
+            "verifyUrl": "https://agent-registry-mcp.concordium.com/v1/badge-check/3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3",
+            "mcp": "https://agent-registry-mcp.concordium.com/mcp",
+            "docs": "https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/concordium-badge.html"
+          }
+        }
+      }
+    ]
+  },
+  "provider": {
+    "organization": "dareskro",
+    "url": "https://github.com/LeDenti/dareskro"
+  },
+  "documentationUrl": "https://github.com/LeDenti/dareskro/tree/main/concordium"
+}

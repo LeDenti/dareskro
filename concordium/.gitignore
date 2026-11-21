@@ -1,0 +1,5 @@
+# Clés exportées du Browser Wallet : jamais dans le dépôt.
+cles/
+node_modules/
+# Journal en clair et nonces : restent hors chaîne (droit à l'oubli), seule l'empreinte est publiée.
+journal/prive/

@@ -1,0 +1,256 @@
+{
+  "prepare_le": "2026-11-20T21:03:27.892Z",
+  "signataire": "3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3",
+  "carte": {
+    "version": 1,
+    "uri": "https://raw.githubusercontent.com/LeDenti/dareskro/main/concordium/carte/agent-card.v1.json",
+    "sha256": "c36880a53f21c5c644d43c6d7d0fc6c5a0091975c5669782f461d9b99c25c16b"
+  },
+  "cle_solana": {
+    "namespace": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+    "key_type": "ed25519",
+    "public_key_hex": "467b74ffae6e6520b6c169d5f37bc0ecb96acdb92a8000fb6c0a12182dc71dc0"
+  },
+  "actes": [
+    {
+      "nom": "cis8.registerExternalKey",
+      "network": "testnet",
+      "contract_address": {
+        "index": 12801,
+        "subindex": 0
+      },
+      "receive_name": "CIS-8.registerExternalKey",
+      "parameter_json": {
+        "external_key": {
+          "namespace": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+          "key_type": "ed25519",
+          "public_key": [
+            70,
+            123,
+            116,
+            255,
+            174,
+            110,
+            101,
+            32,
+            182,
+            193,
+            105,
+            213,
+            243,
+            123,
+            192,
+            236,
+            185,
+            106,
+            205,
+            185,
+            42,
+            128,
+            0,
+            251,
+            108,
+            10,
+            18,
+            24,
+            45,
+            199,
+            29,
+            192
+          ]
+        },
+        "proof": {
+          "scheme": "solana-ed25519",
+          "signature": [
+            253,
+            221,
+            23,
+            196,
+            164,
+            49,
+            226,
+            1,
+            75,
+            186,
+            133,
+            169,
+            69,
+            213,
+            218,
+            126,
+            204,
+            146,
+            119,
+            62,
+            110,
+            71,
+            127,
+            102,
+            32,
+            183,
+            250,
+            37,
+            32,
+            155,
+            162,
+            80,
+            77,
+            213,
+            58,
+            120,
+            108,
+            142,
+            112,
+            22,
+            14,
+            87,
+            46,
+            42,
+            81,
+            74,
+            76,
+            177,
+            187,
+            76,
+            246,
+            24,
+            219,
+            229,
+            21,
+            202,
+            201,
+            46,
+            138,
+            139,
+            212,
+            172,
+            68,
+            5
+          ]
+        },
+        "metadata": [
+          {
+            "key": "role",
+            "value": "dareskro payroll agent: oracle key on Solana devnet"
+          }
+        ]
+      },
+      "parameter_hex": "27000000736f6c616e613a457457545241425a61597136694d6665594b6f75527531363656553278716131070000006564323535313920000000467b74ffae6e6520b6c169d5f37bc0ecb96acdb92a8000fb6c0a12182dc71dc00e000000736f6c616e612d6564323535313940000000fddd17c4a431e2014bba85a945d5da7ecc92773e6e477f6620b7fa25209ba2504dd53a786c8e70160e572e2a514a4cb1bb4cf618dbe515cac92e8a8bd4ac44050100000004000000726f6c653300000064617265736b726f20706179726f6c6c206167656e743a206f7261636c65206b6579206f6e20536f6c616e61206465766e6574",
+      "suggested_energy": 30000,
+      "sender": "3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3",
+      "notes": [
+        "Signature is over the canonical bytes from `build_cis8_canonical_bytes`."
+      ]
+    },
+    {
+      "nom": "cis8004.register",
+      "network": "testnet",
+      "contract_address": {
+        "index": 12802,
+        "subindex": 0
+      },
+      "receive_name": "CIS-8004.register",
+      "parameter_json": {
+        "agent_uri": {
+          "Some": [
+            "https://raw.githubusercontent.com/LeDenti/dareskro/main/concordium/carte/agent-card.v1.json"
+          ]
+        },
+        "metadata_hash": {
+          "Some": [
+            [
+              195,
+              104,
+              128,
+              165,
+              63,
+              33,
+              197,
+              198,
+              68,
+              212,
+              60,
+              109,
+              125,
+              15,
+              198,
+              197,
+              160,
+              9,
+              25,
+              117,
+              197,
+              102,
+              151,
+              130,
+              244,
+              97,
+              217,
+              185,
+              156,
+              37,
+              193,
+              107
+            ]
+          ]
+        },
+        "external_reference": {
+          "Some": [
+            {
+              "contract_address": {
+                "index": 12801,
+                "subindex": 0
+              },
+              "kind": {
+                "Cis8": [
+                  {
+                    "namespace": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+                    "key_type": "ed25519",
+                    "public_key": [
+                      70,
+                      123,
+                      116,
+                      255,
+                      174,
+                      110,
+                      101,
+                      32,
+                      182,
+                      193,
+                      105,
+                      213,
+                      243,
+                      123,
+                      192,
+                      236,
+                      185,
+                      106,
+                      205,
+                      185,
+                      42,
+                      128,
+                      0,
+                      251,
+                      108,
+                      10,
+                      18,
+                      24,
+                      45,
+                      199,
+                      29,
+                      192
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "initial_metadata": []
+      },
+      "parameter_hex": "015b00000068747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f4c6544656e74692f64617265736b726f2f6d61696e2f636f6e636f726469756d2f63617274652f6167656e742d636172642e76312e6a736f6e01c36880a53f21c5c644d43c6d7d0fc6c5a0091975c5669782f461d9b99c25c16b01013200000000000000000000000000000027000000736f6c616e613a457457545241425a61597136694d6665594b6f75527531363656553278716131070000006564323535313920000000467b74ffae6e6520b6c169d5f37bc0ecb96acdb92a8000fb6c0a12182dc71dc000000000",
+      "suggested_energy": 30000,
+      "sender": "3f3W8fwhWUEvvs3qnbHuC9SqojRGARnU1Sg3XfpHFUbTQeEcx3"
+    }
+  ]
+}
