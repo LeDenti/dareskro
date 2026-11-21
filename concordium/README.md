@@ -13,6 +13,7 @@ waits for a named human, then pays) and make it accountable:
 | Sponsored transactions | the employer pays every fee of the agent; the agent holds **no CCD** | `chaine.mjs` |
 | Protocol-Level Token | pay is settled in `hh-EURD`, a test euro token issued for this project | `jeton.mjs` |
 | x402 | the agent pays the employee's 402 invoice; the employer's facilitator co-signs | `x402/` |
+| Concordium ID (Web3 ID proof) | the owner proves once, from the wallet extension, "age >= 18" with no personal data; the proving account must be the agent's owner | `verification/` |
 | Badge check (collector) | the employee's service deals only with an accountable agent: valid badge, Active, card hash pinned, payer = the agent's registered wallet | `x402/collecteur.mjs` |
 | register_data | EU AI Act Article 12 record: each decision hashed with a random nonce, only the hash on chain | `journal/` |
 
@@ -47,6 +48,7 @@ node registre/preparer.mjs 1                  # CIS-8 Solana binding + register 
 node registre/envoyer.mjs                     # owner signs both
 node registre/apres_enregistrement.mjs        # badge file + setAgentWallet (agent key proves control)
 node registre/apres_enregistrement.mjs --carte   # card pass 2 with the badge + setAgentURI (push it first)
+npm run build:verification && node verification/serveur.mjs   # owner check page :4030 (wallet extension)
 node journal/proposition.mjs --ancrer         # 1. the agent proposes (record anchored)
 node journal/approbation.mjs --approuve       # 2. the human approves, net moves to the agent
 node x402/facilitateur.mjs &                  # 3. employer's facilitator  :4021
