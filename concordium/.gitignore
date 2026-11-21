@@ -3,3 +3,5 @@ cles/
 node_modules/
 # Journal en clair et nonces : restent hors chaîne (droit à l'oubli), seule l'empreinte est publiée.
 journal/prive/
+# Browser bundle, rebuilt by esbuild (npm run build:verification)
+verification/public/app.js

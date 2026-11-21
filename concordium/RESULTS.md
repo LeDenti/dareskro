@@ -27,3 +27,18 @@ testnet agents that are revoked, have no card, or pay from a wallet that is not 
 
 Balances after the cycle: employer 999,592.67 hh-EURD; agent 0 hh-EURD and 0 CCD; employee 407.33 hh-EURD.
 The four record entries chain and recompute (`verifierLocal`); entries and nonces stay off chain.
+
+## Owner verification (21 November 2026)
+
+The owner proved, from the Concordium Wallet extension, that a verified adult stands behind agent 1345:
+a zero-knowledge range proof on the date of birth (born before 22 Nov 2008), from a testnet identity
+provider, bound to a fresh challenge. No name and no date of birth left the wallet. The server checked
+the proof against the chain (`getPublicData` + `verifyPresentation`), checked that the proving credential
+is Active and belongs to the owner account `3f3W…Ecx3`, and recorded the result.
+
+| # | Step | Transaction |
+|---|---|---|
+| 13 | Request anchor (challenge + statement fingerprint, tag DKAVR), attempt 1 | [0e5ea942…](https://testnet.ccdscan.io/?dcount=1&dentity=transaction&dhash=0e5ea942ad1583bf950059aea45472761d772230144f4fbd54b1dd35b03436ee) |
+| 14 | Entry 5: REFUSAL of attempt 1 (our own checks misread the credential status and the statement order; the proof itself was valid) | [a4237b50…](https://testnet.ccdscan.io/?dcount=1&dentity=transaction&dhash=a4237b5023e9f73a1ef2c7bf5b08941c141e4ae83360e46644ea1f2776d0f284) |
+| 15 | Request anchor, attempt 2 | [2036438d…](https://testnet.ccdscan.io/?dcount=1&dentity=transaction&dhash=2036438dbe34b98feba33fa58ea3183c754a2497308992f328310d2e377a087d) |
+| 16 | Entry 6: OWNER VERIFIED (proving account = owner, credential Active) | [6f6b999a…](https://testnet.ccdscan.io/?dcount=1&dentity=transaction&dhash=6f6b999a56096191ee83f2d0048a8800472a0ea496de49db5d91c1d7a58dd3ca) |

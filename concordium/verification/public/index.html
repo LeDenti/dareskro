@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Owner check</title>
+<style>
+ :root{--fond:#f7f7f5;--texte:#16181d;--doux:#5b6170;--ok:#11734b;--ko:#a3271f;--bouton:#16181d}
+ @media (prefers-color-scheme:dark){:root{--fond:#121317;--texte:#eceef2;--doux:#a3a9b6;--ok:#4fd39a;--ko:#ff8a80;--bouton:#eceef2}}
+ body{margin:0;background:var(--fond);color:var(--texte);font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+ main{max-width:640px;margin:0 auto;padding:48px 16px}
+ h1{font-size:26px;margin:0 0 8px} p{color:var(--doux)}
+ button#go{margin-top:16px;padding:12px 20px;border:0;border-radius:8px;background:var(--bouton);color:var(--fond);font-size:16px;cursor:pointer}
+ #etat{margin-top:20px;min-height:24px} #etat.ok{color:var(--ok);font-weight:600} #etat.ko{color:var(--ko)}
+ code{font-size:13px}
+</style></head>
+<body><main>
+<h1>Owner check for agent 1345</h1>
+<p>The dareskro payroll agent (<code>JyP9V7ZjVu29m1xTU1KDH</code>) acts for a pharmacy. Its owner proves once, from the Concordium Wallet, that a verified adult stands behind it. The zero-knowledge proof reveals no name and no date of birth. The request and the result are anchored on chain.</p>
+<button id="go">Prove it with the Concordium Wallet</button>
+<div id="etat"></div>
+</main><script src="/app.js"></script></body></html>
